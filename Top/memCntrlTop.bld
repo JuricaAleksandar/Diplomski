@@ -1,0 +1,110 @@
+Release 14.6 ngdbuild P.68d (nt)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+
+Command Line: C:\Xilinx\14.6\ISE_DS\ISE\bin\nt\unwrapped\ngdbuild.exe -intstyle
+ise -dd _ngo -sd ipcore_dir -nt timestamp -uc memCntrlTop.ucf -p
+xc6slx45-fgg676-2 memCntrlTop.ngc memCntrlTop.ngd
+
+Reading NGO file "D:/Diplomski/Top/memCntrlTop.ngc" ...
+Gathering constraint information from source properties...
+Done.
+
+Annotating constraints to design from ucf file "memCntrlTop.ucf" ...
+Resolving constraint associations...
+Checking Constraint Associations...
+INFO:ConstraintSystem:178 - TNM 'iCLK_DIFF_P', used in period specification
+   'TS_iCLK_DIFF_P', was traced into PLL_ADV instance
+   imcb/memc3_infrastructure_inst/u_pll_adv. The following new TNM groups and
+   period specifications were generated at the PLL_ADV output(s): 
+   CLKOUT3: <TIMESPEC TS_imcb_memc3_infrastructure_inst_mcb_drp_clk_bufg_in =
+   PERIOD "imcb_memc3_infrastructure_inst_mcb_drp_clk_bufg_in" TS_iCLK_DIFF_P /
+   1.5 HIGH 50%>
+
+INFO:ConstraintSystem:178 - TNM 'iCLK_DIFF_P', used in period specification
+   'TS_iCLK_DIFF_P', was traced into PLL_ADV instance
+   imcb/memc3_infrastructure_inst/u_pll_adv. The following new TNM groups and
+   period specifications were generated at the PLL_ADV output(s): 
+   CLKOUT1: <TIMESPEC TS_imcb_memc3_infrastructure_inst_clk_2x_180 = PERIOD
+   "imcb_memc3_infrastructure_inst_clk_2x_180" TS_iCLK_DIFF_P / 5 PHASE 2 ns
+   HIGH 50%>
+
+INFO:ConstraintSystem:178 - TNM 'iCLK_DIFF_P', used in period specification
+   'TS_iCLK_DIFF_P', was traced into PLL_ADV instance
+   imcb/memc3_infrastructure_inst/u_pll_adv. The following new TNM groups and
+   period specifications were generated at the PLL_ADV output(s): 
+   CLKOUT0: <TIMESPEC TS_imcb_memc3_infrastructure_inst_clk_2x_0 = PERIOD
+   "imcb_memc3_infrastructure_inst_clk_2x_0" TS_iCLK_DIFF_P / 5 HIGH 50%>
+
+INFO:ConstraintSystem:178 - TNM 'iCLK_DIFF_P', used in period specification
+   'TS_iCLK_DIFF_P', was traced into PLL_ADV instance
+   imcb/memc3_infrastructure_inst/u_pll_adv. The following new TNM groups and
+   period specifications were generated at the PLL_ADV output(s): 
+   CLKOUT2: <TIMESPEC TS_imcb_memc3_infrastructure_inst_clk0_bufg_in = PERIOD
+   "imcb_memc3_infrastructure_inst_clk0_bufg_in" TS_iCLK_DIFF_P / 1.5 HIGH 50%>
+
+INFO:ConstraintSystem:178 - TNM 'iCLK_DIFF_N', used in period specification
+   'TS_iCLK_DIFF_N', was traced into PLL_ADV instance
+   imcb/memc3_infrastructure_inst/u_pll_adv. The following new TNM groups and
+   period specifications were generated at the PLL_ADV output(s): 
+   CLKOUT3: <TIMESPEC TS_imcb_memc3_infrastructure_inst_mcb_drp_clk_bufg_in_0 =
+   PERIOD "imcb_memc3_infrastructure_inst_mcb_drp_clk_bufg_in_0" TS_iCLK_DIFF_N
+   / 1.5 PHASE 3.333333333 ns LOW 50%>
+
+INFO:ConstraintSystem:178 - TNM 'iCLK_DIFF_N', used in period specification
+   'TS_iCLK_DIFF_N', was traced into PLL_ADV instance
+   imcb/memc3_infrastructure_inst/u_pll_adv. The following new TNM groups and
+   period specifications were generated at the PLL_ADV output(s): 
+   CLKOUT1: <TIMESPEC TS_imcb_memc3_infrastructure_inst_clk_2x_180_0 = PERIOD
+   "imcb_memc3_infrastructure_inst_clk_2x_180_0" TS_iCLK_DIFF_N / 5 PHASE 2 ns
+   LOW 50%>
+
+INFO:ConstraintSystem:178 - TNM 'iCLK_DIFF_N', used in period specification
+   'TS_iCLK_DIFF_N', was traced into PLL_ADV instance
+   imcb/memc3_infrastructure_inst/u_pll_adv. The following new TNM groups and
+   period specifications were generated at the PLL_ADV output(s): 
+   CLKOUT0: <TIMESPEC TS_imcb_memc3_infrastructure_inst_clk_2x_0_0 = PERIOD
+   "imcb_memc3_infrastructure_inst_clk_2x_0_0" TS_iCLK_DIFF_N / 5 LOW 50%>
+
+INFO:ConstraintSystem:178 - TNM 'iCLK_DIFF_N', used in period specification
+   'TS_iCLK_DIFF_N', was traced into PLL_ADV instance
+   imcb/memc3_infrastructure_inst/u_pll_adv. The following new TNM groups and
+   period specifications were generated at the PLL_ADV output(s): 
+   CLKOUT2: <TIMESPEC TS_imcb_memc3_infrastructure_inst_clk0_bufg_in_0 = PERIOD
+   "imcb_memc3_infrastructure_inst_clk0_bufg_in_0" TS_iCLK_DIFF_N / 1.5 PHASE
+   3.333333333 ns LOW 50%>
+
+INFO:ConstraintSystem:178 - TNM 'iCLK', used in period specification 'TS_iCLK',
+   was traced into PLL_ADV instance PLL_ADV. The following new TNM groups and
+   period specifications were generated at the PLL_ADV output(s): 
+   CLKOUT0: <TIMESPEC TS_pll00_clkout0 = PERIOD "pll00_clkout0" TS_iCLK /
+   2.714285714 HIGH 50%>
+
+Done...
+
+WARNING:NgdBuild:1440 - User specified non-default attribute value (41.666) was
+   detected for the CLKIN1_PERIOD attribute on PLL "PLL_ADV".  This does not
+   match the PERIOD constraint value (41.67 ns.).  The uncertainty calculation
+   will use the PERIOD constraint value.  This could result in incorrect
+   uncertainty calculated for PLL output clocks.
+Checking expanded design ...
+WARNING:NgdBuild:452 - logical net 'N322' has no driver
+WARNING:NgdBuild:452 - logical net 'N324' has no driver
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+NGDBUILD Design Results Summary:
+  Number of errors:     0
+  Number of warnings:   3
+
+Total memory usage is 192980 kilobytes
+
+Writing NGD file "memCntrlTop.ngd" ...
+Total REAL time to NGDBUILD completion:  2 sec
+Total CPU time to NGDBUILD completion:   2 sec
+
+Writing NGDBUILD log file "memCntrlTop.bld"...

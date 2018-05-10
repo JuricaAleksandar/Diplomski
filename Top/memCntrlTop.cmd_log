@@ -1,0 +1,37 @@
+xst -intstyle ise -ifn "D:/Diplomski/Top/memCntrlTop.xst" -ofn "D:/Diplomski/Top/memCntrlTop.syr" 
+xst -intstyle ise -ifn "D:/Diplomski/Top/memCntrlTop.xst" -ofn "D:/Diplomski/Top/memCntrlTop.syr" 
+ngdbuild -intstyle ise -dd _ngo -sd ipcore_dir -nt timestamp -uc memCntrlTop.ucf -p xc6slx45-fgg676-2 memCntrlTop.ngc memCntrlTop.ngd  
+map -intstyle ise -p xc6slx45-fgg676-2 -w -logic_opt off -ol high -t 1 -xt 0 -register_duplication off -r 4 -global_opt off -mt off -ir off -pr off -lc off -power off -o memCntrlTop_map.ncd memCntrlTop.ngd memCntrlTop.pcf 
+par -w -intstyle ise -ol high -mt off memCntrlTop_map.ncd memCntrlTop.ncd memCntrlTop.pcf 
+trce -intstyle ise -v 3 -s 2 -n 3 -fastpaths -xml memCntrlTop.twx memCntrlTop.ncd -o memCntrlTop.twr memCntrlTop.pcf -ucf memCntrlTop.ucf 
+bitgen -intstyle ise -f memCntrlTop.ut memCntrlTop.ncd 
+xst -intstyle ise -ifn "D:/Diplomski/Top/memCntrlTop.xst" -ofn "D:/Diplomski/Top/memCntrlTop.syr" 
+ngdbuild -intstyle ise -dd _ngo -sd ipcore_dir -nt timestamp -uc memCntrlTop.ucf -p xc6slx45-fgg676-2 memCntrlTop.ngc memCntrlTop.ngd  
+map -intstyle ise -p xc6slx45-fgg676-2 -w -logic_opt off -ol high -t 1 -xt 0 -register_duplication off -r 4 -global_opt off -mt off -ir off -pr off -lc off -power off -o memCntrlTop_map.ncd memCntrlTop.ngd memCntrlTop.pcf 
+par -w -intstyle ise -ol high -mt off memCntrlTop_map.ncd memCntrlTop.ncd memCntrlTop.pcf 
+trce -intstyle ise -v 3 -s 2 -n 3 -fastpaths -xml memCntrlTop.twx memCntrlTop.ncd -o memCntrlTop.twr memCntrlTop.pcf -ucf memCntrlTop.ucf 
+bitgen -intstyle ise -f memCntrlTop.ut memCntrlTop.ncd 
+xst -intstyle ise -ifn "D:/Diplomski/Top/memCntrlTop.xst" -ofn "D:/Diplomski/Top/memCntrlTop.syr" 
+ngdbuild -intstyle ise -dd _ngo -sd ipcore_dir -nt timestamp -uc memCntrlTop.ucf -p xc6slx45-fgg676-2 memCntrlTop.ngc memCntrlTop.ngd  
+map -intstyle ise -p xc6slx45-fgg676-2 -w -logic_opt off -ol high -t 1 -xt 0 -register_duplication off -r 4 -global_opt off -mt off -ir off -pr off -lc off -power off -o memCntrlTop_map.ncd memCntrlTop.ngd memCntrlTop.pcf 
+xst -intstyle ise -ifn "D:/Diplomski/Top/memCntrlTop.xst" -ofn "D:/Diplomski/Top/memCntrlTop.syr" 
+ngdbuild -intstyle ise -dd _ngo -sd ipcore_dir -nt timestamp -uc memCntrlTop.ucf -p xc6slx45-fgg676-2 memCntrlTop.ngc memCntrlTop.ngd  
+map -intstyle ise -p xc6slx45-fgg676-2 -w -logic_opt off -ol high -t 1 -xt 0 -register_duplication off -r 4 -global_opt off -mt off -ir off -pr off -lc off -power off -o memCntrlTop_map.ncd memCntrlTop.ngd memCntrlTop.pcf 
+xst -intstyle ise -ifn "D:/Diplomski/Top/memCntrlTop.xst" -ofn "D:/Diplomski/Top/memCntrlTop.syr" 
+xst -intstyle ise -ifn "D:/Diplomski/Top/memCntrlTop.xst" -ofn "D:/Diplomski/Top/memCntrlTop.syr" 
+ngdbuild -intstyle ise -dd _ngo -sd ipcore_dir -nt timestamp -uc memCntrlTop.ucf -p xc6slx45-fgg676-2 memCntrlTop.ngc memCntrlTop.ngd  
+ngdbuild -intstyle ise -dd _ngo -sd ipcore_dir -nt timestamp -uc memCntrlTop.ucf -p xc6slx45-fgg676-2 memCntrlTop.ngc memCntrlTop.ngd  
+ngdbuild -intstyle ise -dd _ngo -sd ipcore_dir -nt timestamp -uc memCntrlTop.ucf -p xc6slx45-fgg676-2 memCntrlTop.ngc memCntrlTop.ngd  
+map -intstyle ise -p xc6slx45-fgg676-2 -w -logic_opt off -ol high -t 1 -xt 0 -register_duplication off -r 4 -global_opt off -mt off -ir off -pr off -lc off -power off -o memCntrlTop_map.ncd memCntrlTop.ngd memCntrlTop.pcf 
+xst -intstyle ise -ifn "D:/Diplomski/Top/memCntrlTop.xst" -ofn "D:/Diplomski/Top/memCntrlTop.syr" 
+ngdbuild -intstyle ise -dd _ngo -sd ipcore_dir -nt timestamp -uc memCntrlTop.ucf -p xc6slx45-fgg676-2 memCntrlTop.ngc memCntrlTop.ngd  
+map -intstyle ise -p xc6slx45-fgg676-2 -w -logic_opt off -ol high -t 1 -xt 0 -register_duplication off -r 4 -global_opt off -mt off -ir off -pr off -lc off -power off -o memCntrlTop_map.ncd memCntrlTop.ngd memCntrlTop.pcf 
+par -w -intstyle ise -ol high -mt off memCntrlTop_map.ncd memCntrlTop.ncd memCntrlTop.pcf 
+trce -intstyle ise -v 3 -s 2 -n 3 -fastpaths -xml memCntrlTop.twx memCntrlTop.ncd -o memCntrlTop.twr memCntrlTop.pcf -ucf memCntrlTop.ucf 
+bitgen -intstyle ise -f memCntrlTop.ut memCntrlTop.ncd 
+xst -intstyle ise -ifn "D:/Diplomski/Top/memCntrlTop.xst" -ofn "D:/Diplomski/Top/memCntrlTop.syr" 
+ngdbuild -intstyle ise -dd _ngo -sd ipcore_dir -nt timestamp -uc memCntrlTop.ucf -p xc6slx45-fgg676-2 memCntrlTop.ngc memCntrlTop.ngd  
+map -intstyle ise -p xc6slx45-fgg676-2 -w -logic_opt off -ol high -t 1 -xt 0 -register_duplication off -r 4 -global_opt off -mt off -ir off -pr off -lc off -power off -o memCntrlTop_map.ncd memCntrlTop.ngd memCntrlTop.pcf 
+par -w -intstyle ise -ol high -mt off memCntrlTop_map.ncd memCntrlTop.ncd memCntrlTop.pcf 
+trce -intstyle ise -v 3 -s 2 -n 3 -fastpaths -xml memCntrlTop.twx memCntrlTop.ncd -o memCntrlTop.twr memCntrlTop.pcf -ucf memCntrlTop.ucf 
+bitgen -intstyle ise -f memCntrlTop.ut memCntrlTop.ncd 
