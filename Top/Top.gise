@@ -29,10 +29,18 @@
     <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/par.xmsgs"/>
     <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/trce.xmsgs"/>
     <file xil_pn:fileType="FILE_XMSGS" xil_pn:name="_xmsgs/xst.xmsgs"/>
+    <file xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="colorBarGenerator.prj"/>
+    <file xil_pn:fileType="FILE_XST_STX" xil_pn:name="colorBarGenerator.stx"/>
+    <file xil_pn:fileType="FILE_XST" xil_pn:name="colorBarGenerator.xst"/>
+    <file xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="colorBarGenerator_tb_beh.prj"/>
+    <file xil_pn:branch="BehavioralSim" xil_pn:fileType="FILE_ISIM_EXE" xil_pn:name="colorBarGenerator_tb_isim_beh.exe"/>
+    <file xil_pn:fileType="FILE_ISIM_MISC" xil_pn:name="colorBarGenerator_tb_isim_beh.wdb"/>
+    <file xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="colorBarGenerator_tb_stx_beh.prj"/>
     <file xil_pn:fileType="FILE_LOG" xil_pn:name="fuse.log"/>
     <file xil_pn:fileType="FILE_LOG" xil_pn:name="ipcore_dir/coregen.log"/>
     <file xil_pn:fileType="FILE_DIRECTORY" xil_pn:name="isim"/>
     <file xil_pn:branch="BehavioralSim" xil_pn:fileType="FILE_CMD" xil_pn:name="isim.cmd"/>
+    <file xil_pn:branch="BehavioralSim" xil_pn:fileType="FILE_LOG" xil_pn:name="isim.log"/>
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_NGDBUILD_LOG" xil_pn:name="memCntrlTop.bld"/>
     <file xil_pn:fileType="FILE_CMD_LOG" xil_pn:name="memCntrlTop.cmd_log"/>
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_LSO" xil_pn:name="memCntrlTop.lso"/>
@@ -66,9 +74,7 @@
     <file xil_pn:fileType="FILE_XRPT" xil_pn:name="memCntrlTop_par.xrpt"/>
     <file xil_pn:fileType="FILE_HTML" xil_pn:name="memCntrlTop_summary.html"/>
     <file xil_pn:fileType="FILE_FITTER_REPORT" xil_pn:name="memCntrlTop_summary.xml"/>
-    <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="memCntrlTop_tb_beh.prj"/>
     <file xil_pn:branch="BehavioralSim" xil_pn:fileType="FILE_ISIM_EXE" xil_pn:name="memCntrlTop_tb_isim_beh.exe"/>
-    <file xil_pn:fileType="FILE_ISIM_MISC" xil_pn:name="memCntrlTop_tb_isim_beh.wdb"/>
     <file xil_pn:branch="Implementation" xil_pn:fileType="FILE_XST_PROJECT" xil_pn:name="memCntrlTop_tb_stx_beh.prj"/>
     <file xil_pn:fileType="FILE_WEBTALK" xil_pn:name="memCntrlTop_usage.xml"/>
     <file xil_pn:fileType="FILE_XRPT" xil_pn:name="memCntrlTop_xst.xrpt"/>
@@ -86,15 +92,17 @@
   <transforms xmlns="http://www.xilinx.com/XMLSchema">
     <transform xil_pn:end_ts="1525942383" xil_pn:name="TRAN_copyInitialToAbstractSimulation" xil_pn:start_ts="1525942383">
       <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1525942383" xil_pn:in_ck="-1267851422679130961" xil_pn:name="TRAN_copyAbstractToPostAbstractSimulation" xil_pn:start_ts="1525942383">
+    <transform xil_pn:end_ts="1525954805" xil_pn:in_ck="4357516316373827162" xil_pn:name="TRAN_copyAbstractToPostAbstractSimulation" xil_pn:start_ts="1525954805">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
       <status xil_pn:value="OutOfDateForInputs"/>
       <status xil_pn:value="OutOfDateForOutputs"/>
-      <status xil_pn:value="InputAdded"/>
       <status xil_pn:value="InputChanged"/>
       <status xil_pn:value="OutputChanged"/>
+      <outfile xil_pn:name="colorBarGenerator.vhd"/>
+      <outfile xil_pn:name="colorBarGenerator_tb.vhd"/>
       <outfile xil_pn:name="ddr2_model_c3.v"/>
       <outfile xil_pn:name="ddr2_model_parameters_c3.vh"/>
       <outfile xil_pn:name="memCntrlTop.vhd"/>
@@ -102,11 +110,11 @@
       <outfile xil_pn:name="vgaSync.vhd"/>
       <outfile xil_pn:name="vgaSync_tb.vhd"/>
     </transform>
-    <transform xil_pn:end_ts="1525942390" xil_pn:name="TRAN_xawsToSimhdl" xil_pn:prop_ck="-6596071266343423104" xil_pn:start_ts="1525942390">
+    <transform xil_pn:end_ts="1525954817" xil_pn:name="TRAN_xawsToSimhdl" xil_pn:prop_ck="8035325973133048838" xil_pn:start_ts="1525954817">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
-    <transform xil_pn:end_ts="1525942390" xil_pn:name="TRAN_schematicsToHdlSim" xil_pn:prop_ck="2290996523219339262" xil_pn:start_ts="1525942390">
+    <transform xil_pn:end_ts="1525954817" xil_pn:name="TRAN_schematicsToHdlSim" xil_pn:prop_ck="-2311561176932066172" xil_pn:start_ts="1525954817">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
     </transform>
@@ -123,7 +131,7 @@
       <outfile xil_pn:name="ipcore_dir/memControllerBlock/user_design/rtl/memc3_wrapper.vhd"/>
       <outfile xil_pn:name="ipcore_dir/pll0.vhd"/>
     </transform>
-    <transform xil_pn:end_ts="1525942390" xil_pn:in_ck="-220365448564289370" xil_pn:name="TRAN_copyPostAbstractToPreSimulation" xil_pn:start_ts="1525942390">
+    <transform xil_pn:end_ts="1525954817" xil_pn:in_ck="4357516316373827162" xil_pn:name="TRAN_copyPostAbstractToPreSimulation" xil_pn:start_ts="1525954817">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
       <status xil_pn:value="OutOfDateForInputs"/>
@@ -131,23 +139,16 @@
       <status xil_pn:value="OutOfDateForOutputs"/>
       <status xil_pn:value="InputChanged"/>
       <status xil_pn:value="OutputChanged"/>
+      <outfile xil_pn:name="colorBarGenerator.vhd"/>
+      <outfile xil_pn:name="colorBarGenerator_tb.vhd"/>
       <outfile xil_pn:name="ddr2_model_c3.v"/>
       <outfile xil_pn:name="ddr2_model_parameters_c3.vh"/>
-      <outfile xil_pn:name="ipcore_dir/memControllerBlock/user_design/rtl/iodrp_controller.vhd"/>
-      <outfile xil_pn:name="ipcore_dir/memControllerBlock/user_design/rtl/iodrp_mcb_controller.vhd"/>
-      <outfile xil_pn:name="ipcore_dir/memControllerBlock/user_design/rtl/mcb_raw_wrapper.vhd"/>
-      <outfile xil_pn:name="ipcore_dir/memControllerBlock/user_design/rtl/mcb_soft_calibration.vhd"/>
-      <outfile xil_pn:name="ipcore_dir/memControllerBlock/user_design/rtl/mcb_soft_calibration_top.vhd"/>
-      <outfile xil_pn:name="ipcore_dir/memControllerBlock/user_design/rtl/memControllerBlock.vhd"/>
-      <outfile xil_pn:name="ipcore_dir/memControllerBlock/user_design/rtl/memc3_infrastructure.vhd"/>
-      <outfile xil_pn:name="ipcore_dir/memControllerBlock/user_design/rtl/memc3_wrapper.vhd"/>
-      <outfile xil_pn:name="ipcore_dir/pll0.vhd"/>
       <outfile xil_pn:name="memCntrlTop.vhd"/>
       <outfile xil_pn:name="memCntrlTop_tb.vhd"/>
       <outfile xil_pn:name="vgaSync.vhd"/>
       <outfile xil_pn:name="vgaSync_tb.vhd"/>
     </transform>
-    <transform xil_pn:end_ts="1525942406" xil_pn:in_ck="-220365448564289370" xil_pn:name="TRAN_ISimulateBehavioralModelRunFuse" xil_pn:prop_ck="8582460898318066400" xil_pn:start_ts="1525942390">
+    <transform xil_pn:end_ts="1525954832" xil_pn:in_ck="-5716647817581521103" xil_pn:name="TRAN_ISimulateBehavioralModelRunFuse" xil_pn:prop_ck="-6136883097100363924" xil_pn:start_ts="1525954817">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
       <status xil_pn:value="OutOfDateForInputs"/>
@@ -155,23 +156,26 @@
       <status xil_pn:value="OutOfDateForOutputs"/>
       <status xil_pn:value="InputChanged"/>
       <status xil_pn:value="OutputChanged"/>
+      <outfile xil_pn:name="colorBarGenerator_tb_beh.prj"/>
+      <outfile xil_pn:name="colorBarGenerator_tb_isim_beh.exe"/>
       <outfile xil_pn:name="fuse.log"/>
       <outfile xil_pn:name="isim"/>
-      <outfile xil_pn:name="memCntrlTop_tb_beh.prj"/>
-      <outfile xil_pn:name="memCntrlTop_tb_isim_beh.exe"/>
+      <outfile xil_pn:name="isim.log"/>
       <outfile xil_pn:name="xilinxsim.ini"/>
     </transform>
-    <transform xil_pn:end_ts="1525942406" xil_pn:in_ck="5871645319379704057" xil_pn:name="TRAN_ISimulateBehavioralModel" xil_pn:prop_ck="1050241236405343597" xil_pn:start_ts="1525942406">
+    <transform xil_pn:end_ts="1525954832" xil_pn:in_ck="-3072439507000043496" xil_pn:name="TRAN_ISimulateBehavioralModel" xil_pn:prop_ck="1781669378163890553" xil_pn:start_ts="1525954832">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
       <status xil_pn:value="OutOfDateForPredecessor"/>
       <status xil_pn:value="OutOfDateForOutputs"/>
       <status xil_pn:value="OutputChanged"/>
+      <outfile xil_pn:name="colorBarGenerator_tb_isim_beh.wdb"/>
       <outfile xil_pn:name="isim.cmd"/>
-      <outfile xil_pn:name="memCntrlTop_tb_isim_beh.wdb"/>
+      <outfile xil_pn:name="isim.log"/>
     </transform>
     <transform xil_pn:end_ts="1525878486" xil_pn:name="TRAN_copyInitialToXSTAbstractSynthesis" xil_pn:start_ts="1525878486">
       <status xil_pn:value="SuccessfullyRun"/>
+      <status xil_pn:value="ReadyToRun"/>
     </transform>
     <transform xil_pn:end_ts="1525878486" xil_pn:name="TRAN_schematicsToHdl" xil_pn:prop_ck="8433287655783869046" xil_pn:start_ts="1525878486">
       <status xil_pn:value="SuccessfullyRun"/>
@@ -215,6 +219,7 @@
       <status xil_pn:value="InputAdded"/>
       <status xil_pn:value="InputChanged"/>
       <status xil_pn:value="OutputChanged"/>
+      <status xil_pn:value="OutputRemoved"/>
       <outfile xil_pn:name="_xmsgs/xst.xmsgs"/>
       <outfile xil_pn:name="memCntrlTop.lso"/>
       <outfile xil_pn:name="memCntrlTop.ngc"/>
@@ -223,7 +228,6 @@
       <outfile xil_pn:name="memCntrlTop.stx"/>
       <outfile xil_pn:name="memCntrlTop.syr"/>
       <outfile xil_pn:name="memCntrlTop.xst"/>
-      <outfile xil_pn:name="memCntrlTop_tb_beh.prj"/>
       <outfile xil_pn:name="memCntrlTop_tb_stx_beh.prj"/>
       <outfile xil_pn:name="memCntrlTop_xst.xrpt"/>
       <outfile xil_pn:name="webtalk_pn.xml"/>
@@ -281,6 +285,7 @@
     <transform xil_pn:end_ts="1525942900" xil_pn:in_ck="-1252181542520284584" xil_pn:name="TRANEXT_bitFile_spartan6" xil_pn:prop_ck="396117104113915555" xil_pn:start_ts="1525942888">
       <status xil_pn:value="SuccessfullyRun"/>
       <status xil_pn:value="ReadyToRun"/>
+      <status xil_pn:value="OutOfDateForProperties"/>
       <status xil_pn:value="OutOfDateForPredecessor"/>
       <outfile xil_pn:name="_xmsgs/bitgen.xmsgs"/>
       <outfile xil_pn:name="memCntrlTop.ut"/>

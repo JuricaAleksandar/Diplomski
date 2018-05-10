@@ -1,0 +1,28 @@
+Command line:
+   colorBarGenerator_tb_isim_beh.exe
+     -simmode  gui
+     -simrunnum  0
+     -socket  56425
+
+Thu May 10 14:35:18 2018
+
+
+ Elaboration Time: 0.703125 sec
+
+ Current Memory Usage: 1729.9 Meg
+
+ Total Signals          : 191317
+ Total Nets             : 80988
+ Total Signal Drivers   : 88333
+ Total Blocks           : 22981
+ Total Primitive Blocks : 19555
+ Total Processes        : 105061
+ Total Traceable Variables  : 5142
+ Total Scalar Nets and Variables : 5187032
+
+ Total Simulation Time: 599.25 sec
+
+ Current Memory Usage: 631.775 Meg
+
+Thu May 10 15:32:27 2018
+

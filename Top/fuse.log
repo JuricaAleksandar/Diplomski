@@ -1,4 +1,4 @@
-Running: fuse.exe -relaunch -intstyle "ise" -incremental -lib "unisims_ver" -lib "unimacro_ver" -lib "xilinxcorelib_ver" -lib "secureip" -o "D:/Diplomski/Top/memCntrlTop_tb_isim_beh.exe" -prj "D:/Diplomski/Top/memCntrlTop_tb_beh.prj" "work.memCntrlTop_tb" "work.glbl" 
+Running: fuse.exe -relaunch -intstyle "ise" -incremental -lib "unisims_ver" -lib "unimacro_ver" -lib "xilinxcorelib_ver" -lib "secureip" -o "D:/Diplomski/Top/colorBarGenerator_tb_isim_beh.exe" -prj "D:/Diplomski/Top/colorBarGenerator_tb_beh.prj" "work.colorBarGenerator_tb" "work.glbl" 
 ISim P.68d (signature 0x8ef4fb42)
 Number of CPUs detected in this system: 8
 Turning on mult-threading, number of parallel sub-compilation jobs: 16 
@@ -13,10 +13,8 @@ Parsing VHDL file "D:/Diplomski/Top/ipcore_dir/memControllerBlock/user_design/rt
 Parsing VHDL file "D:/Diplomski/Top/ipcore_dir/memControllerBlock/user_design/rtl/memc3_wrapper.vhd" into library work
 Parsing VHDL file "D:/Diplomski/Top/ipcore_dir/memControllerBlock/user_design/rtl/memc3_infrastructure.vhd" into library work
 Parsing VHDL file "D:/Diplomski/Top/ipcore_dir/memControllerBlock/user_design/rtl/memControllerBlock.vhd" into library work
-Parsing VHDL file "D:/Diplomski/Top/ipcore_dir/pll0.vhd" into library work
-Parsing VHDL file "D:/Diplomski/Top/vgaSync.vhd" into library work
-Parsing VHDL file "D:/Diplomski/Top/memCntrlTop.vhd" into library work
-Parsing VHDL file "D:/Diplomski/Top/memCntrlTop_tb.vhd" into library work
+Parsing VHDL file "D:/Diplomski/Top/colorBarGenerator.vhd" into library work
+Parsing VHDL file "D:/Diplomski/Top/colorBarGenerator_tb.vhd" into library work
 Starting static elaboration
 WARNING:HDLCompiler:329 - "v:/hipsBuilds/P_hips_v21.0/rst/hips/mcb/common_modules.v" Line 260: Target <(null)> of concurrent assignment or output port connection should be a net type.
 WARNING:HDLCompiler:536 - "v:/hipsBuilds/P_hips_v21.0/rst/hips/mcb/MCB_WRAP.v" Line 324: Index is always out of bounds for array convertbin
@@ -25,8 +23,8 @@ WARNING:HDLCompiler:1330 - "v:/hipsBuilds/P_hips_v21.0/rst/hips/mcb/MCB_WRAP.v" 
 WARNING:HDLCompiler:536 - "v:/hipsBuilds/P_hips_v21.0/rst/hips/mcb/MCB_WRAP.v" Line 323: Index is always out of bounds for array convertbin
 WARNING:HDLCompiler:532 - "v:/hipsBuilds/P_hips_v21.0/rst/hips/mcb/MCB_WRAP.v" Line 323: Index <-1> is out of range [63:0] for signal <convertbin>.
 Completed static elaboration
-Fuse Memory Usage: 220476 KB
-Fuse CPU Usage: 1437 ms
+Fuse Memory Usage: 219452 KB
+Fuse CPU Usage: 1296 ms
 Compiling module glbl
 Compiling module xil_mcb_mod49
 Compiling module xil_mcb_mod109
@@ -131,20 +129,15 @@ Compiling package vcomponents
 Compiling package std_logic_arith
 Compiling package std_logic_unsigned
 Compiling package vl_types
+Compiling architecture behavioral of entity colorBarGenerator [colorbargenerator_default]
 Compiling package numeric_std
 Compiling package textio
 Compiling package vital_timing
 Compiling package vital_primitives
 Compiling package vpkg
-Compiling architecture behavioral of entity vgaSync [vgasync_default]
-Compiling package std_logic_signed
-Compiling architecture ibufg_v of entity IBUFG [\IBUFG("DONT_CARE","0",true,"DEF...]
-Compiling architecture pll_adv_v of entity PLL_ADV [\PLL_ADV("OPTIMIZED","CLKFBOUT",...]
-Compiling architecture pll_base_v of entity PLL_BASE [\PLL_BASE("OPTIMIZED",19,0.0,41....]
-Compiling architecture bufg_v of entity BUFG [bufg_default]
-Compiling architecture xilinx of entity pll0 [pll0_default]
 Compiling architecture ibufgds_v of entity IBUFGDS [\IBUFGDS("DONT_CARE",true,"0",tr...]
 Compiling architecture pll_adv_v of entity PLL_ADV [\PLL_ADV("OPTIMIZED","CLKFBOUT",...]
+Compiling architecture bufg_v of entity BUFG [bufg_default]
 Compiling architecture bufgmux_v of entity BUFGMUX [\BUFGMUX("SYNC")(1,4)\]
 Compiling architecture inv_v of entity INV [inv_default]
 Compiling architecture bufgce_v of entity BUFGCE [bufgce_default]
@@ -191,13 +184,11 @@ Compiling architecture pullup_v of entity PULLUP [pullup_default]
 Compiling architecture aarch of entity mcb_raw_wrapper [\mcb_raw_wrapper(4000,('0','0','...]
 Compiling architecture acch of entity memc3_wrapper [\memc3_wrapper(4000,4,32,4,32,12...]
 Compiling architecture arc of entity memControllerBlock [\memControllerBlock(4,32,4,32,40...]
-Compiling architecture oddr2_v of entity ODDR2 [\ODDR2("NONE",'0',"SYNC")(1,4,1,...]
-Compiling architecture behavioral of entity memCntrlTop [memcntrltop_default]
-Compiling architecture behavior of entity memcntrltop_tb
+Compiling architecture behavior of entity colorbargenerator_tb
 Time Resolution for simulation is 1ps.
-Waiting for 41 sub-compilation(s) to finish...
-Compiled 125 VHDL Units
+Waiting for 34 sub-compilation(s) to finish...
+Compiled 112 VHDL Units
 Compiled 98 Verilog Units
-Built simulation executable D:/Diplomski/Top/memCntrlTop_tb_isim_beh.exe
-Fuse Memory Usage: 271620 KB
-Fuse CPU Usage: 6202 ms
+Built simulation executable D:/Diplomski/Top/colorBarGenerator_tb_isim_beh.exe
+Fuse Memory Usage: 268420 KB
+Fuse CPU Usage: 5515 ms
