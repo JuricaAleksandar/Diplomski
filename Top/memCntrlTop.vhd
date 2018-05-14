@@ -53,8 +53,6 @@ entity memCntrlTop is
 			  ioRAM_DQ : inout STD_LOGIC_VECTOR (15 downto 0);
 			  ioRZQ : inout STD_LOGIC;
 			  ioZIO : inout STD_LOGIC;
-			  oLED : out STD_LOGIC_VECTOR (7 downto 0);
-			  iSW : in STD_LOGIC_VECTOR (2 downto 0);
 		     onBLANK : out STD_LOGIC; 
 			  onSYNC : out STD_LOGIC;
 			  onPSAVE : out STD_LOGIC;
@@ -150,6 +148,8 @@ architecture Behavioral of memCntrlTop is
 	signal sPIXEL_Y, sPIXEL_X : STD_LOGIC_VECTOR(10 downto 0);
 	signal sVIDEO_ON, sH_SYNC, sV_SYNC : STD_LOGIC;
 	
+	signal sDONE : STD_LOGIC;
+	
 begin
 	
 	onRAM_CS <= '0';
@@ -164,17 +164,6 @@ begin
 	sP1_CMD_CLK <= sCLK;
 	sP1_WR_CLK <= sCLK;
 	sP1_RD_CLK <= sCLK;
-	
-	sWR_RGB <= (others => '0') when iSW = "000"
-			else (7 downto 0 => '1', others => '0') when iSW = "001"
-			else (15 downto 8 => '1', others => '0') when iSW = "010"
-			else (15 downto 0 => '1', others => '0') when iSW = "011"
-			else (23 downto 16 => '1', others => '0') when iSW = "100"
-			else (23 downto 16 => '1', 7 downto 0 => '1', others => '0') when iSW = "101"
-			else (23 downto 8 => '1', others => '0') when iSW = "110"
-			else (others => '1');
-	
-	sP0_WR_DATA <= (7 downto 0 => '0') & sWR_RGB;
 	
 	ivgasync : entity work.vgaSync
 		port map(
@@ -198,32 +187,31 @@ begin
 			C3_SIMULATION => "TRUE")
 		port map (
 
-		c3_sys_clk_p  =>         iCLK_DIFF_P,
-		c3_sys_clk_n    =>       iCLK_DIFF_N,
-		c3_sys_rst_i    =>       sINV_RST,                        
-
-		mcb3_dram_dq       =>    ioRAM_DQ,  
-		mcb3_dram_a        =>    oRAM_ADDR,  
-		mcb3_dram_ba       =>    oRAM_BADDR,
-		mcb3_dram_ras_n    =>    onRAM_RAS,                        
-		mcb3_dram_cas_n    =>    onRAM_CAS,                        
-		mcb3_dram_we_n     =>    onRAM_WE,                          
-		mcb3_dram_odt    =>      oRAM_ODT,
-		mcb3_dram_cke      =>    oRAM_CKE,                          
-		mcb3_dram_ck       =>    oRAM_CLK,                          
-		mcb3_dram_ck_n     =>    onRAM_CLK,       
-		mcb3_dram_dqs      =>    ioRAM_LDQS,                          
-		mcb3_dram_dqs_n  =>      ionRAM_LDQS,
-		mcb3_dram_udqs  =>       ioRAM_UDQS,            
-		mcb3_dram_udqs_n    =>   ionRAM_UDQS,  
-		mcb3_dram_udm  =>        oRAM_UDM,     
-		mcb3_dram_dm  =>       oRAM_LDM,
-		
+		c3_sys_clk_p  									 =>  iCLK_DIFF_P,
+		c3_sys_clk_n    								 =>  iCLK_DIFF_N,
+		c3_sys_rst_i    								 =>  sINV_RST,                        
 		c3_clk0											 =>  sCLK,
 		c3_rst0											 =>  sRST,
 		c3_calib_done      							 =>  sCALIB_DONE,
 		mcb3_rzq        								 =>  ioRZQ,
 		mcb3_zio        								 =>  ioZIO,
+	
+		mcb3_dram_dq       							 =>  ioRAM_DQ,  
+		mcb3_dram_a        							 =>  oRAM_ADDR,  
+		mcb3_dram_ba      							 =>  oRAM_BADDR,
+		mcb3_dram_ras_n   							 =>  onRAM_RAS,                        
+		mcb3_dram_cas_n  							 	 =>  onRAM_CAS,                        
+		mcb3_dram_we_n    							 =>  onRAM_WE,                          
+		mcb3_dram_odt   								 =>  oRAM_ODT,
+		mcb3_dram_cke     							 =>  oRAM_CKE,                          
+		mcb3_dram_ck      							 =>  oRAM_CLK,                          
+		mcb3_dram_ck_n    							 =>  onRAM_CLK,       
+		mcb3_dram_dqs     							 =>  ioRAM_LDQS,                          
+		mcb3_dram_dqs_n 								 =>  ionRAM_LDQS,
+		mcb3_dram_udqs 								 =>  ioRAM_UDQS,            
+		mcb3_dram_udqs_n   							 =>  ionRAM_UDQS,  
+		mcb3_dram_udm 									 =>  oRAM_UDM,     
+		mcb3_dram_dm 									 =>  oRAM_LDM,
 
 		c3_p0_cmd_clk                           =>  sP0_CMD_CLK,
 		c3_p0_cmd_en                            =>  sP0_CMD_EN,
@@ -280,185 +268,26 @@ begin
 		c3_p1_rd_error                          =>  sP1_RD_ERROR
 	);
 
-	process(sCLK, sRST) begin
-		if(sRST = '1') then
-			sOLD_DATA <= (others => '0');
-		elsif(sCLK'event and sCLK = '1') then
-			sOLD_DATA <= sP0_RD_DATA;
-		end if;
-	end process;
-
-	process(sCLK, sRST) begin
-		if(sRST = '1') then
-			sSTATE <= IDLE;
-		elsif(sCLK'event and sCLK = '1') then
-			sSTATE <= sNEXT_STATE;
-		end if;
-	end process;
-
-	process(sSTATE, sCALIB_DONE, sP0_RD_EMPTY) begin
-		case sSTATE is
-			when IDLE =>
-				if(sCALIB_DONE = '1') then
-					sNEXT_STATE <= SET_DATA;
-				else
-					sNEXT_STATE <= IDLE;
-				end if;			
-			when SET_DATA =>
-				sNEXT_STATE <= NOP;
-			when NOP =>
-				sNEXT_STATE <= SET_CMD;
-			when SET_CMD =>
-				sNEXT_STATE <= DONE;
-			when DONE =>
-				sNEXT_STATE <= SET_CMD1;
-			when SET_CMD1 =>
-				sNEXT_STATE <= WAIT_DATA;
-			when WAIT_DATA =>
-				if(sP0_RD_EMPTY = '0') then
-					sNEXT_STATE <= READ_DATA;
-				else
-					sNEXT_STATE <= WAIT_DATA;
-				end if;
-			when READ_DATA =>
-				sNEXT_STATE <= DONE1;
-			when others =>
-				sNEXT_STATE <= IDLE;
-		end case;
-	end process;
-
-	process(sSTATE, sWR_RGB, sP0_RD_DATA) begin
-		case sSTATE is
-			when IDLE =>
-				sP0_CMD_INSTR <= "000";
-				sP0_CMD_BL <= (others => '0');
-				sP0_CMD_BYTE_ADDR <= (others => '0');
-				sP0_CMD_EN <= '0';
-				sP0_WR_EN <= '0';
-				sP0_WR_MASK <= (others => '0');
-				sP0_RD_EN <= '0';
-				sLED <= (others => '0');
-				sWE <= '0';
-				sRGB <= (others => '0');
-				
-			when SET_DATA =>
-				sP0_CMD_INSTR <= "000";
-				sP0_CMD_BL <= (others => '0');
-				sP0_CMD_BYTE_ADDR <= (others => '0');
-				sP0_CMD_EN <= '0';
-				sP0_WR_EN <= '1';
-				sP0_WR_MASK <= (others => '0');
-				sP0_RD_EN <= '0';
-				sLED <= (others => '0');
-				sWE <= '0';
-				sRGB <= (others => '0');
-				
-			when NOP =>
-				sP0_CMD_INSTR <= "000";
-				sP0_CMD_BL <= (others => '0');
-				sP0_CMD_BYTE_ADDR <= (others => '0');
-				sP0_CMD_EN <= '0';
-				sP0_WR_EN <= '0';
-				sP0_WR_MASK <= (others => '0');
-				sP0_RD_EN <= '0';
-				sLED <= (others => '0');
-				sWE <= '0';
-				sRGB <= (others => '0');
-				
-			when SET_CMD =>
-				sP0_CMD_INSTR <= "000";
-				sP0_CMD_BL <= (others => '0');
-				sP0_CMD_BYTE_ADDR <= (others => '0');
-				sP0_CMD_EN <= '1';
-				sP0_WR_EN <= '0';
-				sP0_WR_MASK <= (others => '0');
-				sP0_RD_EN <= '0';
-				sLED <= (others => '0');
-				sWE <= '0';
-				sRGB <= (others => '0');
-				
-			when DONE =>
-				sP0_CMD_INSTR <= "001";
-				sP0_CMD_BL <= (others => '0');
-				sP0_CMD_BYTE_ADDR <= (others => '0');
-				sP0_CMD_EN <= '0';
-				sP0_WR_EN <= '0';
-				sP0_WR_MASK <= (others => '0');
-				sP0_RD_EN <= '0';
-				sLED <= (others => '0');
-				sWE <= '0';
-				sRGB <= (others => '0');
-				
-			when SET_CMD1 =>
-				sP0_CMD_INSTR <= "001";
-				sP0_CMD_BL <= (others => '0');
-				sP0_CMD_BYTE_ADDR <= (others => '0');
-				sP0_CMD_EN <= '1';
-				sP0_WR_EN <= '0';
-				sP0_WR_MASK <= (others => '0');
-				sP0_RD_EN <= '0';
-				sLED <= (others => '0');
-				sWE <= '0';
-				sRGB <= (others => '0');
-				
-			when WAIT_DATA =>
-				sP0_CMD_INSTR <= "001";
-				sP0_CMD_BL <= (others => '0');
-				sP0_CMD_BYTE_ADDR <= (others => '0');
-				sP0_CMD_EN <= '0';
-				sP0_WR_EN <= '0';
-				sP0_WR_MASK <= (others => '0');
-				sP0_RD_EN <= '1';
-				sLED <= (others => '0');
-				sWE <= '0';
-				sRGB <= (others => '0');
-				
-			when READ_DATA =>
-				sP0_CMD_INSTR <= "001";
-				sP0_CMD_BL <= (others => '0');
-				sP0_CMD_BYTE_ADDR <= (others => '0');
-				sP0_CMD_EN <= '0';
-				sP0_WR_EN <= '0';
-				sP0_WR_MASK <= (others => '0');
-				sP0_RD_EN <= '0';
-				sLED <= "00" & sOLD_DATA(23 downto 22) & sOLD_DATA(15 downto 14) & sOLD_DATA(7 downto 6);
-				sWE <= '1';
-				sRGB <= sOLD_DATA(23 downto 0);
-				
-			when others =>
-				sP0_CMD_INSTR <= "000";
-				sP0_CMD_BL <= (others => '0');
-				sP0_CMD_BYTE_ADDR <= (others => '0');
-				sP0_CMD_EN <= '0';
-				sP0_WR_EN <= '0';
-				sP0_WR_MASK <= (others => '0');
-				sP0_RD_EN <= '0';
-				sLED <= (others => '0');
-				sWE <= '0';
-				sRGB <= (others => '0');
-				
-		end case;
-	end process;
-	
-	process(sCLK, sRST) begin
-		if(sRST = '1') then
-			oLED <= (others => '0');
-		elsif(sCLK'event and sCLK = '1') then
-			if(sWE = '1') then
-				oLED <= sLED;
-			end if;
-		end if;
-	end process;
-	
-	process(sCLK, sRST) begin
-		if(sRST = '1') then
-			oRGB <= (others => '0');
-		elsif(sCLK'event and sCLK = '1') then
-			if(sWE = '1') then
-				oRGB <= sRGB;
-			end if;
-		end if;
-	end process;
+	CBR : entity work.colorBarGenerator
+		port map(
+		  iCLK => sCLK,
+		  inRST => sCALIB_DONE,
+		  oDONE => sDONE,
+		  oCMD_EN => sP0_CMD_EN,
+		  oCMD_INSTR => sP0_CMD_INSTR,
+		  oCMD_BL => sP0_CMD_BL,
+		  oCMD_BYTE_ADDR => sP0_CMD_BYTE_ADDR,
+		  iCMD_EMPTY => sP0_CMD_EMPTY,
+		  iCMD_FULL => sP0_CMD_FULL,
+		  oWR_EN => sP0_WR_EN,
+		  oWR_MASK => sP0_WR_MASK,
+		  oWR_DATA => sP0_WR_DATA,
+		  iWR_FULL => sP0_WR_FULL,
+		  iWR_EMPTY => sP0_WR_EMPTY,
+		  iWR_COUNT => sP0_WR_COUNT,
+		  iWR_UNDERRUN => sP0_WR_UNDERRUN,
+		  iWR_ERROR => sP0_WR_ERROR
+		);
 	
 	CLK_ODDR2 : ODDR2            
 	generic map                    
@@ -482,7 +311,10 @@ begin
 	sP1_WR_EN <= '0';
 	sP1_WR_MASK <= (others => '0');
 	sP1_RD_EN <= '0';
+	sP0_RD_EN <= '0';
+	sP1_WR_DATA <= (others => '0');
 	
+	oRGB <= (others => '0'); ---------------------------------------------------------------------
 	onSYNC <= sH_SYNC and sV_SYNC;
 	onBLANK <= sVIDEO_ON;
 	onPSAVE <= '1';

@@ -58,26 +58,44 @@ architecture Behavioral of vgaSync is
 	
 begin
 
+--	process(iCLK, inRST) begin
+--		if(inRST = '0') then
+--			sH_COUNT_NEXT <= (others => '0');
+--		elsif(iCLK'event and iCLK ='1') then
+--			if(sH_COUNT_NEXT = cH_DISPLAY + cH_FP + cH_BP + cH_RETR - 1) then
+--				sH_COUNT_NEXT <= (others => '0');
+--			else
+--				sH_COUNT_NEXT <= sH_COUNT_NEXT + 1;
+--			end if;
+--		end if;
+--	end process;
+--
+--	process(iCLK,inRST) begin
+--		if(inRST = '0') then
+--			sV_COUNT_NEXT <= (others => '0');
+--		elsif(iCLK'event and iCLK ='1') then
+--			if(sH_COUNT_NEXT = cH_DISPLAY + cH_FP + cH_BP + cH_RETR - 1) then
+--				sV_COUNT_NEXT <= sV_COUNT_NEXT + 1;
+--			elsif(sV_COUNT_NEXT = cV_DISPLAY + cV_FP + cV_BP + cV_RETR - 1) then
+--				sV_COUNT_NEXT <= (others => '0');
+--			end if;
+--		end if;
+--	end process;
+	
 	process(iCLK, inRST) begin
 		if(inRST = '0') then
 			sH_COUNT_NEXT <= (others => '0');
-		elsif(iCLK'event and iCLK ='1') then
-			if(sH_COUNT_NEXT = cH_DISPLAY + cH_FP + cH_BP + cH_RETR - 1) then
-				sH_COUNT_NEXT <= (others => '0');
-			else
-				sH_COUNT_NEXT <= sH_COUNT_NEXT + 1;
-			end if;
-		end if;
-	end process;
-
-	process(iCLK,inRST) begin
-		if(inRST = '0') then
 			sV_COUNT_NEXT <= (others => '0');
 		elsif(iCLK'event and iCLK ='1') then
 			if(sH_COUNT_NEXT = cH_DISPLAY + cH_FP + cH_BP + cH_RETR - 1) then
-				sV_COUNT_NEXT <= sV_COUNT_NEXT + 1;
-			elsif(sV_COUNT_NEXT = cV_DISPLAY + cV_FP + cV_BP + cV_RETR - 1) then
-				sV_COUNT_NEXT <= (others => '0');
+				sH_COUNT_NEXT <= (others => '0');
+				if(sV_COUNT_NEXT = cV_DISPLAY + cV_FP + cV_BP + cV_RETR - 1) then
+					sV_COUNT_NEXT <= (others => '0');
+				else
+					sV_COUNT_NEXT <= sV_COUNT_NEXT + 1;
+				end if;
+			else
+				sH_COUNT_NEXT <= sH_COUNT_NEXT + 1;
 			end if;
 		end if;
 	end process;

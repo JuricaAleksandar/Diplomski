@@ -54,37 +54,25 @@ architecture Behavioral of colorBarGenerator is
 
 	type tGEN_STATE is (IDLE, SET_DATA, NOP, SET_CMD, DONE);
 	signal sSTATE, sNEXT_STATE : tGEN_STATE;
-	signal sCOUNT : integer range 0 to 70;
 	signal sPOS_X : STD_LOGIC_VECTOR (10 downto 0);
 	signal sPOS_Y : STD_LOGIC_VECTOR (9 downto 0);
 	signal sRGB : STD_LOGIC_VECTOR (23 downto 0);
-	signal sWE : STD_LOGIC;
-	signal sEN : STD_LOGIC;
+	signal sPOS_WE : STD_LOGIC;
+	signal sCNT_EN : STD_LOGIC;
 
 begin
-
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
-			sCOUNT <= 0;
-		elsif(iCLK'event and iCLK = '1') then
-			if(sEN = '1') then
-				sCOUNT <= sCOUNT + 1;
-			else
-				sCOUNT <= 0;
-			end if;
-		end if;
-	end process;
 
 	process(iCLK, inRST) begin
 		if(inRST = '0') then
 			sPOS_X <= (others => '0');
 			sPOS_Y <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
-			if(sWE = '1') then
-				sPOS_X <= sPOS_X + 64;
-				if(sPOS_X = 1024) then
-					sPOS_Y <= sPOS_Y + 1;
+			if(sPOS_WE = '1') then
+				if(sPOS_X = 960) then
 					sPOS_X <= (others => '0');
+					sPOS_Y <= sPOS_Y + 1;
+				else
+					sPOS_X <= sPOS_X + 64;
 				end if;
 			end if;
 		end if;
@@ -98,7 +86,7 @@ begin
 		end if;
 	end process;
 
-	process(sSTATE, sCOUNT, iWR_EMPTY, sPOS_Y) begin
+	process(sSTATE, iWR_COUNT, iWR_EMPTY, sPOS_Y, sPOS_X) begin
 		case sSTATE is
 			when IDLE =>
 				if(iWR_EMPTY = '1') then
@@ -107,7 +95,7 @@ begin
 					sNEXT_STATE <= IDLE;
 				end if;
 			when SET_DATA =>
-				if (sCOUNT = 64) then
+				if (iWR_COUNT = 63) then
 					sNEXT_STATE <= NOP;
 				else
 					sNEXT_STATE <= SET_DATA;
@@ -115,10 +103,10 @@ begin
 			when NOP =>
 				sNEXT_STATE <= SET_CMD;
 			when SET_CMD =>
-				if(sPOS_Y < 768) then
-					sNEXT_STATE <= IDLE;
-				else
+				if(sPOS_Y = 767 and sPOS_X = 960) then
 					sNEXT_STATE <= DONE;
+				else
+					sNEXT_STATE <= IDLE;
 				end if;
 			when others =>
 				sNEXT_STATE <= DONE;
@@ -131,36 +119,36 @@ begin
 			  oDONE <= '0';
            oCMD_EN <= '0';
 			  oWR_EN <= '0';
-			  sWE <= '0';
-			  sEN <= '0';
+			  sPOS_WE <= '0';
+			  sCNT_EN <= '0';
 			  
 			when SET_DATA =>
 			  oDONE <= '0';
            oCMD_EN <= '0';
 			  oWR_EN <= '1';
-			  sWE <= '0';
-			  sEN <= '1';
+			  sPOS_WE <= '0';
+			  sCNT_EN <= '1';
 			
 			when NOP =>
 			  oDONE <= '0';
            oCMD_EN <= '0';
 			  oWR_EN <= '0';
-			  sWE <= '1';
-			  sEN <= '0';
+			  sPOS_WE <= '0';
+			  sCNT_EN <= '0';
 			  
 			when SET_CMD =>
 			  oDONE <= '0';
            oCMD_EN <= '1';
 			  oWR_EN <= '0';
-			  sWE <= '0';
-			  sEN <= '0';
+			  sPOS_WE <= '1';
+			  sCNT_EN <= '0';
 			  
 			when others =>
 			  oDONE <= '1';
            oCMD_EN <= '0';
 			  oWR_EN <= '0';
-			  sWE <= '0';
-			  sEN <= '0';
+			  sPOS_WE <= '0';
+			  sCNT_EN <= '0';
 			  
 		end case;
 	end process;
@@ -174,7 +162,7 @@ begin
 			else (7 downto 0 => '1', others => '0') when (sPOS_X >= 768 and sPOS_X < 896)
 			else (23 downto 0 => '0');
 
-	oCMD_BYTE_ADDR <= "000000" & sPOS_Y(9 downto 0) & "000" & sPOS_X(9 downto 0) & '0';
+	oCMD_BYTE_ADDR <= "000000" & sPOS_Y & "00" & sPOS_X(9 downto 0) & "00";
 	oCMD_INSTR <= (others => '0');
 	oCMD_BL <= (others => '1');
 	oWR_MASK <= (others => '0');

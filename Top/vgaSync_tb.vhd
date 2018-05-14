@@ -43,8 +43,8 @@ ARCHITECTURE behavior OF vgaSync_tb IS
     PORT(
          iCLK : IN  std_logic;
          inRST : IN  std_logic;
-         oPIXEL_X : OUT  std_logic_vector(9 downto 0);
-         oPIXEL_Y : OUT  std_logic_vector(9 downto 0);
+         oPIXEL_X : OUT  std_logic_vector(10 downto 0);
+         oPIXEL_Y : OUT  std_logic_vector(10 downto 0);
          oVIDEO_ON : OUT  std_logic;
          oH_SYNC : OUT  std_logic;
          oV_SYNC : OUT  std_logic
@@ -57,8 +57,8 @@ ARCHITECTURE behavior OF vgaSync_tb IS
    signal inRST : std_logic := '0';
 
  	--Outputs
-   signal oPIXEL_X : std_logic_vector(9 downto 0);
-   signal oPIXEL_Y : std_logic_vector(9 downto 0);
+   signal oPIXEL_X : std_logic_vector(10 downto 0);
+   signal oPIXEL_Y : std_logic_vector(10 downto 0);
    signal oVIDEO_ON : std_logic;
    signal oH_SYNC : std_logic;
    signal oV_SYNC : std_logic;

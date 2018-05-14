@@ -377,11 +377,11 @@ component memc3_wrapper is
 
 
 
-   constant C3_CLKOUT0_DIVIDE       : integer := 3; 
-   constant C3_CLKOUT1_DIVIDE       : integer := 3; 
-   constant C3_CLKOUT2_DIVIDE       : integer := 10; 
-   constant C3_CLKOUT3_DIVIDE       : integer := 10; 
-   constant C3_CLKFBOUT_MULT        : integer := 15; 
+   constant C3_CLKOUT0_DIVIDE       : integer := 2; 
+   constant C3_CLKOUT1_DIVIDE       : integer := 2; 
+   constant C3_CLKOUT2_DIVIDE       : integer := 5; 
+   constant C3_CLKOUT3_DIVIDE       : integer := 5; 
+   constant C3_CLKFBOUT_MULT        : integer := 10; 
    constant C3_DIVCLK_DIVIDE        : integer := 1; 
    constant C3_INCLK_PERIOD         : integer := 20000; 
    constant C3_ARB_NUM_TIME_SLOTS   : integer := 12; 
@@ -407,7 +407,7 @@ component memc3_wrapper is
    constant C3_MEM_TWTR             : integer := 7500; 
    constant C3_MEM_TYPE             : string := "DDR2"; 
    constant C3_MEM_DENSITY          : string := "2Gb"; 
-   constant C3_MEM_BURST_LEN        : integer := 4; 
+   constant C3_MEM_BURST_LEN        : integer := 8; 
    constant C3_MEM_CAS_LATENCY      : integer := 4; 
    constant C3_MEM_NUM_COL_BITS     : integer := 10; 
    constant C3_MEM_DDR1_2_ODS       : string := "FULL"; 
