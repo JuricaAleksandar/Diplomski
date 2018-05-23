@@ -422,7 +422,7 @@ BEGIN
 			  oH_SYNC => open,
 			  oV_SYNC => open);
 
-	iSTART <= '1' when (oPIXEL_X = 1343 and oPIXEL_Y = 15)--805)
+	iSTART <= '1' when (oPIXEL_X = 1342 and oPIXEL_Y = 15)--805)
 				else '0';
 
    -- Stimulus process

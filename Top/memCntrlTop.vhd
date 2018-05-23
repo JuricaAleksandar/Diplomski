@@ -140,7 +140,7 @@ architecture Behavioral of memCntrlTop is
 	signal sWE : STD_LOGIC;
 	
 	signal sLOCKED : STD_LOGIC;
-	signal sPLL_CLK : STD_LOGIC;
+	signal sGEN_CLK : STD_LOGIC;
 	signal snPLL_CLK : STD_LOGIC;
 	
 	signal sRGB : STD_LOGIC_VECTOR(23 downto 0);
@@ -149,69 +149,59 @@ architecture Behavioral of memCntrlTop is
 	signal sVIDEO_ON, sH_SYNC, sV_SYNC : STD_LOGIC;
 	
 	signal sDONE : STD_LOGIC;
+	signal sSTART : STD_LOGIC;
 	
 begin
 	
-	onRAM_CS <= '0';
-
-	snPLL_CLK <= not sPLL_CLK;
-
-	sINV_RST <= not inRST;
-	
-	sP0_CMD_CLK <= sCLK;
-	sP0_WR_CLK <= sCLK;
-	sP0_RD_CLK <= sCLK;
-	sP1_CMD_CLK <= sCLK;
-	sP1_WR_CLK <= sCLK;
-	sP1_RD_CLK <= sCLK;
-	
 	ivgasync : entity work.vgaSync
-		port map(
-			iCLK => sPLL_CLK,
-         inRST => sLOCKED,
-		   oPIXEL_X => sPIXEL_X,
-		   oPIXEL_Y => sPIXEL_Y,
-		   oVIDEO_ON => sVIDEO_ON, 
-		   oH_SYNC => sH_SYNC, 
-		   oV_SYNC => sV_SYNC );
+	port map(
+		iCLK => sGEN_CLK,
+		inRST => sLOCKED,
+		oPIXEL_X => sPIXEL_X,
+		oPIXEL_Y => sPIXEL_Y,
+		oVIDEO_ON => sVIDEO_ON, 
+		oH_SYNC => sH_SYNC, 
+		oV_SYNC => sV_SYNC
+	);
 	
-	pll00 : entity work.pll0
-		port map(
-    CLK_IN => iCLK,
-    CLK_OUT => sPLL_CLK,
-    RESET  => sINV_RST,
-    LOCKED => sLOCKED);
+	dcm65MHz : entity work.dcm65MHz
+	port map(
+		CLK_IN => iCLK,
+		CLK_OUT => sGEN_CLK,
+		RESET  => sINV_RST,
+		LOCKED => sLOCKED
+	);
 	
 	imcb : entity work.memControllerBlock
-		generic map(
-			C3_SIMULATION => "TRUE")
-		port map (
-
-		c3_sys_clk_p  									 =>  iCLK_DIFF_P,
-		c3_sys_clk_n    								 =>  iCLK_DIFF_N,
-		c3_sys_rst_i    								 =>  sINV_RST,                        
-		c3_clk0											 =>  sCLK,
-		c3_rst0											 =>  sRST,
-		c3_calib_done      							 =>  sCALIB_DONE,
-		mcb3_rzq        								 =>  ioRZQ,
-		mcb3_zio        								 =>  ioZIO,
+	generic map(
+			C3_SIMULATION => "TRUE"
+	)
+	port map(
+		c3_sys_clk_p  					=>  iCLK_DIFF_P,
+		c3_sys_clk_n    				=>  iCLK_DIFF_N,
+		c3_sys_rst_i    				=>  sINV_RST,                        
+		c3_clk0							=>  sCLK,
+		c3_rst0							=>  sRST,
+		c3_calib_done      			=>  sCALIB_DONE,
+		mcb3_rzq        				=>  ioRZQ,
+		mcb3_zio        				=>  ioZIO,
 	
-		mcb3_dram_dq       							 =>  ioRAM_DQ,  
-		mcb3_dram_a        							 =>  oRAM_ADDR,  
-		mcb3_dram_ba      							 =>  oRAM_BADDR,
-		mcb3_dram_ras_n   							 =>  onRAM_RAS,                        
-		mcb3_dram_cas_n  							 	 =>  onRAM_CAS,                        
-		mcb3_dram_we_n    							 =>  onRAM_WE,                          
-		mcb3_dram_odt   								 =>  oRAM_ODT,
-		mcb3_dram_cke     							 =>  oRAM_CKE,                          
-		mcb3_dram_ck      							 =>  oRAM_CLK,                          
-		mcb3_dram_ck_n    							 =>  onRAM_CLK,       
-		mcb3_dram_dqs     							 =>  ioRAM_LDQS,                          
-		mcb3_dram_dqs_n 								 =>  ionRAM_LDQS,
-		mcb3_dram_udqs 								 =>  ioRAM_UDQS,            
-		mcb3_dram_udqs_n   							 =>  ionRAM_UDQS,  
-		mcb3_dram_udm 									 =>  oRAM_UDM,     
-		mcb3_dram_dm 									 =>  oRAM_LDM,
+		mcb3_dram_dq       			=>  ioRAM_DQ,  
+		mcb3_dram_a        			=>  oRAM_ADDR,  
+		mcb3_dram_ba      			=>  oRAM_BADDR,
+		mcb3_dram_ras_n   			=>  onRAM_RAS,                        
+		mcb3_dram_cas_n  				=>  onRAM_CAS,                        
+		mcb3_dram_we_n    			=>  onRAM_WE,                          
+		mcb3_dram_odt   				=>  oRAM_ODT,
+		mcb3_dram_cke     			=>  oRAM_CKE,                          
+		mcb3_dram_ck      			=>  oRAM_CLK,                          
+		mcb3_dram_ck_n    			=>  onRAM_CLK,       
+		mcb3_dram_dqs     			=>  ioRAM_LDQS,                          
+		mcb3_dram_dqs_n 				=>  ionRAM_LDQS,
+		mcb3_dram_udqs 				=>  ioRAM_UDQS,            
+		mcb3_dram_udqs_n   			=>  ionRAM_UDQS,  
+		mcb3_dram_udm 					=>  oRAM_UDM,     
+		mcb3_dram_dm 					=>  oRAM_LDM,
 
 		c3_p0_cmd_clk                           =>  sP0_CMD_CLK,
 		c3_p0_cmd_en                            =>  sP0_CMD_EN,
@@ -269,57 +259,93 @@ begin
 	);
 
 	CBR : entity work.colorBarGenerator
-		port map(
-		  iCLK => sCLK,
-		  inRST => sCALIB_DONE,
-		  oDONE => sDONE,
-		  oCMD_EN => sP0_CMD_EN,
-		  oCMD_INSTR => sP0_CMD_INSTR,
-		  oCMD_BL => sP0_CMD_BL,
-		  oCMD_BYTE_ADDR => sP0_CMD_BYTE_ADDR,
-		  iCMD_EMPTY => sP0_CMD_EMPTY,
-		  iCMD_FULL => sP0_CMD_FULL,
-		  oWR_EN => sP0_WR_EN,
-		  oWR_MASK => sP0_WR_MASK,
-		  oWR_DATA => sP0_WR_DATA,
-		  iWR_FULL => sP0_WR_FULL,
-		  iWR_EMPTY => sP0_WR_EMPTY,
-		  iWR_COUNT => sP0_WR_COUNT,
-		  iWR_UNDERRUN => sP0_WR_UNDERRUN,
-		  iWR_ERROR => sP0_WR_ERROR
-		);
+	port map(
+	  iCLK => sCLK,
+	  inRST => sCALIB_DONE,
+	  oDONE => sDONE,
+	  oCMD_EN => sP0_CMD_EN,
+	  oCMD_INSTR => sP0_CMD_INSTR,
+	  oCMD_BL => sP0_CMD_BL,
+	  oCMD_BYTE_ADDR => sP0_CMD_BYTE_ADDR,
+	  iCMD_EMPTY => sP0_CMD_EMPTY,
+	  iCMD_FULL => sP0_CMD_FULL,
+	  oWR_EN => sP0_WR_EN,
+	  oWR_MASK => sP0_WR_MASK,
+	  oWR_DATA => sP0_WR_DATA,
+	  iWR_FULL => sP0_WR_FULL,
+	  iWR_EMPTY => sP0_WR_EMPTY,
+	  iWR_COUNT => sP0_WR_COUNT,
+	  iWR_UNDERRUN => sP0_WR_UNDERRUN,
+	  iWR_ERROR => sP0_WR_ERROR
+	);
 	
 	CLK_ODDR2 : ODDR2            
-	generic map                    
-	(DDR_ALIGNMENT  =>  "NONE",
-	 INIT           =>  '0',
-	 SRTYPE         =>  "SYNC")                              
+	generic map(
+		DDR_ALIGNMENT  =>  "NONE",
+		INIT           =>  '0',
+		SRTYPE         =>  "SYNC"
+	)                              
 	port map                       
-	(Q              =>  oCLK,
-	 C0             =>  sPLL_CLK,
-	 C1             =>  snPLL_CLK,
-	 CE             =>  '1',
-	 D0             =>  '1',
-	 D1             =>  '0',
-	 R              =>  '0',
-	 S              =>  '0');
+	(
+		Q              =>  oCLK,
+		C0             =>  sGEN_CLK,
+		C1             =>  snPLL_CLK,
+		CE             =>  '1',
+		D0             =>  '1',
+		D1             =>  '0',
+		R              =>  '0',
+		S              =>  '0'
+	);
 	
-	sP1_CMD_INSTR <= "000";
-	sP1_CMD_BL <= (others => '0');
-	sP1_CMD_BYTE_ADDR <= (others => '0');
-	sP1_CMD_EN <= '0';
+	pbuffer : entity work.pixelBuffer
+	port map(
+		iWR_CLK => sCLK,
+		iRD_CLK => sGEN_CLK,
+		inRST => sDONE,
+		oCMD_EN => sP1_CMD_EN,
+		oCMD_INSTR => sP1_CMD_INSTR,
+		oCMD_BL => sP1_CMD_BL,
+		oCMD_BYTE_ADDR => sP1_CMD_BYTE_ADDR,
+		iCMD_EMPTY => sP1_CMD_EMPTY,
+		iCMD_FULL => sP1_CMD_FULL,
+		oRD_EN => sP1_RD_EN,
+		iRD_DATA => sP1_RD_DATA,
+		iRD_FULL => sP1_RD_FULL,
+		iRD_EMPTY => sP1_RD_EMPTY,
+		iRD_OVERFLOW => sP1_RD_OVERFLOW,
+		iRD_ERROR => sP1_RD_ERROR,
+		iRD_COUNT => sP1_RD_COUNT,
+		iFIFO_RD_EN => sVIDEO_ON,
+		iSTART => sSTART,
+		oRGB => oRGB
+	);
+	
 	sP1_WR_EN <= '0';
 	sP1_WR_MASK <= (others => '0');
-	sP1_RD_EN <= '0';
-	sP0_RD_EN <= '0';
 	sP1_WR_DATA <= (others => '0');
+	sP0_RD_EN <= '0';
 	
-	oRGB <= (others => '0'); ---------------------------------------------------------------------
 	onSYNC <= sH_SYNC and sV_SYNC;
 	onBLANK <= sVIDEO_ON;
 	onPSAVE <= '1';
 	oH_SYNC <= sH_SYNC;
 	oV_SYNC <= sV_SYNC;
+	
+	onRAM_CS <= '0';
+
+	snPLL_CLK <= not sGEN_CLK;
+
+	sINV_RST <= not inRST;
+	
+	sP0_CMD_CLK <= sCLK;
+	sP0_WR_CLK <= sCLK;
+	sP0_RD_CLK <= sCLK;
+	sP1_CMD_CLK <= sCLK;
+	sP1_WR_CLK <= sCLK;
+	sP1_RD_CLK <= sCLK;
+	
+	sSTART <= '1' when (sPIXEL_X = 1342 and sPIXEL_Y = 805)
+				else '0';
 	
 end Behavioral;
 

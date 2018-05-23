@@ -53,7 +53,7 @@ end pixelBuffer;
 
 architecture Behavioral of pixelBuffer is
 
-	type tREAD_STATE is (IDLE, SET_CMD, WAIT_DATA, READ_DATA, CHECK_FIFO, WAIT_FIFO);
+	type tREAD_STATE is (IDLE, SET_CMD, WAIT_UPDATE, WAIT_DATA, WAIT_FIFO);
 	signal sSTATE, sNEXT_STATE : tREAD_STATE;
 
 	signal sINV_RST : STD_LOGIC;
@@ -61,20 +61,27 @@ architecture Behavioral of pixelBuffer is
 	signal sFIFO_EMPTY : STD_LOGIC;
 	signal sFIFO_RD_EN : STD_LOGIC;
 	signal sFIFO_WR_EN : STD_LOGIC;
-	signal sPOS_X : STD_LOGIC_VECTOR(10 downto 0);
+	signal sPOS_X : STD_LOGIC_VECTOR(6 downto 0);
 	signal sPOS_Y : STD_LOGIC_VECTOR(9 downto 0);
 	signal sPOS_WE : STD_LOGIC;
 	signal sCOMBINED_EN : STD_LOGIC;
+	signal sFIFO_BURST_COUNT : STD_LOGIC_VECTOR(3 downto 0);
+	signal sREAD_COUNT : STD_LOGIC_VECTOR(2 downto 0);
+	signal sBURST_READ : STD_LOGIC;
 	
 begin
 	
 	sINV_RST <= not inRST;	
 		
 	oCMD_INSTR <= "001";
-	oCMD_BL <= (others => '1');
-	oCMD_BYTE_ADDR <= "000000" & sPOS_Y & "00" & sPOS_X(9 downto 0) & "00";
+	oCMD_BL <= (5 downto 3 => '0',others => '1');
+	oCMD_BYTE_ADDR <= "000000" & sPOS_Y & "00" & sPOS_X & "00000";
 		
 	sCOMBINED_EN <= sFIFO_RD_EN and iFIFO_RD_EN;
+		
+	sFIFO_WR_EN <= '1' when (iRD_COUNT > 0 and sFIFO_FULL = '0') else '0';
+	
+	oRD_EN <= '1' when (iRD_COUNT > 0 and sFIFO_FULL = '0') else '0';
 		
 	process(iRD_CLK, inRST) begin
 		if(inRST = '0') then
@@ -85,14 +92,53 @@ begin
 			end if;
 		end if;
 	end process;
+		
+	-- Read pixel counter --
+	process(iWR_CLK, inRST) begin
+		if(inRST = '0') then
+			sREAD_COUNT <= (others => '0');
+			sBURST_READ <= '0';
+		elsif(iWR_CLK'event and iWR_CLK = '1') then
+			if(sFIFO_WR_EN = '1') then
+				if(sREAD_COUNT = 6) then
+					sBURST_READ <= '1';
+					sREAD_COUNT <= sREAD_COUNT + 1;
+				elsif(sREAD_COUNT = 7) then
+					sREAD_COUNT <= (others => '0');
+					sBURST_READ <= '0';
+				else
+					sREAD_COUNT <= sREAD_COUNT + 1;
+					sBURST_READ <= '0';
+				end if;
+			else
+				sBURST_READ <= '0';
+			end if;
+		end if;
+	end process;
 	
+	-- Read fifo stored burst counter --
+	process(iWR_CLK, inRST) begin
+		if(inRST = '0') then
+			sFIFO_BURST_COUNT <= (others => '0');
+		elsif(iWR_CLK'event and iWR_CLK = '1') then
+			if(sPOS_WE = '1' and sBURST_READ = '0') then
+				sFIFO_BURST_COUNT <= sFIFO_BURST_COUNT + 1;
+			elsif(sPOS_WE = '0' and sBURST_READ = '1') then
+				sFIFO_BURST_COUNT <= sFIFO_BURST_COUNT - 1;
+			else
+				sFIFO_BURST_COUNT <= sFIFO_BURST_COUNT;
+			end if;			
+		end if;
+	end process;
+	
+	-- Read address generator --
 	process(iWR_CLK, inRST) begin
 		if(inRST = '0') then
 			sPOS_X <= (others => '0');
 			sPOS_Y <= (others => '0');
 		elsif(iWR_CLK'event and iWR_CLK = '1') then
 			if(sPOS_WE = '1') then
-				if(sPOS_X = 960) then
+				if(sPOS_X = 127) then
 					sPOS_X <= (others => '0');
 					if(sPOS_Y = 767) then
 						sPOS_Y <= (others => '0');
@@ -100,12 +146,13 @@ begin
 						sPOS_Y <= sPOS_Y + 1;
 					end if;
 				else
-					sPOS_X <= sPOS_X + 64;
+					sPOS_X <= sPOS_X + 1;
 				end if;
 			end if;
 		end if;
 	end process;
 		
+	-- Memory reader automate --
 	process(iWR_CLK, inRST) begin
 		if(inRST = '0') then
 			sSTATE <= IDLE;
@@ -114,70 +161,51 @@ begin
 		end if;
 	end process;
 	
-	process(sSTATE, iRD_FULL, iRD_COUNT, sFIFO_FULL) begin
+	process(sSTATE, sFIFO_BURST_COUNT, iCMD_FULL, sFIFO_FULL) begin
 		case sSTATE is
 			when IDLE =>
-					sNEXT_STATE <= SET_CMD;
-			when SET_CMD =>
-				sNEXT_STATE <= WAIT_DATA;
-			when WAIT_DATA =>
-				if(iRD_FULL = '1') then
-					sNEXT_STATE <= READ_DATA;
-				else
-					sNEXT_STATE <= WAIT_DATA;
-				end if;
-			when READ_DATA =>
-				if(iRD_COUNT = 1) then
-					sNEXT_STATE <= CHECK_FIFO;
-				else
-					sNEXT_STATE <= READ_DATA;
-				end if;
-			when CHECK_FIFO =>
-				if(sFIFO_FULL = '1') then
-					sNEXT_STATE <= WAIT_FIFO;
-				else
-					sNEXT_STATE <= SET_CMD;
-				end if;
-			when others =>
 				if(sFIFO_FULL = '0') then
 					sNEXT_STATE <= SET_CMD;
 				else
+					sNEXT_STATE <= IDLE;
+				end if;
+				
+			when SET_CMD =>
+				sNEXT_STATE <= WAIT_UPDATE;
+				
+			when WAIT_UPDATE =>
+				sNEXT_STATE <= WAIT_DATA;
+				
+			when WAIT_DATA =>
+				if(sFIFO_FULL = '1') then
+					sNEXT_STATE <= WAIT_FIFO;
+				else
+					if(sFIFO_BURST_COUNT < 8 and iCMD_FULL ='0') then
+						sNEXT_STATE <= SET_CMD;
+					else
+						sNEXT_STATE <= WAIT_DATA;
+					end if;
+				end if;
+				
+			when others =>
+				if(sFIFO_FULL = '0') then
+					sNEXT_STATE <= WAIT_DATA;
+				else
 					sNEXT_STATE <= WAIT_FIFO;
 				end if;
+				
 		end case;
 	end process;
 	
 	process(sSTATE) begin
 		case sSTATE is
-			when IDLE =>
-				oCMD_EN <= '0';
-				oRD_EN <= '0';
-				sPOS_WE <= '0';
-				sFIFO_WR_EN <= '0';
-				
 			when SET_CMD =>
 				oCMD_EN <= '1';
-				oRD_EN <= '0';
 				sPOS_WE <= '1';
-				sFIFO_WR_EN <= '0';
-			
-			when WAIT_DATA =>
-				oCMD_EN <= '0';
-				oRD_EN <= '0';
-				sPOS_WE <= '0';
-				sFIFO_WR_EN <= '0';
-				
-			when READ_DATA =>
-				oCMD_EN <= '0';
-				oRD_EN <= '1';
-				sPOS_WE <= '0';
-				sFIFO_WR_EN <= '1';
 				
 			when others =>
 				oCMD_EN <= '0';
-				oRD_EN <= '0';
 				sPOS_WE <= '0';
-				sFIFO_WR_EN <= '0';
 				
 		end case;
 	end process;

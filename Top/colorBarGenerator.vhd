@@ -54,7 +54,7 @@ architecture Behavioral of colorBarGenerator is
 
 	type tGEN_STATE is (IDLE, SET_DATA, NOP, SET_CMD, DONE);
 	signal sSTATE, sNEXT_STATE : tGEN_STATE;
-	signal sPOS_X : STD_LOGIC_VECTOR (10 downto 0);
+	signal sPOS_X : STD_LOGIC_VECTOR (3 downto 0);
 	signal sPOS_Y : STD_LOGIC_VECTOR (9 downto 0);
 	signal sRGB : STD_LOGIC_VECTOR (23 downto 0);
 	signal sPOS_WE : STD_LOGIC;
@@ -68,11 +68,11 @@ begin
 			sPOS_Y <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sPOS_WE = '1') then
-				if(sPOS_X = 960) then
+				if(sPOS_X = 15) then
 					sPOS_X <= (others => '0');
 					sPOS_Y <= sPOS_Y + 1;
 				else
-					sPOS_X <= sPOS_X + 64;
+					sPOS_X <= sPOS_X + 1;
 				end if;
 			end if;
 		end if;
@@ -103,7 +103,7 @@ begin
 			when NOP =>
 				sNEXT_STATE <= SET_CMD;
 			when SET_CMD =>
-				if(sPOS_Y = 767 and sPOS_X = 960) then
+				if(sPOS_Y = 767 and sPOS_X = 15) then
 					sNEXT_STATE <= DONE;
 				else
 					sNEXT_STATE <= IDLE;
@@ -153,16 +153,16 @@ begin
 		end case;
 	end process;
 
-	sRGB <= (others => '1') when sPOS_X < 128
-			else (23 downto 8 => '1', others => '0') when (sPOS_X >= 128 and sPOS_X < 256)
-			else (15 downto 0 => '1', others => '0') when (sPOS_X >= 256 and sPOS_X < 384)
-			else (15 downto 8 => '1', others => '0') when (sPOS_X >= 384 and sPOS_X < 512)
-			else (23 downto 16 => '1', 7 downto 0 => '1', others => '0') when (sPOS_X >= 512 and sPOS_X < 640)
-			else (23 downto 16 => '1', others => '0') when (sPOS_X >= 640 and sPOS_X < 768)
-			else (7 downto 0 => '1', others => '0') when (sPOS_X >= 768 and sPOS_X < 896)
+	sRGB <= (others => '1') when sPOS_X < 2
+			else (23 downto 8 => '1', others => '0') when (sPOS_X >= 2 and sPOS_X < 4)
+			else (15 downto 0 => '1', others => '0') when (sPOS_X >= 4 and sPOS_X < 6)
+			else (15 downto 8 => '1', others => '0') when (sPOS_X >= 6 and sPOS_X < 8)
+			else (23 downto 16 => '1', 7 downto 0 => '1', others => '0') when (sPOS_X >= 8 and sPOS_X < 10)
+			else (23 downto 16 => '1', others => '0') when (sPOS_X >= 10 and sPOS_X < 12)
+			else (7 downto 0 => '1', others => '0') when (sPOS_X >= 12 and sPOS_X < 14)
 			else (23 downto 0 => '0');
 
-	oCMD_BYTE_ADDR <= "000000" & sPOS_Y & "00" & sPOS_X(9 downto 0) & "00";
+	oCMD_BYTE_ADDR <= "000000" & sPOS_Y & "00" & sPOS_X & "00000000";
 	oCMD_INSTR <= (others => '0');
 	oCMD_BL <= (others => '1');
 	oWR_MASK <= (others => '0');

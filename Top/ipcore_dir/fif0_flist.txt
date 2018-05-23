@@ -3,7 +3,6 @@ _xmsgs\pn_parser.xmsgs
 fif0.asy
 fif0.gise
 fif0.ngc
-fif0.sym
 fif0.vhd
 fif0.vho
 fif0.xco
