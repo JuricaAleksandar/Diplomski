@@ -32,6 +32,13 @@ use UNISIM.VComponents.all;
 entity spiFlashController is
     Port ( iCLK : in  STD_LOGIC;
            inRST : in  STD_LOGIC;
+			  iRD_EN : in STD_LOGIC;
+			  iRD_START : in STD_LOGIC;
+			  iRD_ADDR : in STD_LOGIC_VECTOR (23 downto 0);
+			  iRD_COUNT : in STD_LOGIC_VECTOR (7 downto 0);
+			  oREADY : out STD_LOGIC;
+			  oDATA_VALID : out STD_LOGIC;
+			  oDATA : out STD_LOGIC_VECTOR (7 downto 0);
            oSCLK : out  STD_LOGIC;
            onCS : out  STD_LOGIC;
            ioSIO : inout  STD_LOGIC_VECTOR (3 downto 0);
@@ -40,21 +47,28 @@ end spiFlashController;
 
 architecture Behavioral of spiFlashController is
 
-	type tREADER_STATE is (
-								IDLE,
-								WREN_CMD,
-								SEND,
-								END_CMD,
-								IDLE1,
-								RDSR_CMD,
-								SEND1,
-								RECEIVE1,
-								END_CMD1,
-								IDLE2,
-								WRSR_CMD,
-								SEND2,
-								READY
-								);
+	type tREADER_STATE is 
+	(
+		IDLE,
+		WREN_CMD,
+		SEND,
+		END_CMD,
+		IDLE1,
+		RDSR_CMD,
+		SEND1,
+		RECEIVE1,
+		END_CMD1,
+		IDLE2,
+		WRSR_CMD,
+		SEND2,
+		READY,
+		QREAD_CMD,
+		SEND3,
+		DUMMY,
+		RECEIVE2,
+		END_CMD2
+	);
+	
 	signal sSTATE, sNEXT_STATE : tREADER_STATE;
 	
 	signal sT : STD_LOGIC_VECTOR (3 downto 0);
@@ -63,20 +77,46 @@ architecture Behavioral of spiFlashController is
 	signal sMOSI_SHREG : STD_LOGIC_VECTOR (31 downto 0);
 	signal sMOSI_REG_IN : STD_LOGIC_VECTOR (31 downto 0);
 	signal sCONTROL : STD_LOGIC;
-	signal sBIT_CNT_EN : STD_LOGIC;
-	signal sBIT_COUNTER : STD_LOGIC_VECTOR (5 downto 0);
+	signal sEN : STD_LOGIC;
+	signal sBIT_COUNTER : STD_LOGIC_VECTOR (8 downto 0);
 	signal sCLK : STD_LOGIC;
-	signal sCLK_EN : STD_LOGIC;
-	signal sIN_SHREG_1 : STD_LOGIC_VECTOR (7 downto 0);
-	signal sRECEIVE : STD_LOGIC;
-	signal sCOUNTER : STD_LOGIC_VECTOR (7 downto 0);
+	signal snCLK : STD_LOGIC;
+	signal sMISO_SHREG : STD_LOGIC_VECTOR (7 downto 0);
+	signal sREC_STATUS : STD_LOGIC;
+	signal sREC_DATA : STD_LOGIC;
+	signal sCOUNTER : STD_LOGIC_VECTOR (3 downto 0);
 	signal sCNT_EN : STD_LOGIC;
+	signal sDATA : STD_LOGIC_VECTOR (7 downto 0);
+	signal sDATA_VALID : STD_LOGIC;
+	signal sDATA_VALID_REG : STD_LOGIC;
+	signal sRD_COUNT : STD_LOGIC_VECTOR (7 downto 0);
 	
 begin
 	
 	sOUT <= "000" & sMOSI_SHREG(31);
-	oSCLK <= sCLK;
+	snCLK <= not sCLK;
 	onRESET <= '1';
+	oDATA_VALID <= sDATA_VALID_REG;
+	oDATA <= sDATA;
+	
+	-- SPI clock output register
+	CLK_ODDR2 : ODDR2            
+	generic map(
+		DDR_ALIGNMENT  =>  "NONE",
+		INIT           =>  '0',
+		SRTYPE         =>  "SYNC"
+	)                              
+	port map                       
+	(
+		Q              =>  oSCLK,
+		C0             =>  sCLK,
+		C1             =>  snCLK,
+		CE             =>  '1',
+		D0             =>  '1',
+		D1             =>  '0',
+		R              =>  '0',
+		S              =>  '0'
+	);
 	
 	-- Four input/output tri-state buffers for cmd, address and data signals
 	sio0 : IOBUF
@@ -115,6 +155,17 @@ begin
 		IO => ioSIO(3)
 	);
 	
+	-- Requested byte count register
+	process(iCLK, inRST) begin
+		if(inRST = '0') then
+			sRD_COUNT <= (others => '0');
+		elsif(iCLK'event and iCLK = '1') then
+			if(iRD_START = '1') then
+				sRD_COUNT <= iRD_COUNT;
+			end if;
+		end if;
+	end process;
+	
 	-- Cycle counter
 	process(iCLK, inRST) begin
 		if(inRST = '0') then
@@ -133,7 +184,7 @@ begin
 		if(inRST = '0') then
 			sCLK <= '0';
 		elsif(iCLK'event and iCLK = '1') then
-			if(sCLK_EN = '1') then
+			if(sEN = '1') then
 				sCLK <= not sCLK;
 			else
 				sCLK <= '0';
@@ -156,13 +207,17 @@ begin
 		end if;
 	end process;
 
-	-- SIO1 input shift register
+	-- MISO shift register
 	process(iCLK, inRST) begin
 		if(inRST = '0') then
-			sIN_SHREG_1 <= (others => '0');
+			sMISO_SHREG <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
-			if(sCLK = '1' and sRECEIVE = '1') then
-				sIN_SHREG_1 <= sIN_SHREG_1(6 downto 0) & sIN(1);
+			if(sCLK = '1') then
+				if (sREC_STATUS = '1') then
+					sMISO_SHREG <= sMISO_SHREG(6 downto 0) & sIN(1);
+				elsif (sREC_DATA = '1') then
+					sMISO_SHREG <= sMISO_SHREG(3 downto 0) & sIN;
+				end if;
 			end if;
 		end if;
 	end process;
@@ -172,13 +227,31 @@ begin
 		if(inRST = '0') then
 			sBIT_COUNTER <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
-			if(sBIT_CNT_EN = '1') then
+			if(sEN = '1') then
 				if(sCLK = '0') then
 					sBIT_COUNTER <= sBIT_COUNTER + 1;
 				end if;
 			else
 				sBIT_COUNTER <= (others => '0');
 			end if;
+		end if;
+	end process;
+
+	-- Output registers
+	process(iCLK, inRST) begin
+		if(inRST = '0') then
+			sDATA <= (others => '0');
+			sDATA_VALID <= '0';
+			sDATA_VALID_REG <= '0';
+		elsif(iCLK'event and iCLK = '1') then
+				if(sREC_DATA = '1' and sBIT_COUNTER(0) = '0' and sBIT_COUNTER /= 40) then
+					sDATA <= sMISO_SHREG;
+					sDATA_VALID <= '1';
+				end if;
+				if(iRD_EN = '1' and sDATA_VALID = '1') then
+					sDATA_VALID <= '0';
+				end if;
+				sDATA_VALID_REG <= sDATA_VALID;
 		end if;
 	end process;
 
@@ -191,7 +264,7 @@ begin
 		end if;
 	end process;
 
-	process(sSTATE, sBIT_COUNTER, sIN_SHREG_1,  sCOUNTER) begin
+	process(sSTATE, sBIT_COUNTER, sMISO_SHREG,  sCOUNTER, iRD_START, sRD_COUNT) begin
 		case sSTATE is
 			when IDLE =>
 					sNEXT_STATE <= WREN_CMD;
@@ -234,9 +307,9 @@ begin
 				end if;
 				
 			when END_CMD1 =>
-				if(sIN_SHREG_1(1) = '1') then
+				if(sMISO_SHREG(1) = '1') then
 					sNEXT_STATE <= IDLE2;
-				elsif(sIN_SHREG_1(6) = '1' and sIN_SHREG_1(0) = '0') then
+				elsif(sMISO_SHREG(6) = '1' and sMISO_SHREG(0) = '0') then
 					sNEXT_STATE <= READY;
 				else
 					sNEXT_STATE <= IDLE;
@@ -255,104 +328,176 @@ begin
 					sNEXT_STATE <= SEND2;
 				end if;
 				
-			when others =>
+			when READY =>
+				if(iRD_START = '1') then
+					sNEXT_STATE <= QREAD_CMD;
+				else
+					sNEXT_STATE <= READY;
+				end if;
+				
+			when QREAD_CMD =>
+				sNEXT_STATE <= SEND3;
+				
+			when SEND3 =>
+				if(sBIT_COUNTER = 32) then
+					sNEXT_STATE <= DUMMY;
+				else
+					sNEXT_STATE <= SEND3;
+				end if;
+			
+			when DUMMY =>
+				if(sBIT_COUNTER = 40) then
+					sNEXT_STATE <= RECEIVE2;
+				else
+					sNEXT_STATE <= DUMMY;
+				end if;
+				
+			when RECEIVE2 =>
+				if(sBIT_COUNTER(8 downto 1) - 20 = sRD_COUNT) then
+					sNEXT_STATE <= END_CMD2;
+				else
+					sNEXT_STATE <= RECEIVE2;
+				end if;
+				
+			when END_CMD2 =>
 				sNEXT_STATE <= READY;
 				
 		end case;
 	end process;
 
-	process(sSTATE, iCLK) begin
-	
+	process(sSTATE) begin
+		oREADY <= '0';
 		case sSTATE is		
 			when IDLE|IDLE1|IDLE2 =>
 				sT <= (others => '1');
 				onCS <= '1';
-				sCLK_EN <= '0';
+				sEN <= '0';
 				sCONTROL <= '0';
 				sMOSI_REG_IN <= (others => '0');
-				sBIT_CNT_EN <= '0';
-				sRECEIVE <= '0';
+				sREC_STATUS <= '0';
+				sREC_DATA <= '0';
 				sCNT_EN <= '1';
 				
 			when WREN_CMD =>
 				sT <= (0 => '0', others => '1');
 				onCS <= '1';
-				sCLK_EN <= '0';
+				sEN <= '0';
 				sCONTROL <= '1';
 				sMOSI_REG_IN <= x"06000000"; -- 0x06 CMD
-				sBIT_CNT_EN <= '0';
-				sRECEIVE <= '0';
+				sREC_STATUS <= '0';
+				sREC_DATA <= '0';
 				sCNT_EN <= '0';
 				
-			when SEND|SEND1|SEND2 =>
+			when SEND|SEND1|SEND2|SEND3 =>
 				sT <= (0 => '0', others => '1');
 				onCS <= '0';
-				sCLK_EN <= '1';
+				sEN <= '1';
 				sCONTROL <= '0';
 				sMOSI_REG_IN <= (others => '0');
-				sBIT_CNT_EN <= '1';
-				sRECEIVE <= '0';
+				sREC_STATUS <= '0';
+				sREC_DATA <= '0';
 				sCNT_EN <= '0';
 				
 			when END_CMD =>
 				sT <= (0 => '0', others => '1');
 				onCS <= '0';
-				sCLK_EN <= '0';
+				sEN <= '0';
 				sCONTROL <= '0';
 				sMOSI_REG_IN <= (others => '0');
-				sBIT_CNT_EN <= '0';
-				sRECEIVE <= '0';
+				sREC_STATUS <= '0';
+				sREC_DATA <= '0';
 				sCNT_EN <= '0';
 			
 			when RDSR_CMD =>
 				sT <= (0 => '0', others => '1');
 				onCS <= '1';
-				sCLK_EN <= '0';
+				sEN <= '0';
 				sCONTROL <= '1';
 				sMOSI_REG_IN <= x"05000000"; -- 0x05 CMD
-				sBIT_CNT_EN <= '0';
-				sRECEIVE <= '0';
+				sREC_STATUS <= '0';
+				sREC_DATA <= '0';
 				sCNT_EN <= '0';
 			
 			when RECEIVE1 =>
 				sT <= (others => '1');
 				onCS <= '0';
-				sCLK_EN <= '1';
+				sEN <= '1';
 				sCONTROL <= '0';
 				sMOSI_REG_IN <= (others => '0');
-				sBIT_CNT_EN <= '1';
-				sRECEIVE <= '1';
+				sREC_STATUS <= '1';
+				sREC_DATA <= '0';
 				sCNT_EN <= '0';
 			
 			when END_CMD1 =>
 				sT <= (others => '1');
 				onCS <= '0';
-				sCLK_EN <= '0';
+				sEN <= '0';
 				sCONTROL <= '0';
 				sMOSI_REG_IN <= (others => '0');
-				sBIT_CNT_EN <= '0';
-				sRECEIVE <= '1';
+				sREC_STATUS <= '1';
+				sREC_DATA <= '0';
 				sCNT_EN <= '0';
 			
 			when WRSR_CMD =>
 				sT <= (0 => '0', others => '1');
 				onCS <= '1';
-				sCLK_EN <= '0';
+				sEN <= '0';
 				sCONTROL <= '1';
 				sMOSI_REG_IN <= x"01400000"; -- 0x01 CMD 0x40 DATA
-				sBIT_CNT_EN <= '0';
-				sRECEIVE <= '0';
+				sREC_STATUS <= '0';
+				sREC_DATA <= '0';
+				sCNT_EN <= '0';
+				
+			when QREAD_CMD =>
+				sT <= (0 => '0', others => '1');
+				onCS <= '1';
+				sEN <= '0';
+				sCONTROL <= '1';
+				sMOSI_REG_IN <= x"6B" & iRD_ADDR; -- 0x6B CMD Input DATA
+				sREC_STATUS <= '0';
+				sREC_DATA <= '0';
 				sCNT_EN <= '0';
 			
+			when DUMMY =>
+				sT <= (others => '1');
+				onCS <= '0';
+				sEN <= '1';
+				sCONTROL <= '0';
+				sMOSI_REG_IN <= (others => '0');
+				sREC_STATUS <= '0';
+				sREC_DATA <= '0';
+				sCNT_EN <= '0';
+				
+			when RECEIVE2 =>
+				sT <= (others => '1');
+				onCS <= '0';
+				sEN <= '1';
+				sCONTROL <= '0';
+				sMOSI_REG_IN <= (others => '0');
+				sREC_STATUS <= '0';
+				sREC_DATA <= '1';
+				sCNT_EN <= '0';
+			
+			when END_CMD2 =>
+				sT <= (others => '1');
+				onCS <= '0';
+				sEN <= '0';
+				sCONTROL <= '0';
+				sMOSI_REG_IN <= (others => '0');
+				sREC_STATUS <= '0';
+				sREC_DATA <= '1';
+				sCNT_EN <= '0';
+				
 			when others =>
 				sT <= (others => '1');
 				onCS <= '1';
-				sCLK_EN <= '0';
+				sEN <= '0';
 				sCONTROL <= '0';
 				sMOSI_REG_IN <= (others => '0');
-				sBIT_CNT_EN <= '0';
-				sRECEIVE <= '0';
+				sREC_STATUS <= '0';
+				sREC_DATA <= '0';
 				sCNT_EN <= '0';
+				oREADY <= '1';
 				
 		end case;
 	end process;

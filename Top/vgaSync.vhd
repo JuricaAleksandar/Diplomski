@@ -82,7 +82,7 @@ begin
 	sV_SYNC_NEXT <= '0' when (sV_COUNT_NEXT >= cV_DISPLAY + cV_FP and sV_COUNT_NEXT < cV_DISPLAY + cV_FP + cV_RETR)
 					else '1';			
 
-	sVIDEO_ON_NEXT <= '1' when (sH_COUNT_NEXT < cH_DISPLAY and sV_COUNT_NEXT < cV_DISPLAY)
+	sVIDEO_ON_NEXT <= '1' when (sH_COUNT_NEXT < cH_DISPLAY/2 + 256 and sH_COUNT_NEXT >= cH_DISPLAY/2 - 256 and sV_COUNT_NEXT < cV_DISPLAY/2 + 256 and sV_COUNT_NEXT >= cV_DISPLAY/2 - 256)
 					else '0';
 					
 	process(iCLK,inRST) begin

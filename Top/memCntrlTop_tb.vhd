@@ -68,15 +68,17 @@ ARCHITECTURE behavior OF memCntrlTop_tb IS
          ioRAM_DQ : INOUT  std_logic_vector(15 downto 0);
          ioRZQ : INOUT  std_logic;
          ioZIO : INOUT  std_logic;
-         oLED : OUT  std_logic_vector(7 downto 0);
-			iSW : IN std_logic_vector(2 downto 0);
 			onBLANK : out STD_LOGIC; 
 			onSYNC : out STD_LOGIC;
 		   onPSAVE : out STD_LOGIC;
 		   oH_SYNC : out STD_LOGIC;
 		   oV_SYNC : out STD_LOGIC;
 			oRGB : out STD_LOGIC_VECTOR(23 downto 0);
-		   oCLK : out STD_LOGIC
+		   oVGA_CLK : out STD_LOGIC;
+			oSCLK : OUT  std_logic;
+		   onCS : OUT  std_logic;
+		   ioSIO : INOUT  std_logic_vector(3 downto 0);
+		   onRESET : OUT  std_logic
         );
     END COMPONENT;
     
@@ -99,7 +101,24 @@ ARCHITECTURE behavior OF memCntrlTop_tb IS
       odt     : in    std_logic
       );
   end component;
-
+	
+	component MX25L25635E
+	 port(
+			SCLK : in STD_LOGIC;
+			 CS : in STD_LOGIC;
+			 SI : inout STD_LOGIC; 
+			 SO : inout STD_LOGIC; 
+			 WP : inout STD_LOGIC;
+			 HOLD : inout STD_LOGIC;
+			 RESET : inout STD_LOGIC
+			);
+	 end component;
+	 
+	signal oSCLK : std_logic;
+	signal onCS : std_logic;
+	signal ioSIO : std_logic_vector(3 downto 0);
+	signal onRESET : std_logic;
+	 
 	signal mcb3_enable1 : std_logic;
 	signal mcb3_enable2 : std_logic;
 
@@ -108,7 +127,6 @@ ARCHITECTURE behavior OF memCntrlTop_tb IS
    signal iCLK_DIFF_N : std_logic;
 	signal iCLK : std_logic;
    signal inRST : std_logic;
-	signal iSW : std_logic_vector(2 downto 0);
 
 	--BiDirs
    signal ioRAM_UDQS : std_logic;
@@ -132,14 +150,13 @@ ARCHITECTURE behavior OF memCntrlTop_tb IS
    signal oRAM_LDM : std_logic;
    signal oRAM_BADDR : std_logic_vector(2 downto 0);
    signal oRAM_ADDR : std_logic_vector(13 downto 0);
-   signal oLED : std_logic_vector(7 downto 0);
 	signal onBLANK : STD_LOGIC; 
 	signal onSYNC : STD_LOGIC;
 	signal onPSAVE : STD_LOGIC;
 	signal oH_SYNC : STD_LOGIC;
 	signal oV_SYNC : STD_LOGIC;
 	signal oRGB : STD_LOGIC_VECTOR(23 downto 0);
-	signal oCLK : STD_LOGIC;
+	signal oVGA_CLK : STD_LOGIC;
 
    -- Clock period definitions
    constant iCLK_DIFF_period : time := 20 ns;
@@ -223,15 +240,17 @@ BEGIN
           ioRAM_DQ => ioRAM_DQ,
           ioRZQ => ioRZQ,
           ioZIO => ioZIO,
-          oLED => oLED,
-			 iSW => iSW,
 			 onBLANK => onBLANK,
 			 onSYNC => onSYNC,
 			 onPSAVE => onPSAVE,
 		    oH_SYNC => oH_SYNC,
 			 oV_SYNC => oV_SYNC,
 			 oRGB => oRGB,
-			 oCLK => oCLK
+			 oVGA_CLK => oVGA_CLK,
+			 oSCLK => oSCLK,
+			 onCS => onCS,
+			 onRESET => onRESET,
+			 ioSIO => ioSIO
         );
 
    -- Clock process definitions
@@ -280,12 +299,23 @@ BEGIN
         odt       => oRAM_ODT
       );
 	
+	flashMem : MX25L25635E
+	port map
+	(
+		SCLK => oSCLK,
+		CS => onCS,
+		RESET => onRESET,
+		SI => ioSIO(0),
+		SO => ioSIO(1),
+		WP => ioSIO(2),
+		HOLD => ioSIO(3)
+	);
+	
    -- Stimulus process
    stim_proc: process
    begin		
       inRST <= '0';
-		iSW <= "101";
-      wait for 200 us;	
+      wait for 300 us;	
 		inRST <= '1';
       wait;
    end process;

@@ -1,1 +1,1 @@
--intstyle "ise" -incremental -lib "unisims_ver" -lib "unimacro_ver" -lib "xilinxcorelib_ver" -lib "secureip" -o "D:/Diplomski/Top/spiFlashController_tb_isim_beh.exe" -prj "D:/Diplomski/Top/spiFlashController_tb_beh.prj" "work.spiFlashController_tb" "work.glbl" 
+-intstyle "ise" -incremental -lib "unisims_ver" -lib "unimacro_ver" -lib "xilinxcorelib_ver" -lib "secureip" -o "D:/Diplomski/Top/flash2RAM_tb_isim_beh.exe" -prj "D:/Diplomski/Top/flash2RAM_tb_beh.prj" "work.flash2RAM_tb" "work.glbl" 

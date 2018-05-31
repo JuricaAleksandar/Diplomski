@@ -46,12 +46,15 @@ entity pixelBuffer is
            iRD_OVERFLOW : in  STD_LOGIC;
            iRD_ERROR : in  STD_LOGIC;
            iRD_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
-			  iFIFO_RD_EN : in STD_LOGIC;
+			  iVIDEO_ON : in STD_LOGIC;
 			  iSTART : in STD_LOGIC;
 			  oRGB : out STD_LOGIC_VECTOR (23 downto 0));
 end pixelBuffer;
 
 architecture Behavioral of pixelBuffer is
+
+	constant H_RESOLUTION : natural := 512;
+	constant V_RESOLUTION : natural := 512;
 
 	type tREAD_STATE is (IDLE, SET_CMD, WAIT_UPDATE, WAIT_DATA, WAIT_FIFO);
 	signal sSTATE, sNEXT_STATE : tREAD_STATE;
@@ -61,8 +64,8 @@ architecture Behavioral of pixelBuffer is
 	signal sFIFO_EMPTY : STD_LOGIC;
 	signal sFIFO_RD_EN : STD_LOGIC;
 	signal sFIFO_WR_EN : STD_LOGIC;
-	signal sPOS_X : STD_LOGIC_VECTOR(6 downto 0);
-	signal sPOS_Y : STD_LOGIC_VECTOR(9 downto 0);
+	signal sPOS_X : STD_LOGIC_VECTOR(5 downto 0);
+	signal sPOS_Y : STD_LOGIC_VECTOR(8 downto 0);
 	signal sPOS_WE : STD_LOGIC;
 	signal sCOMBINED_EN : STD_LOGIC;
 	signal sFIFO_BURST_COUNT : STD_LOGIC_VECTOR(3 downto 0);
@@ -73,11 +76,11 @@ begin
 	
 	sINV_RST <= not inRST;	
 		
-	oCMD_INSTR <= "001";
-	oCMD_BL <= (5 downto 3 => '0',others => '1');
-	oCMD_BYTE_ADDR <= "000000" & sPOS_Y & "00" & sPOS_X & "00000";
+	oCMD_INSTR <= "001"; -- Read instuction code
+	oCMD_BL <= (5 downto 3 => '0',others => '1'); -- Burst length 8
+	oCMD_BYTE_ADDR <= "0000000" & sPOS_Y & "000" & sPOS_X & "00000";
 		
-	sCOMBINED_EN <= sFIFO_RD_EN and iFIFO_RD_EN;
+	sCOMBINED_EN <= sFIFO_RD_EN and iVIDEO_ON;
 		
 	sFIFO_WR_EN <= '1' when (iRD_COUNT > 0 and sFIFO_FULL = '0') else '0';
 	
@@ -138,9 +141,9 @@ begin
 			sPOS_Y <= (others => '0');
 		elsif(iWR_CLK'event and iWR_CLK = '1') then
 			if(sPOS_WE = '1') then
-				if(sPOS_X = 127) then
+				if(sPOS_X = H_RESOLUTION/8 - 1) then
 					sPOS_X <= (others => '0');
-					if(sPOS_Y = 767) then
+					if(sPOS_Y = V_RESOLUTION - 1) then
 						sPOS_Y <= (others => '0');
 					else
 						sPOS_Y <= sPOS_Y + 1;

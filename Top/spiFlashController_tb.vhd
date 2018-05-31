@@ -43,6 +43,13 @@ ARCHITECTURE behavior OF spiFlashController_tb IS
     PORT(
          iCLK : IN  std_logic;
          inRST : IN  std_logic;
+			iRD_EN : in STD_LOGIC;
+			iRD_START : in STD_LOGIC;
+			iRD_ADDR : in STD_LOGIC_VECTOR (23 downto 0);
+			iRD_COUNT : in STD_LOGIC_VECTOR (7 downto 0);
+			oDATA_VALID : out STD_LOGIC;
+			oDATA : out STD_LOGIC_VECTOR (7 downto 0);
+			oREADY : out STD_LOGIC;
          oSCLK : OUT  std_logic;
          onCS : OUT  std_logic;
          ioSIO : INOUT  std_logic_vector(3 downto 0);
@@ -65,7 +72,11 @@ ARCHITECTURE behavior OF spiFlashController_tb IS
    --Inputs
    signal iCLK : std_logic := '0';
    signal inRST : std_logic := '0';
-
+	signal iRD_EN : STD_LOGIC;
+	signal iRD_START : STD_LOGIC;
+	signal iRD_ADDR : STD_LOGIC_VECTOR (23 downto 0);
+	signal iRD_COUNT : STD_LOGIC_VECTOR (7 downto 0);
+	
 	--BiDirs
    signal ioSIO : std_logic_vector(3 downto 0);
 
@@ -73,7 +84,10 @@ ARCHITECTURE behavior OF spiFlashController_tb IS
    signal oSCLK : std_logic;
    signal onCS : std_logic;
    signal onRESET : std_logic;
-
+	signal oDATA_VALID : STD_LOGIC;
+	signal oDATA : STD_LOGIC_VECTOR (7 downto 0);
+	signal oREADY : STD_LOGIC;
+	
    -- Clock period definitions
    constant iCLK_period : time := 10 ns;
  
@@ -83,6 +97,13 @@ BEGIN
    uut: spiFlashController PORT MAP (
           iCLK => iCLK,
           inRST => inRST,
+			 iRD_EN => iRD_EN,
+			 iRD_START => iRD_START,
+			 iRD_ADDR => iRD_ADDR,
+			 iRD_COUNT => iRD_COUNT,
+			 oREADY => oREADY,
+			 oDATA_VALID => oDATA_VALID,
+			 oDATA => oDATA,
           oSCLK => oSCLK,
           onCS => onCS,
           ioSIO => ioSIO,
@@ -112,11 +133,23 @@ BEGIN
 
    -- Stimulus process
    stim_proc: process
-   begin		
+   begin	
+		iRD_EN <= '0';
+		iRD_START <= '0';
+		iRD_ADDR <= (others => '0');
+		iRD_COUNT <= (others => '0');
       inRST <= '0';
       wait for 300 us;	
 		inRST <= '1';
-
+		wait for 20 us;
+		iRD_START <= '1';
+		iRD_ADDR <= (others => '0');
+		iRD_COUNT <= (6 downto 5 => '1', others => '0');
+		wait for iCLK_period;
+		iRD_ADDR <= (others => '0');
+		iRD_COUNT <= (others => '0');
+		iRD_START <= '0';
+		iRD_EN <= '1';
       wait;
    end process;
 

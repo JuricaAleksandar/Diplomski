@@ -1,0 +1,11 @@
+Storage Target: Xilinx Flash/PROM
+Storage Family: Platform Flash
+xcf16p          [16 M]
+FF
+Diplomski
+D:\Diplomski\Top\
+
+MCS
+Yes
+1
+No

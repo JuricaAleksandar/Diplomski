@@ -1,0 +1,12 @@
+# PROMGEN: Xilinx Prom Generator P.68d
+# Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+
+SOFTWARE_VERSION P.68d
+DATE            05/31/2018 - 16:05
+SOURCE          D:\Diplomski\Top\Diplomski.mcs
+DEVICE          XCF16P
+DATA_WIDTH      8
+FILL_DATA       0xFF
+SIGNATURE       0x0978C7EB
+BLOCK 0 VERSION 0 0x0978C7EB
+BLOCK 1 VERSION 0 END 0x0978C7EB

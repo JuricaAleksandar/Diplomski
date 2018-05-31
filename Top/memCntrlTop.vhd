@@ -58,21 +58,20 @@ entity memCntrlTop is
 			  onPSAVE : out STD_LOGIC;
 		     oH_SYNC : out STD_LOGIC;
 			  oV_SYNC : out STD_LOGIC;
-			  oRGB : out STD_LOGIC_VECTOR(23 downto 0);
-			  oCLK : out STD_LOGIC);
+			  oRGB : out STD_LOGIC_VECTOR (23 downto 0);
+			  oVGA_CLK : out STD_LOGIC;
+			  oSCLK : OUT  std_logic;
+			  onCS : OUT  std_logic;
+           ioSIO : INOUT  std_logic_vector(3 downto 0);
+           onRESET : OUT  std_logic);
 end memCntrlTop;
 
 architecture Behavioral of memCntrlTop is
-	
-	type tSTATE is (IDLE, SET_DATA, NOP, SET_CMD, DONE, SET_CMD1, WAIT_DATA, READ_DATA, DONE1);
-	
-	signal sSTATE, sNEXT_STATE : tSTATE;
 	
 	signal sINV_RST : STD_LOGIC;
 	signal sCLK : STD_LOGIC;
 	signal sRST : STD_LOGIC;
 	signal sWR_RGB : STD_LOGIC_VECTOR (23 downto 0);
-	
 	signal sCALIB_DONE : STD_LOGIC;
 	
 	--- Port 0 command signals ---
@@ -151,6 +150,16 @@ architecture Behavioral of memCntrlTop is
 	signal sDONE : STD_LOGIC;
 	signal sSTART : STD_LOGIC;
 	
+	signal sCOMBINED_RST : STD_LOGIC;
+	
+	signal sFLASH_RD_EN : STD_LOGIC;
+	signal sFLASH_RD_START : STD_LOGIC;
+	signal sFLASH_RD_ADDR : STD_LOGIC_VECTOR (23 downto 0);
+	signal sFLASH_RD_COUNT : STD_LOGIC_VECTOR (7 downto 0);
+	signal sFLASH_READY : STD_LOGIC;
+	signal sFLASH_DATA_VALID : STD_LOGIC;
+	signal sFLASH_DATA : STD_LOGIC_VECTOR (7 downto 0);
+	
 begin
 	
 	ivgasync : entity work.vgaSync
@@ -203,80 +212,104 @@ begin
 		mcb3_dram_udm 					=>  oRAM_UDM,     
 		mcb3_dram_dm 					=>  oRAM_LDM,
 
-		c3_p0_cmd_clk                           =>  sP0_CMD_CLK,
-		c3_p0_cmd_en                            =>  sP0_CMD_EN,
-		c3_p0_cmd_instr                         =>  sP0_CMD_INSTR,
-		c3_p0_cmd_bl                            =>  sP0_CMD_BL,
-		c3_p0_cmd_byte_addr                     =>  sP0_CMD_BYTE_ADDR,
-		c3_p0_cmd_empty                         =>  sP0_CMD_EMPTY,
-		c3_p0_cmd_full                          =>  sP0_CMD_FULL,
+		c3_p0_cmd_clk              =>  sP0_CMD_CLK,
+		c3_p0_cmd_en               =>  sP0_CMD_EN,
+		c3_p0_cmd_instr            =>  sP0_CMD_INSTR,
+		c3_p0_cmd_bl               =>  sP0_CMD_BL,
+		c3_p0_cmd_byte_addr        =>  sP0_CMD_BYTE_ADDR,
+		c3_p0_cmd_empty            =>  sP0_CMD_EMPTY,
+		c3_p0_cmd_full             =>  sP0_CMD_FULL,
 		
-		c3_p0_wr_clk                            =>  sP0_WR_CLK,
-		c3_p0_wr_en                             =>  sP0_WR_EN,
-		c3_p0_wr_mask                           =>  sP0_WR_MASK,
-		c3_p0_wr_data                           =>  sP0_WR_DATA,
-		c3_p0_wr_full                           =>  sP0_WR_FULL,
-		c3_p0_wr_empty                          =>  sP0_WR_EMPTY,
-		c3_p0_wr_count                          =>  sP0_WR_COUNT,
-		c3_p0_wr_underrun                       =>  sP0_WR_UNDERRUN,
-		c3_p0_wr_error                          =>  sP0_WR_ERROR,
+		c3_p0_wr_clk               =>  sP0_WR_CLK,
+		c3_p0_wr_en                =>  sP0_WR_EN,
+		c3_p0_wr_mask              =>  sP0_WR_MASK,
+		c3_p0_wr_data              =>  sP0_WR_DATA,
+		c3_p0_wr_full              =>  sP0_WR_FULL,
+		c3_p0_wr_empty             =>  sP0_WR_EMPTY,
+		c3_p0_wr_count             =>  sP0_WR_COUNT,
+		c3_p0_wr_underrun          =>  sP0_WR_UNDERRUN,
+		c3_p0_wr_error             =>  sP0_WR_ERROR,
 		
-		c3_p0_rd_clk                            =>  sP0_RD_CLK,
-		c3_p0_rd_en                             =>  sP0_RD_EN,
-		c3_p0_rd_data                           =>  sP0_RD_DATA,
-		c3_p0_rd_full                           =>  sP0_RD_FULL,
-		c3_p0_rd_empty                          =>  sP0_RD_EMPTY,
-		c3_p0_rd_count                          =>  sP0_RD_COUNT,
-		c3_p0_rd_overflow                       =>  sP0_RD_OVERFLOW,
-		c3_p0_rd_error                          =>  sP0_RD_ERROR,
+		c3_p0_rd_clk               =>  sP0_RD_CLK,
+		c3_p0_rd_en                =>  sP0_RD_EN,
+		c3_p0_rd_data              =>  sP0_RD_DATA,
+		c3_p0_rd_full              =>  sP0_RD_FULL,
+		c3_p0_rd_empty             =>  sP0_RD_EMPTY,
+		c3_p0_rd_count             =>  sP0_RD_COUNT,
+		c3_p0_rd_overflow          =>  sP0_RD_OVERFLOW,
+		c3_p0_rd_error             =>  sP0_RD_ERROR,
 		
-		c3_p1_cmd_clk                           =>  sP1_CMD_CLK,
-		c3_p1_cmd_en                            =>  sP1_CMD_EN,
-		c3_p1_cmd_instr                         =>  sP1_CMD_INSTR,
-		c3_p1_cmd_bl                            =>  sP1_CMD_BL,
-		c3_p1_cmd_byte_addr                     =>  sP1_CMD_BYTE_ADDR,
-		c3_p1_cmd_empty                         =>  sP1_CMD_EMPTY,
-		c3_p1_cmd_full                          =>  sP1_CMD_FULL,
+		c3_p1_cmd_clk              =>  sP1_CMD_CLK,
+		c3_p1_cmd_en               =>  sP1_CMD_EN,
+		c3_p1_cmd_instr            =>  sP1_CMD_INSTR,
+		c3_p1_cmd_bl               =>  sP1_CMD_BL,
+		c3_p1_cmd_byte_addr        =>  sP1_CMD_BYTE_ADDR,
+		c3_p1_cmd_empty            =>  sP1_CMD_EMPTY,
+		c3_p1_cmd_full             =>  sP1_CMD_FULL,
 		
-		c3_p1_wr_clk                            =>  sP1_WR_CLK,
-		c3_p1_wr_en                             =>  sP1_WR_EN,
-		c3_p1_wr_mask                           =>  sP1_WR_MASK,
-		c3_p1_wr_data                           =>  sP1_WR_DATA,
-		c3_p1_wr_full                           =>  sP1_WR_FULL,
-		c3_p1_wr_empty                          =>  sP1_WR_EMPTY,
-		c3_p1_wr_count                          =>  sP1_WR_COUNT,
-		c3_p1_wr_underrun                       =>  sP1_WR_UNDERRUN,
-		c3_p1_wr_error                          =>  sP1_WR_ERROR,
+		c3_p1_wr_clk               =>  sP1_WR_CLK,
+		c3_p1_wr_en                =>  sP1_WR_EN,
+		c3_p1_wr_mask              =>  sP1_WR_MASK,
+		c3_p1_wr_data              =>  sP1_WR_DATA,
+		c3_p1_wr_full              =>  sP1_WR_FULL,
+		c3_p1_wr_empty             =>  sP1_WR_EMPTY,
+		c3_p1_wr_count             =>  sP1_WR_COUNT,
+		c3_p1_wr_underrun          =>  sP1_WR_UNDERRUN,
+		c3_p1_wr_error             =>  sP1_WR_ERROR,
 		
-		c3_p1_rd_clk                            =>  sP1_RD_CLK,
-		c3_p1_rd_en                             =>  sP1_RD_EN,
-		c3_p1_rd_data                           =>  sP1_RD_DATA,
-		c3_p1_rd_full                           =>  sP1_RD_FULL,
-		c3_p1_rd_empty                          =>  sP1_RD_EMPTY,
-		c3_p1_rd_count                          =>  sP1_RD_COUNT,
-		c3_p1_rd_overflow                       =>  sP1_RD_OVERFLOW,
-		c3_p1_rd_error                          =>  sP1_RD_ERROR
+		c3_p1_rd_clk               =>  sP1_RD_CLK,
+		c3_p1_rd_en                =>  sP1_RD_EN,
+		c3_p1_rd_data              =>  sP1_RD_DATA,
+		c3_p1_rd_full              =>  sP1_RD_FULL,
+		c3_p1_rd_empty             =>  sP1_RD_EMPTY,
+		c3_p1_rd_count             =>  sP1_RD_COUNT,
+		c3_p1_rd_overflow          =>  sP1_RD_OVERFLOW,
+		c3_p1_rd_error             =>  sP1_RD_ERROR
 	);
 
-	CBR : entity work.colorBarGenerator
+	sfc : entity work.spiFlashController
 	port map(
-	  iCLK => sCLK,
-	  inRST => sCALIB_DONE,
-	  oDONE => sDONE,
-	  oCMD_EN => sP0_CMD_EN,
-	  oCMD_INSTR => sP0_CMD_INSTR,
-	  oCMD_BL => sP0_CMD_BL,
-	  oCMD_BYTE_ADDR => sP0_CMD_BYTE_ADDR,
-	  iCMD_EMPTY => sP0_CMD_EMPTY,
-	  iCMD_FULL => sP0_CMD_FULL,
-	  oWR_EN => sP0_WR_EN,
-	  oWR_MASK => sP0_WR_MASK,
-	  oWR_DATA => sP0_WR_DATA,
-	  iWR_FULL => sP0_WR_FULL,
-	  iWR_EMPTY => sP0_WR_EMPTY,
-	  iWR_COUNT => sP0_WR_COUNT,
-	  iWR_UNDERRUN => sP0_WR_UNDERRUN,
-	  iWR_ERROR => sP0_WR_ERROR
+		iCLK => sCLK,
+		inRST => sCOMBINED_RST,
+		iRD_EN => sFLASH_RD_EN,
+		iRD_START => sFLASH_RD_START,
+		iRD_ADDR => sFLASH_RD_ADDR,
+		iRD_COUNT => sFLASH_RD_COUNT,
+		oREADY => sFLASH_READY,
+		oDATA_VALID => sFLASH_DATA_VALID,
+		oDATA => sFLASH_DATA,
+		oSCLK => oSCLK,
+		onCS => onCS,
+		ioSIO => ioSIO,
+		onRESET => onRESET
+	);
+
+	f2r : entity work.flash2RAM
+	port map(
+		iCLK => sCLK,
+		inRST => sCOMBINED_RST,
+		iREADY => sFLASH_READY,
+		iDATA_VALID => sFLASH_DATA_VALID,
+		iDATA => sFLASH_DATA,
+		oRD_EN => sFLASH_RD_EN,
+		oRD_START => sFLASH_RD_START,
+		oRD_ADDR => sFLASH_RD_ADDR,
+		oRD_COUNT => sFLASH_RD_COUNT,
+		oDONE => sDONE,
+		oCMD_EN => sP0_CMD_EN,
+		oCMD_INSTR => sP0_CMD_INSTR,
+		oCMD_BL => sP0_CMD_BL,
+		oCMD_BYTE_ADDR => sP0_CMD_BYTE_ADDR,
+		iCMD_EMPTY => sP0_CMD_EMPTY,
+		iCMD_FULL => sP0_CMD_FULL,
+		oWR_EN => sP0_WR_EN,
+		oWR_MASK => sP0_WR_MASK,
+		oWR_DATA => sP0_WR_DATA,
+		iWR_FULL => sP0_WR_FULL,
+		iWR_EMPTY => sP0_WR_EMPTY,
+		iWR_COUNT => sP0_WR_COUNT,
+		iWR_UNDERRUN => sP0_WR_UNDERRUN,
+		iWR_ERROR => sP0_WR_ERROR
 	);
 	
 	CLK_ODDR2 : ODDR2            
@@ -287,7 +320,7 @@ begin
 	)                              
 	port map                       
 	(
-		Q              =>  oCLK,
+		Q              =>  oVGA_CLK,
 		C0             =>  sGEN_CLK,
 		C1             =>  snPLL_CLK,
 		CE             =>  '1',
@@ -315,7 +348,7 @@ begin
 		iRD_OVERFLOW => sP1_RD_OVERFLOW,
 		iRD_ERROR => sP1_RD_ERROR,
 		iRD_COUNT => sP1_RD_COUNT,
-		iFIFO_RD_EN => sVIDEO_ON,
+		iVIDEO_ON => sVIDEO_ON,
 		iSTART => sSTART,
 		oRGB => oRGB
 	);
@@ -346,6 +379,8 @@ begin
 	
 	sSTART <= '1' when (sPIXEL_X = 1342 and sPIXEL_Y = 805)
 				else '0';
+	
+	sCOMBINED_RST <= sCALIB_DONE and not sRST;
 	
 end Behavioral;
 

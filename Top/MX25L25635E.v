@@ -87,7 +87,7 @@ module MX25L25635E( SCLK,
     /*----------------------------------------------------------------------*/
     /* Define Initial Memory File Name					    */
     /*----------------------------------------------------------------------*/
-    parameter   Init_File	= "none"; // initial flash data
+    parameter   Init_File	= "lena_noise1.mem"; // initial flash data
 
     /*----------------------------------------------------------------------*/
     /* AC Charicters Parameter						    */
