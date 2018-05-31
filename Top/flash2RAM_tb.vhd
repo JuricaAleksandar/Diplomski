@@ -42,7 +42,7 @@ ARCHITECTURE behavior OF flash2RAM_tb IS
     COMPONENT flash2RAM
     PORT(
          iCLK : IN  std_logic;
-         inRST : IN  std_logic;
+         iRST : IN  std_logic;
          iREADY : IN  std_logic;
          iDATA_VALID : IN  std_logic;
          iDATA : IN  std_logic_vector(7 downto 0);
@@ -71,7 +71,8 @@ ARCHITECTURE behavior OF flash2RAM_tb IS
 	 COMPONENT spiFlashController
     PORT(
          iCLK : IN  std_logic;
-         inRST : IN  std_logic;
+         iRST : IN  std_logic;
+			iCALIB_DONE : IN std_logic;
 			iRD_EN : in STD_LOGIC;
 			iRD_START : in STD_LOGIC;
 			iRD_ADDR : in STD_LOGIC_VECTOR (23 downto 0);
@@ -107,7 +108,8 @@ ARCHITECTURE behavior OF flash2RAM_tb IS
 
    --Inputs
    signal iCLK : std_logic := '0';
-   signal inRST : std_logic := '0';
+   signal iRST : std_logic := '0';
+	signal iCALIB_DONE : std_logic := '0';
    signal iREADY : std_logic := '0';
    signal iDATA_VALID : std_logic := '0';
    signal iDATA : std_logic_vector(7 downto 0) := (others => '0');
@@ -141,7 +143,7 @@ BEGIN
 	-- Instantiate the Unit Under Test (UUT)
    uut: flash2RAM PORT MAP (
           iCLK => iCLK,
-          inRST => inRST,
+          iRST => iRST,
           iREADY => iREADY,
           iDATA_VALID => iDATA_VALID,
           iDATA => iDATA,
@@ -168,7 +170,8 @@ BEGIN
 	
 	spi: spiFlashController PORT MAP (
           iCLK => iCLK,
-          inRST => inRST,
+          iRST => iRST,
+			 iCALIB_DONE => iCALIB_DONE,
 			 iRD_EN => oRD_EN,
 			 iRD_START => oRD_START,
 			 iRD_ADDR => oRD_ADDR,
@@ -206,9 +209,12 @@ BEGIN
    -- Stimulus process
    stim_proc: process
    begin		
-      inRST <= '0';
+      iRST <= '1';
+		iCALIB_DONE <= '0';
       wait for 300 us;	
-		inRST <= '1';
+		iRST <= '0';
+		wait for 50 us;
+		iCALIB_DONE <= '1';
 		wait;
    end process;
 

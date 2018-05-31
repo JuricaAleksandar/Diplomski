@@ -32,7 +32,8 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity pixelBuffer is
     Port ( iWR_CLK : in  STD_LOGIC;
 			  iRD_CLK : in STD_LOGIC;
-           inRST : in  STD_LOGIC;
+           iRST : in  STD_LOGIC;
+			  iDONE : in STD_LOGIC;
            oCMD_EN : out  STD_LOGIC;
            oCMD_INSTR : out  STD_LOGIC_VECTOR (2 downto 0);
            oCMD_BL : out  STD_LOGIC_VECTOR (5 downto 0);
@@ -59,7 +60,6 @@ architecture Behavioral of pixelBuffer is
 	type tREAD_STATE is (IDLE, SET_CMD, WAIT_UPDATE, WAIT_DATA, WAIT_FIFO);
 	signal sSTATE, sNEXT_STATE : tREAD_STATE;
 
-	signal sINV_RST : STD_LOGIC;
 	signal sFIFO_FULL : STD_LOGIC;
 	signal sFIFO_EMPTY : STD_LOGIC;
 	signal sFIFO_RD_EN : STD_LOGIC;
@@ -73,8 +73,6 @@ architecture Behavioral of pixelBuffer is
 	signal sBURST_READ : STD_LOGIC;
 	
 begin
-	
-	sINV_RST <= not inRST;	
 		
 	oCMD_INSTR <= "001"; -- Read instuction code
 	oCMD_BL <= (5 downto 3 => '0',others => '1'); -- Burst length 8
@@ -86,8 +84,8 @@ begin
 	
 	oRD_EN <= '1' when (iRD_COUNT > 0 and sFIFO_FULL = '0') else '0';
 		
-	process(iRD_CLK, inRST) begin
-		if(inRST = '0') then
+	process(iRD_CLK, iRST) begin
+		if(iRST = '1') then
 			sFIFO_RD_EN <= '0';
 		elsif(iRD_CLK'event and iRD_CLK = '1') then
 			if(sFIFO_FULL = '1' and iSTART = '1' and sFIFO_EMPTY = '0') then
@@ -97,8 +95,8 @@ begin
 	end process;
 		
 	-- Read pixel counter --
-	process(iWR_CLK, inRST) begin
-		if(inRST = '0') then
+	process(iWR_CLK, iRST) begin
+		if(iRST = '1') then
 			sREAD_COUNT <= (others => '0');
 			sBURST_READ <= '0';
 		elsif(iWR_CLK'event and iWR_CLK = '1') then
@@ -120,8 +118,8 @@ begin
 	end process;
 	
 	-- Read fifo stored burst counter --
-	process(iWR_CLK, inRST) begin
-		if(inRST = '0') then
+	process(iWR_CLK, iRST) begin
+		if(iRST = '1') then
 			sFIFO_BURST_COUNT <= (others => '0');
 		elsif(iWR_CLK'event and iWR_CLK = '1') then
 			if(sPOS_WE = '1' and sBURST_READ = '0') then
@@ -135,8 +133,8 @@ begin
 	end process;
 	
 	-- Read address generator --
-	process(iWR_CLK, inRST) begin
-		if(inRST = '0') then
+	process(iWR_CLK, iRST) begin
+		if(iRST = '1') then
 			sPOS_X <= (others => '0');
 			sPOS_Y <= (others => '0');
 		elsif(iWR_CLK'event and iWR_CLK = '1') then
@@ -156,18 +154,18 @@ begin
 	end process;
 		
 	-- Memory reader automate --
-	process(iWR_CLK, inRST) begin
-		if(inRST = '0') then
+	process(iWR_CLK, iRST) begin
+		if(iRST = '1') then
 			sSTATE <= IDLE;
 		elsif(iWR_CLK'event and iWR_CLK = '1') then
 			sSTATE <= sNEXT_STATE;
 		end if;
 	end process;
 	
-	process(sSTATE, sFIFO_BURST_COUNT, iCMD_FULL, sFIFO_FULL) begin
+	process(sSTATE, sFIFO_BURST_COUNT, iCMD_FULL, sFIFO_FULL, iDONE) begin
 		case sSTATE is
 			when IDLE =>
-				if(sFIFO_FULL = '0') then
+				if(sFIFO_FULL = '0' and iDONE = '1') then
 					sNEXT_STATE <= SET_CMD;
 				else
 					sNEXT_STATE <= IDLE;
@@ -215,7 +213,7 @@ begin
 	
 	fifo : entity work.fif0
 		port map(
-		 rst => sINV_RST,
+		 rst => iRST,
 		 wr_clk => iWR_CLK,
 		 rd_clk => iRD_CLK,
 		 din => iRD_DATA(23 downto 0),

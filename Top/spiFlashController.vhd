@@ -31,7 +31,8 @@ use UNISIM.VComponents.all;
 
 entity spiFlashController is
     Port ( iCLK : in  STD_LOGIC;
-           inRST : in  STD_LOGIC;
+           iRST : in  STD_LOGIC;
+			  iCALIB_DONE : in STD_LOGIC;
 			  iRD_EN : in STD_LOGIC;
 			  iRD_START : in STD_LOGIC;
 			  iRD_ADDR : in STD_LOGIC_VECTOR (23 downto 0);
@@ -156,8 +157,8 @@ begin
 	);
 	
 	-- Requested byte count register
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sRD_COUNT <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(iRD_START = '1') then
@@ -167,8 +168,8 @@ begin
 	end process;
 	
 	-- Cycle counter
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sCOUNTER <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sCNT_EN = '1') then
@@ -180,8 +181,8 @@ begin
 	end process;
 	
 	-- SPI clock generator
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sCLK <= '0';
 		elsif(iCLK'event and iCLK = '1') then
 			if(sEN = '1') then
@@ -193,8 +194,8 @@ begin
 	end process;
 	
 	-- MOSI shift register
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sMOSI_SHREG <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sCONTROL = '0') then
@@ -208,8 +209,8 @@ begin
 	end process;
 
 	-- MISO shift register
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sMISO_SHREG <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sCLK = '1') then
@@ -223,8 +224,8 @@ begin
 	end process;
 
 	-- Transaction bits counter
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sBIT_COUNTER <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sEN = '1') then
@@ -238,8 +239,8 @@ begin
 	end process;
 
 	-- Output registers
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sDATA <= (others => '0');
 			sDATA_VALID <= '0';
 			sDATA_VALID_REG <= '0';
@@ -256,18 +257,20 @@ begin
 	end process;
 
 	-- Flash reader automate
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sSTATE <= IDLE;
 		elsif(iCLK'event and iCLK = '1') then
 			sSTATE <= sNEXT_STATE;
 		end if;
 	end process;
 
-	process(sSTATE, sBIT_COUNTER, sMISO_SHREG,  sCOUNTER, iRD_START, sRD_COUNT) begin
+	process(sSTATE, sBIT_COUNTER, sMISO_SHREG,  sCOUNTER, iRD_START, sRD_COUNT, iCALIB_DONE) begin
 		case sSTATE is
 			when IDLE =>
+				if(iCALIB_DONE = '1') then
 					sNEXT_STATE <= WREN_CMD;
+				end if;
 					
 			when WREN_CMD =>
 				sNEXT_STATE <= SEND;

@@ -32,7 +32,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity flash2RAM is
     Port ( iCLK : in  STD_LOGIC;
-           inRST : in  STD_LOGIC;
+           iRST : in  STD_LOGIC;
            iREADY : in  STD_LOGIC;
            iDATA_VALID : in  STD_LOGIC;
            iDATA : in  STD_LOGIC_VECTOR (7 downto 0);
@@ -79,8 +79,8 @@ architecture Behavioral of flash2RAM is
 begin
 
 	-- Ram write enable
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sWR_EN <= '0';
 			sWAIT <= '0';
 		elsif(iCLK'event and iCLK = '1') then
@@ -99,8 +99,8 @@ begin
 	end process;
 
 	-- Registers
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sWR_DATA <= (others => '0');
 			sBYTE_COUNTER <= (others => '0');
 			sPIXEL_COUNTER <= (others => '0');
@@ -121,8 +121,8 @@ begin
 	end process;
 		
 	-- Flash address generator
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sFLASH_ADDR <= (22 => '1', others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sFLASH_ADDR_EN = '1') then
@@ -132,8 +132,8 @@ begin
 	end process;
 
 	-- RAM address generator
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sPOS_X <= (others => '0');
 			sPOS_Y <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
@@ -147,8 +147,8 @@ begin
 	end process;
 
 	-- State machine register
-	process(iCLK, inRST) begin
-		if(inRST = '0') then
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
 			sSTATE <= IDLE;
 		elsif(iCLK'event and iCLK = '1') then
 			sSTATE <= sNEXT_STATE;

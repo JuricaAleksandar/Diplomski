@@ -150,8 +150,6 @@ architecture Behavioral of memCntrlTop is
 	signal sDONE : STD_LOGIC;
 	signal sSTART : STD_LOGIC;
 	
-	signal sCOMBINED_RST : STD_LOGIC;
-	
 	signal sFLASH_RD_EN : STD_LOGIC;
 	signal sFLASH_RD_START : STD_LOGIC;
 	signal sFLASH_RD_ADDR : STD_LOGIC_VECTOR (23 downto 0);
@@ -270,7 +268,8 @@ begin
 	sfc : entity work.spiFlashController
 	port map(
 		iCLK => sCLK,
-		inRST => sCOMBINED_RST,
+		iRST => sRST,
+		iCALIB_DONE => sCALIB_DONE,
 		iRD_EN => sFLASH_RD_EN,
 		iRD_START => sFLASH_RD_START,
 		iRD_ADDR => sFLASH_RD_ADDR,
@@ -287,7 +286,7 @@ begin
 	f2r : entity work.flash2RAM
 	port map(
 		iCLK => sCLK,
-		inRST => sCOMBINED_RST,
+		iRST => sRST,
 		iREADY => sFLASH_READY,
 		iDATA_VALID => sFLASH_DATA_VALID,
 		iDATA => sFLASH_DATA,
@@ -334,7 +333,8 @@ begin
 	port map(
 		iWR_CLK => sCLK,
 		iRD_CLK => sGEN_CLK,
-		inRST => sDONE,
+		iRST => sRST,
+		iDONE => sDONE,
 		oCMD_EN => sP1_CMD_EN,
 		oCMD_INSTR => sP1_CMD_INSTR,
 		oCMD_BL => sP1_CMD_BL,
@@ -379,8 +379,6 @@ begin
 	
 	sSTART <= '1' when (sPIXEL_X = 1342 and sPIXEL_Y = 805)
 				else '0';
-	
-	sCOMBINED_RST <= sCALIB_DONE and not sRST;
 	
 end Behavioral;
 

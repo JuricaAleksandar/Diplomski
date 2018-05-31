@@ -79,6 +79,7 @@ ARCHITECTURE behavior OF pixelBuffer_tb IS
    signal iCLK_DIFF_P : std_logic;
    signal iCLK_DIFF_N : std_logic;
    signal inRST : std_logic;
+	signal iDONE : std_logic;
 
 	--BiDirs
    signal ioRAM_UDQS : std_logic;
@@ -168,7 +169,6 @@ ARCHITECTURE behavior OF pixelBuffer_tb IS
 	signal sP1_RD_ERROR : STD_LOGIC;
 
 	signal sINV_RST : STD_LOGIC;
-	signal sDONE : STD_LOGIC;
   -- Clock period definitions
    constant iCLK_DIFF_period : time := 20 ns;
 	constant sPIXEL_CLK_period : time := 15.39 ns;
@@ -211,7 +211,8 @@ BEGIN
    uut: entity work.pixelBuffer PORT MAP (
           iWR_CLK => sCLK,
           iRD_CLK => sPIXEL_CLK,
-          inRST => sDONE,
+          iRST => sRST,
+			 iDONE => iDONE,
           oCMD_EN => sP0_CMD_EN,
           oCMD_INSTR => sP0_CMD_INSTR,
           oCMD_BL => sP0_CMD_BL,
@@ -225,7 +226,7 @@ BEGIN
           iRD_OVERFLOW => sP0_RD_OVERFLOW,
           iRD_ERROR => sP0_RD_ERROR,
           iRD_COUNT => sP0_RD_COUNT,
-			 iFIFO_RD_EN => oVIDEO_ON,
+			 iVIDEO_ON => oVIDEO_ON,
 			 iSTART => iSTART,
 			 oRGB => oRGB
         );
@@ -429,11 +430,11 @@ BEGIN
    stim_proc: process
    begin		
       inRST <= '0';
-		sDONE <= '0';
+		iDONE <= '0';
       wait for 100 us;	
 		inRST <= '1';
 		wait for 100 us;
-		sDONE <= '1';
+		iDONE <= '1';
       wait;
    end process;
 

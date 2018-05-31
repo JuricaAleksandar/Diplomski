@@ -12,13 +12,13 @@
          <ClosedNode>/pixelBuffer - Behavioral D:|Diplomski|Top|pixelBuffer.vhd</ClosedNode>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem>memCntrlTop - Behavioral (D:/Diplomski/Top/memCntrlTop.vhd)</SelectedItem>
+         <SelectedItem>f2r - flash2RAM - Behavioral (D:/Diplomski/Top/flash2RAM.vhd)</SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
       <ViewHeaderState orientation="horizontal" >000000ff00000000000000010000000100000000000000000000000000000000020200000001000000010000006400000194000000020000000000000000000000000200000064ffffffff000000810000000300000002000001940000000100000003000000000000000100000003</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >true</UserChangedColumnWidths>
-      <CurrentItem>memCntrlTop - Behavioral (D:/Diplomski/Top/memCntrlTop.vhd)</CurrentItem>
+      <CurrentItem>f2r - flash2RAM - Behavioral (D:/Diplomski/Top/flash2RAM.vhd)</CurrentItem>
    </ItemView>
    <ItemView engineview="SynthesisOnly" sourcetype="" guiview="Process" >
       <ClosedNodes>
@@ -95,7 +95,6 @@
          <ClosedNode>/Automatic `includes</ClosedNode>
          <ClosedNode>/colorBarGenerator_tb - behavior D:|Diplomski|Top|colorBarGenerator_tb.vhd</ClosedNode>
          <ClosedNode>/flash2RAM_tb - behavior D:|Diplomski|Top|flash2RAM_tb.vhd</ClosedNode>
-         <ClosedNode>/memCntrlTop_tb - behavior D:|Diplomski|Top|memCntrlTop_tb.vhd</ClosedNode>
          <ClosedNode>/memCntrlTop_tb - behavior D:|Diplomski|Top|memCntrlTop_tb.vhd/uut - memCntrlTop - Behavioral/pbuffer - pixelBuffer - Behavioral</ClosedNode>
          <ClosedNode>/pixelBuffer_tb - behavior D:|Diplomski|Top|pixelBuffer_tb.vhd</ClosedNode>
          <ClosedNode>/pixelBuffer_tb - behavior D:|Diplomski|Top|pixelBuffer_tb.vhd/uut - pixelBuffer - Behavioral</ClosedNode>
@@ -107,7 +106,7 @@
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
-      <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000002020000000100000001000000640000017f000000020000000000000000000000000200000064ffffffff0000008100000003000000020000017f0000000100000003000000000000000100000003</ViewHeaderState>
+      <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000001000000000000000000000000000000000202000000010000000100000064000001a8000000020000000000000000000000000200000064ffffffff000000810000000300000002000001a80000000100000003000000000000000100000003</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >true</UserChangedColumnWidths>
       <CurrentItem>flash2RAM_tb - behavior (D:/Diplomski/Top/flash2RAM_tb.vhd)</CurrentItem>
    </ItemView>
@@ -153,7 +152,7 @@
       <CurrentItem/>
    </ItemView>
    <SourceProcessView>000000ff0000000000000002000001350000017301000000050100000002</SourceProcessView>
-   <CurrentView>Implementation</CurrentView>
+   <CurrentView>Behavioral Simulation</CurrentView>
    <ItemView engineview="SynthesisOnly" sourcetype="DESUT_VERILOG" guiview="Process" >
       <ClosedNodes>
          <ClosedNodesVersion>1</ClosedNodesVersion>
