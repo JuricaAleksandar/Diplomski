@@ -74,36 +74,6 @@ architecture Behavioral of memCntrlTop is
 	signal sWR_RGB : STD_LOGIC_VECTOR (23 downto 0);
 	signal sCALIB_DONE : STD_LOGIC;
 	
-	--- Port 0 command signals ---
-	signal sP0_CMD_CLK : STD_LOGIC;
-	signal sP0_CMD_EN : STD_LOGIC;
-	signal sP0_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
-	signal sP0_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
-	signal sP0_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
-	signal sP0_CMD_EMPTY : STD_LOGIC;
-	signal sP0_CMD_FULL : STD_LOGIC;
-	
-	--- Port 0 write signals ---
-	signal sP0_WR_CLK : STD_LOGIC;
-	signal sP0_WR_EN : STD_LOGIC;
-	signal sP0_WR_MASK : STD_LOGIC_VECTOR (3 downto 0);
-	signal sP0_WR_DATA : STD_LOGIC_VECTOR (31 downto 0);
-	signal sP0_WR_FULL : STD_LOGIC;
-	signal sP0_WR_EMPTY  : STD_LOGIC;
-	signal sP0_WR_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-	signal sP0_WR_UNDERRUN : STD_LOGIC;
-	signal sP0_WR_ERROR : STD_LOGIC;
-	
-	--- Port 0 read signals ---
-	signal sP0_RD_CLK : STD_LOGIC;
-	signal sP0_RD_EN : STD_LOGIC;
-	signal sP0_RD_DATA : STD_LOGIC_VECTOR (31 downto 0);
-	signal sP0_RD_FULL : STD_LOGIC;
-	signal sP0_RD_EMPTY : STD_LOGIC;
-	signal sP0_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-	signal sP0_RD_OVERFLOW : STD_LOGIC;
-	signal sP0_RD_ERROR : STD_LOGIC;
-	
 	--- Port 1 command signals ---
 	signal sP1_CMD_CLK : STD_LOGIC;
 	signal sP1_CMD_EN : STD_LOGIC;
@@ -133,6 +103,45 @@ architecture Behavioral of memCntrlTop is
 	signal sP1_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
 	signal sP1_RD_OVERFLOW : STD_LOGIC;
 	signal sP1_RD_ERROR : STD_LOGIC;
+	
+	--- Port 2 command signals ---
+	signal sP2_CMD_CLK : STD_LOGIC;
+	signal sP2_CMD_EN : STD_LOGIC;
+	signal sP2_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
+	signal sP2_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
+	signal sP2_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
+	signal sP2_CMD_EMPTY : STD_LOGIC;
+	signal sP2_CMD_FULL : STD_LOGIC;
+	
+	--- Port 2 write signals ---
+	signal sP2_WR_CLK : STD_LOGIC;
+	signal sP2_WR_EN : STD_LOGIC;
+	signal sP2_WR_MASK : STD_LOGIC_VECTOR (3 downto 0);
+	signal sP2_WR_DATA : STD_LOGIC_VECTOR (31 downto 0);
+	signal sP2_WR_FULL : STD_LOGIC;
+	signal sP2_WR_EMPTY  : STD_LOGIC;
+	signal sP2_WR_COUNT : STD_LOGIC_VECTOR (6 downto 0);
+	signal sP2_WR_UNDERRUN : STD_LOGIC;
+	signal sP2_WR_ERROR : STD_LOGIC;
+	
+	--- Port 3 command signals ---
+	signal sP3_CMD_CLK : STD_LOGIC;
+	signal sP3_CMD_EN : STD_LOGIC;
+	signal sP3_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
+	signal sP3_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
+	signal sP3_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
+	signal sP3_CMD_EMPTY : STD_LOGIC;
+	signal sP3_CMD_FULL : STD_LOGIC;
+	
+	--- Port 3 read signals ---
+	signal sP3_RD_CLK : STD_LOGIC;
+	signal sP3_RD_EN : STD_LOGIC;
+	signal sP3_RD_DATA : STD_LOGIC_VECTOR (31 downto 0);
+	signal sP3_RD_FULL : STD_LOGIC;
+	signal sP3_RD_EMPTY : STD_LOGIC;
+	signal sP3_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
+	signal sP3_RD_OVERFLOW : STD_LOGIC;
+	signal sP3_RD_ERROR : STD_LOGIC;
 	
 	signal sOLD_DATA : STD_LOGIC_VECTOR (31 downto 0);
 	signal sLED : STD_LOGIC_VECTOR (7 downto 0);
@@ -209,33 +218,6 @@ begin
 		mcb3_dram_udqs_n   			=>  ionRAM_UDQS,  
 		mcb3_dram_udm 					=>  oRAM_UDM,     
 		mcb3_dram_dm 					=>  oRAM_LDM,
-
-		c3_p0_cmd_clk              =>  sP0_CMD_CLK,
-		c3_p0_cmd_en               =>  sP0_CMD_EN,
-		c3_p0_cmd_instr            =>  sP0_CMD_INSTR,
-		c3_p0_cmd_bl               =>  sP0_CMD_BL,
-		c3_p0_cmd_byte_addr        =>  sP0_CMD_BYTE_ADDR,
-		c3_p0_cmd_empty            =>  sP0_CMD_EMPTY,
-		c3_p0_cmd_full             =>  sP0_CMD_FULL,
-		
-		c3_p0_wr_clk               =>  sP0_WR_CLK,
-		c3_p0_wr_en                =>  sP0_WR_EN,
-		c3_p0_wr_mask              =>  sP0_WR_MASK,
-		c3_p0_wr_data              =>  sP0_WR_DATA,
-		c3_p0_wr_full              =>  sP0_WR_FULL,
-		c3_p0_wr_empty             =>  sP0_WR_EMPTY,
-		c3_p0_wr_count             =>  sP0_WR_COUNT,
-		c3_p0_wr_underrun          =>  sP0_WR_UNDERRUN,
-		c3_p0_wr_error             =>  sP0_WR_ERROR,
-		
-		c3_p0_rd_clk               =>  sP0_RD_CLK,
-		c3_p0_rd_en                =>  sP0_RD_EN,
-		c3_p0_rd_data              =>  sP0_RD_DATA,
-		c3_p0_rd_full              =>  sP0_RD_FULL,
-		c3_p0_rd_empty             =>  sP0_RD_EMPTY,
-		c3_p0_rd_count             =>  sP0_RD_COUNT,
-		c3_p0_rd_overflow          =>  sP0_RD_OVERFLOW,
-		c3_p0_rd_error             =>  sP0_RD_ERROR,
 		
 		c3_p1_cmd_clk              =>  sP1_CMD_CLK,
 		c3_p1_cmd_en               =>  sP1_CMD_EN,
@@ -262,7 +244,42 @@ begin
 		c3_p1_rd_empty             =>  sP1_RD_EMPTY,
 		c3_p1_rd_count             =>  sP1_RD_COUNT,
 		c3_p1_rd_overflow          =>  sP1_RD_OVERFLOW,
-		c3_p1_rd_error             =>  sP1_RD_ERROR
+		c3_p1_rd_error             =>  sP1_RD_ERROR,
+		
+		c3_p2_cmd_clk              =>  sP2_CMD_CLK,
+		c3_p2_cmd_en               =>  sP2_CMD_EN,
+		c3_p2_cmd_instr            =>  sP2_CMD_INSTR,
+		c3_p2_cmd_bl               =>  sP2_CMD_BL,
+		c3_p2_cmd_byte_addr        =>  sP2_CMD_BYTE_ADDR,
+		c3_p2_cmd_empty            =>  sP2_CMD_EMPTY,
+		c3_p2_cmd_full             =>  sP2_CMD_FULL,
+		
+		c3_p2_wr_clk               =>  sP2_WR_CLK,
+		c3_p2_wr_en                =>  sP2_WR_EN,
+		c3_p2_wr_mask              =>  sP2_WR_MASK,
+		c3_p2_wr_data              =>  sP2_WR_DATA,
+		c3_p2_wr_full              =>  sP2_WR_FULL,
+		c3_p2_wr_empty             =>  sP2_WR_EMPTY,
+		c3_p2_wr_count             =>  sP2_WR_COUNT,
+		c3_p2_wr_underrun          =>  sP2_WR_UNDERRUN,
+		c3_p2_wr_error             =>  sP2_WR_ERROR,
+		
+		c3_p3_cmd_clk              =>  sP3_CMD_CLK,
+		c3_p3_cmd_en               =>  sP3_CMD_EN,
+		c3_p3_cmd_instr            =>  sP3_CMD_INSTR,
+		c3_p3_cmd_bl               =>  sP3_CMD_BL,
+		c3_p3_cmd_byte_addr        =>  sP3_CMD_BYTE_ADDR,
+		c3_p3_cmd_empty            =>  sP3_CMD_EMPTY,
+		c3_p3_cmd_full             =>  sP3_CMD_FULL,
+		
+		c3_p3_rd_clk               =>  sP3_RD_CLK,
+		c3_p3_rd_en                =>  sP3_RD_EN,
+		c3_p3_rd_data              =>  sP3_RD_DATA,
+		c3_p3_rd_full              =>  sP3_RD_FULL,
+		c3_p3_rd_empty             =>  sP3_RD_EMPTY,
+		c3_p3_rd_count             =>  sP3_RD_COUNT,
+		c3_p3_rd_overflow          =>  sP3_RD_OVERFLOW,
+		c3_p3_rd_error             =>  sP3_RD_ERROR
 	);
 
 	sfc : entity work.spiFlashController
@@ -295,20 +312,20 @@ begin
 		oRD_ADDR => sFLASH_RD_ADDR,
 		oRD_COUNT => sFLASH_RD_COUNT,
 		oDONE => sDONE,
-		oCMD_EN => sP0_CMD_EN,
-		oCMD_INSTR => sP0_CMD_INSTR,
-		oCMD_BL => sP0_CMD_BL,
-		oCMD_BYTE_ADDR => sP0_CMD_BYTE_ADDR,
-		iCMD_EMPTY => sP0_CMD_EMPTY,
-		iCMD_FULL => sP0_CMD_FULL,
-		oWR_EN => sP0_WR_EN,
-		oWR_MASK => sP0_WR_MASK,
-		oWR_DATA => sP0_WR_DATA,
-		iWR_FULL => sP0_WR_FULL,
-		iWR_EMPTY => sP0_WR_EMPTY,
-		iWR_COUNT => sP0_WR_COUNT,
-		iWR_UNDERRUN => sP0_WR_UNDERRUN,
-		iWR_ERROR => sP0_WR_ERROR
+		oCMD_EN => sP2_CMD_EN,
+		oCMD_INSTR => sP2_CMD_INSTR,
+		oCMD_BL => sP2_CMD_BL,
+		oCMD_BYTE_ADDR => sP2_CMD_BYTE_ADDR,
+		iCMD_EMPTY => sP2_CMD_EMPTY,
+		iCMD_FULL => sP2_CMD_FULL,
+		oWR_EN => sP2_WR_EN,
+		oWR_MASK => sP2_WR_MASK,
+		oWR_DATA => sP2_WR_DATA,
+		iWR_FULL => sP2_WR_FULL,
+		iWR_EMPTY => sP2_WR_EMPTY,
+		iWR_COUNT => sP2_WR_COUNT,
+		iWR_UNDERRUN => sP2_WR_UNDERRUN,
+		iWR_ERROR => sP2_WR_ERROR
 	);
 	
 	CLK_ODDR2 : ODDR2            
@@ -335,28 +352,32 @@ begin
 		iRD_CLK => sGEN_CLK,
 		iRST => sRST,
 		iDONE => sDONE,
-		oCMD_EN => sP1_CMD_EN,
-		oCMD_INSTR => sP1_CMD_INSTR,
-		oCMD_BL => sP1_CMD_BL,
-		oCMD_BYTE_ADDR => sP1_CMD_BYTE_ADDR,
-		iCMD_EMPTY => sP1_CMD_EMPTY,
-		iCMD_FULL => sP1_CMD_FULL,
-		oRD_EN => sP1_RD_EN,
-		iRD_DATA => sP1_RD_DATA,
-		iRD_FULL => sP1_RD_FULL,
-		iRD_EMPTY => sP1_RD_EMPTY,
-		iRD_OVERFLOW => sP1_RD_OVERFLOW,
-		iRD_ERROR => sP1_RD_ERROR,
-		iRD_COUNT => sP1_RD_COUNT,
+		oCMD_EN => sP3_CMD_EN,
+		oCMD_INSTR => sP3_CMD_INSTR,
+		oCMD_BL => sP3_CMD_BL,
+		oCMD_BYTE_ADDR => sP3_CMD_BYTE_ADDR,
+		iCMD_EMPTY => sP3_CMD_EMPTY,
+		iCMD_FULL => sP3_CMD_FULL,
+		oRD_EN => sP3_RD_EN,
+		iRD_DATA => sP3_RD_DATA,
+		iRD_FULL => sP3_RD_FULL,
+		iRD_EMPTY => sP3_RD_EMPTY,
+		iRD_OVERFLOW => sP3_RD_OVERFLOW,
+		iRD_ERROR => sP3_RD_ERROR,
+		iRD_COUNT => sP3_RD_COUNT,
 		iVIDEO_ON => sVIDEO_ON,
 		iSTART => sSTART,
 		oRGB => oRGB
 	);
 	
+	sP1_CMD_INSTR <= (others => '0');
+	sP1_CMD_BL <= (others => '0');
+	sP1_CMD_BYTE_ADDR <= (others => '0');
+	sP1_CMD_EN <= '0';
+	sP1_RD_EN <= '0';
 	sP1_WR_EN <= '0';
 	sP1_WR_MASK <= (others => '0');
 	sP1_WR_DATA <= (others => '0');
-	sP0_RD_EN <= '0';
 	
 	onSYNC <= sH_SYNC and sV_SYNC;
 	onBLANK <= sVIDEO_ON;
@@ -370,12 +391,13 @@ begin
 
 	sINV_RST <= not inRST;
 	
-	sP0_CMD_CLK <= sCLK;
-	sP0_WR_CLK <= sCLK;
-	sP0_RD_CLK <= sCLK;
 	sP1_CMD_CLK <= sCLK;
 	sP1_WR_CLK <= sCLK;
 	sP1_RD_CLK <= sCLK;
+	sP2_CMD_CLK <= sCLK;
+	sP2_WR_CLK <= sCLK;
+	sP3_CMD_CLK <= sCLK;
+	sP3_RD_CLK <= sCLK;
 	
 	sSTART <= '1' when (sPIXEL_X = 1342 and sPIXEL_Y = 805)
 				else '0';

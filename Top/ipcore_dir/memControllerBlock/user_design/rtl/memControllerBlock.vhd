@@ -126,30 +126,6 @@ generic
    mcb3_dram_dqs_n                         : inout  std_logic;
    mcb3_dram_ck                            : out std_logic;
    mcb3_dram_ck_n                          : out std_logic;
-   c3_p0_cmd_clk                           : in std_logic;
-   c3_p0_cmd_en                            : in std_logic;
-   c3_p0_cmd_instr                         : in std_logic_vector(2 downto 0);
-   c3_p0_cmd_bl                            : in std_logic_vector(5 downto 0);
-   c3_p0_cmd_byte_addr                     : in std_logic_vector(29 downto 0);
-   c3_p0_cmd_empty                         : out std_logic;
-   c3_p0_cmd_full                          : out std_logic;
-   c3_p0_wr_clk                            : in std_logic;
-   c3_p0_wr_en                             : in std_logic;
-   c3_p0_wr_mask                           : in std_logic_vector(C3_P0_MASK_SIZE - 1 downto 0);
-   c3_p0_wr_data                           : in std_logic_vector(C3_P0_DATA_PORT_SIZE - 1 downto 0);
-   c3_p0_wr_full                           : out std_logic;
-   c3_p0_wr_empty                          : out std_logic;
-   c3_p0_wr_count                          : out std_logic_vector(6 downto 0);
-   c3_p0_wr_underrun                       : out std_logic;
-   c3_p0_wr_error                          : out std_logic;
-   c3_p0_rd_clk                            : in std_logic;
-   c3_p0_rd_en                             : in std_logic;
-   c3_p0_rd_data                           : out std_logic_vector(C3_P0_DATA_PORT_SIZE - 1 downto 0);
-   c3_p0_rd_full                           : out std_logic;
-   c3_p0_rd_empty                          : out std_logic;
-   c3_p0_rd_count                          : out std_logic_vector(6 downto 0);
-   c3_p0_rd_overflow                       : out std_logic;
-   c3_p0_rd_error                          : out std_logic;
    c3_p1_cmd_clk                           : in std_logic;
    c3_p1_cmd_en                            : in std_logic;
    c3_p1_cmd_instr                         : in std_logic_vector(2 downto 0);
@@ -173,7 +149,38 @@ generic
    c3_p1_rd_empty                          : out std_logic;
    c3_p1_rd_count                          : out std_logic_vector(6 downto 0);
    c3_p1_rd_overflow                       : out std_logic;
-   c3_p1_rd_error                          : out std_logic
+   c3_p1_rd_error                          : out std_logic;
+   c3_p2_cmd_clk                           : in std_logic;
+   c3_p2_cmd_en                            : in std_logic;
+   c3_p2_cmd_instr                         : in std_logic_vector(2 downto 0);
+   c3_p2_cmd_bl                            : in std_logic_vector(5 downto 0);
+   c3_p2_cmd_byte_addr                     : in std_logic_vector(29 downto 0);
+   c3_p2_cmd_empty                         : out std_logic;
+   c3_p2_cmd_full                          : out std_logic;
+   c3_p2_wr_clk                            : in std_logic;
+   c3_p2_wr_en                             : in std_logic;
+   c3_p2_wr_mask                           : in std_logic_vector(3 downto 0);
+   c3_p2_wr_data                           : in std_logic_vector(31 downto 0);
+   c3_p2_wr_full                           : out std_logic;
+   c3_p2_wr_empty                          : out std_logic;
+   c3_p2_wr_count                          : out std_logic_vector(6 downto 0);
+   c3_p2_wr_underrun                       : out std_logic;
+   c3_p2_wr_error                          : out std_logic;
+   c3_p3_cmd_clk                           : in std_logic;
+   c3_p3_cmd_en                            : in std_logic;
+   c3_p3_cmd_instr                         : in std_logic_vector(2 downto 0);
+   c3_p3_cmd_bl                            : in std_logic_vector(5 downto 0);
+   c3_p3_cmd_byte_addr                     : in std_logic_vector(29 downto 0);
+   c3_p3_cmd_empty                         : out std_logic;
+   c3_p3_cmd_full                          : out std_logic;
+   c3_p3_rd_clk                            : in std_logic;
+   c3_p3_rd_en                             : in std_logic;
+   c3_p3_rd_data                           : out std_logic_vector(31 downto 0);
+   c3_p3_rd_full                           : out std_logic;
+   c3_p3_rd_empty                          : out std_logic;
+   c3_p3_rd_count                          : out std_logic_vector(6 downto 0);
+   c3_p3_rd_overflow                       : out std_logic;
+   c3_p3_rd_error                          : out std_logic
   );
 end memControllerBlock;
 
@@ -223,18 +230,18 @@ component memc3_wrapper is
       C_P1_MASK_SIZE       : integer;
       C_P1_DATA_PORT_SIZE   : integer;
       C_ARB_NUM_TIME_SLOTS   : integer;
-      C_ARB_TIME_SLOT_0    : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_1    : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_2    : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_3    : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_4    : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_5    : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_6    : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_7    : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_8    : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_9    : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_10   : bit_vector(5 downto 0);
-      C_ARB_TIME_SLOT_11   : bit_vector(5 downto 0);
+      C_ARB_TIME_SLOT_0    : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_1    : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_2    : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_3    : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_4    : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_5    : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_6    : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_7    : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_8    : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_9    : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_10   : bit_vector(8 downto 0);
+      C_ARB_TIME_SLOT_11   : bit_vector(8 downto 0);
       C_MEM_TRAS           : integer;
       C_MEM_TRCD           : integer;
       C_MEM_TREFI          : integer;
@@ -318,30 +325,6 @@ component memc3_wrapper is
       mcb3_dram_dqs_n                        : inout  std_logic;
       mcb3_dram_ck                           : out  std_logic;
       mcb3_dram_ck_n                         : out  std_logic;
-      p0_cmd_clk                            : in std_logic;
-      p0_cmd_en                             : in std_logic;
-      p0_cmd_instr                          : in std_logic_vector(2 downto 0);
-      p0_cmd_bl                             : in std_logic_vector(5 downto 0);
-      p0_cmd_byte_addr                      : in std_logic_vector(29 downto 0);
-      p0_cmd_empty                          : out std_logic;
-      p0_cmd_full                           : out std_logic;
-      p0_wr_clk                             : in std_logic;
-      p0_wr_en                              : in std_logic;
-      p0_wr_mask                            : in std_logic_vector(C_P0_MASK_SIZE - 1 downto 0);
-      p0_wr_data                            : in std_logic_vector(C_P0_DATA_PORT_SIZE - 1 downto 0);
-      p0_wr_full                            : out std_logic;
-      p0_wr_empty                           : out std_logic;
-      p0_wr_count                           : out std_logic_vector(6 downto 0);
-      p0_wr_underrun                        : out std_logic;
-      p0_wr_error                           : out std_logic;
-      p0_rd_clk                             : in std_logic;
-      p0_rd_en                              : in std_logic;
-      p0_rd_data                            : out std_logic_vector(C_P0_DATA_PORT_SIZE - 1 downto 0);
-      p0_rd_full                            : out std_logic;
-      p0_rd_empty                           : out std_logic;
-      p0_rd_count                           : out std_logic_vector(6 downto 0);
-      p0_rd_overflow                        : out std_logic;
-      p0_rd_error                           : out std_logic;
       p1_cmd_clk                            : in std_logic;
       p1_cmd_en                             : in std_logic;
       p1_cmd_instr                          : in std_logic_vector(2 downto 0);
@@ -366,6 +349,37 @@ component memc3_wrapper is
       p1_rd_count                           : out std_logic_vector(6 downto 0);
       p1_rd_overflow                        : out std_logic;
       p1_rd_error                           : out std_logic;
+      p2_cmd_clk                            : in std_logic;
+      p2_cmd_en                             : in std_logic;
+      p2_cmd_instr                          : in std_logic_vector(2 downto 0);
+      p2_cmd_bl                             : in std_logic_vector(5 downto 0);
+      p2_cmd_byte_addr                      : in std_logic_vector(29 downto 0);
+      p2_cmd_empty                          : out std_logic;
+      p2_cmd_full                           : out std_logic;
+      p2_wr_clk                             : in std_logic;
+      p2_wr_en                              : in std_logic;
+      p2_wr_mask                            : in std_logic_vector(3 downto 0);
+      p2_wr_data                            : in std_logic_vector(31 downto 0);
+      p2_wr_full                            : out std_logic;
+      p2_wr_empty                           : out std_logic;
+      p2_wr_count                           : out std_logic_vector(6 downto 0);
+      p2_wr_underrun                        : out std_logic;
+      p2_wr_error                           : out std_logic;
+      p3_cmd_clk                            : in std_logic;
+      p3_cmd_en                             : in std_logic;
+      p3_cmd_instr                          : in std_logic_vector(2 downto 0);
+      p3_cmd_bl                             : in std_logic_vector(5 downto 0);
+      p3_cmd_byte_addr                      : in std_logic_vector(29 downto 0);
+      p3_cmd_empty                          : out std_logic;
+      p3_cmd_full                           : out std_logic;
+      p3_rd_clk                             : in std_logic;
+      p3_rd_en                              : in std_logic;
+      p3_rd_data                            : out std_logic_vector(31 downto 0);
+      p3_rd_full                            : out std_logic;
+      p3_rd_empty                           : out std_logic;
+      p3_rd_count                           : out std_logic_vector(6 downto 0);
+      p3_rd_overflow                        : out std_logic;
+      p3_rd_error                           : out std_logic;
       selfrefresh_enter                     : in std_logic;
       selfrefresh_mode                      : out std_logic
 
@@ -385,18 +399,18 @@ component memc3_wrapper is
    constant C3_DIVCLK_DIVIDE        : integer := 1; 
    constant C3_INCLK_PERIOD         : integer := 20000; 
    constant C3_ARB_NUM_TIME_SLOTS   : integer := 12; 
-   constant C3_ARB_TIME_SLOT_0      : bit_vector(5 downto 0) := o"01"; 
-   constant C3_ARB_TIME_SLOT_1      : bit_vector(5 downto 0) := o"10"; 
-   constant C3_ARB_TIME_SLOT_2      : bit_vector(5 downto 0) := o"01"; 
-   constant C3_ARB_TIME_SLOT_3      : bit_vector(5 downto 0) := o"10"; 
-   constant C3_ARB_TIME_SLOT_4      : bit_vector(5 downto 0) := o"01"; 
-   constant C3_ARB_TIME_SLOT_5      : bit_vector(5 downto 0) := o"10"; 
-   constant C3_ARB_TIME_SLOT_6      : bit_vector(5 downto 0) := o"01"; 
-   constant C3_ARB_TIME_SLOT_7      : bit_vector(5 downto 0) := o"10"; 
-   constant C3_ARB_TIME_SLOT_8      : bit_vector(5 downto 0) := o"01"; 
-   constant C3_ARB_TIME_SLOT_9      : bit_vector(5 downto 0) := o"10"; 
-   constant C3_ARB_TIME_SLOT_10     : bit_vector(5 downto 0) := o"01"; 
-   constant C3_ARB_TIME_SLOT_11     : bit_vector(5 downto 0) := o"10"; 
+   constant C3_ARB_TIME_SLOT_0      : bit_vector(8 downto 0) := o"123"; 
+   constant C3_ARB_TIME_SLOT_1      : bit_vector(8 downto 0) := o"231"; 
+   constant C3_ARB_TIME_SLOT_2      : bit_vector(8 downto 0) := o"312"; 
+   constant C3_ARB_TIME_SLOT_3      : bit_vector(8 downto 0) := o"123"; 
+   constant C3_ARB_TIME_SLOT_4      : bit_vector(8 downto 0) := o"231"; 
+   constant C3_ARB_TIME_SLOT_5      : bit_vector(8 downto 0) := o"312"; 
+   constant C3_ARB_TIME_SLOT_6      : bit_vector(8 downto 0) := o"123"; 
+   constant C3_ARB_TIME_SLOT_7      : bit_vector(8 downto 0) := o"231"; 
+   constant C3_ARB_TIME_SLOT_8      : bit_vector(8 downto 0) := o"312"; 
+   constant C3_ARB_TIME_SLOT_9      : bit_vector(8 downto 0) := o"123"; 
+   constant C3_ARB_TIME_SLOT_10     : bit_vector(8 downto 0) := o"231"; 
+   constant C3_ARB_TIME_SLOT_11     : bit_vector(8 downto 0) := o"312"; 
    constant C3_MEM_TRAS             : integer := 45000; 
    constant C3_MEM_TRCD             : integer := 15000; 
    constant C3_MEM_TREFI            : integer := 7800000; 
@@ -407,7 +421,7 @@ component memc3_wrapper is
    constant C3_MEM_TWTR             : integer := 7500; 
    constant C3_MEM_TYPE             : string := "DDR2"; 
    constant C3_MEM_DENSITY          : string := "2Gb"; 
-   constant C3_MEM_BURST_LEN        : integer := 8; 
+   constant C3_MEM_BURST_LEN        : integer := 4; 
    constant C3_MEM_CAS_LATENCY      : integer := 4; 
    constant C3_MEM_NUM_COL_BITS     : integer := 10; 
    constant C3_MEM_DDR1_2_ODS       : string := "FULL"; 
@@ -618,30 +632,6 @@ port map
    mcb3_dram_dqs_n                      => mcb3_dram_dqs_n,
    mcb3_dram_ck                         => mcb3_dram_ck,
    mcb3_dram_ck_n                       => mcb3_dram_ck_n,
-   p0_cmd_clk                           =>  c3_p0_cmd_clk,
-   p0_cmd_en                            =>  c3_p0_cmd_en,
-   p0_cmd_instr                         =>  c3_p0_cmd_instr,
-   p0_cmd_bl                            =>  c3_p0_cmd_bl,
-   p0_cmd_byte_addr                     =>  c3_p0_cmd_byte_addr,
-   p0_cmd_empty                         =>  c3_p0_cmd_empty,
-   p0_cmd_full                          =>  c3_p0_cmd_full,
-   p0_wr_clk                            =>  c3_p0_wr_clk,
-   p0_wr_en                             =>  c3_p0_wr_en,
-   p0_wr_mask                           =>  c3_p0_wr_mask,
-   p0_wr_data                           =>  c3_p0_wr_data,
-   p0_wr_full                           =>  c3_p0_wr_full,
-   p0_wr_empty                          =>  c3_p0_wr_empty,
-   p0_wr_count                          =>  c3_p0_wr_count,
-   p0_wr_underrun                       =>  c3_p0_wr_underrun,
-   p0_wr_error                          =>  c3_p0_wr_error,
-   p0_rd_clk                            =>  c3_p0_rd_clk,
-   p0_rd_en                             =>  c3_p0_rd_en,
-   p0_rd_data                           =>  c3_p0_rd_data,
-   p0_rd_full                           =>  c3_p0_rd_full,
-   p0_rd_empty                          =>  c3_p0_rd_empty,
-   p0_rd_count                          =>  c3_p0_rd_count,
-   p0_rd_overflow                       =>  c3_p0_rd_overflow,
-   p0_rd_error                          =>  c3_p0_rd_error,
    p1_cmd_clk                           =>  c3_p1_cmd_clk,
    p1_cmd_en                            =>  c3_p1_cmd_en,
    p1_cmd_instr                         =>  c3_p1_cmd_instr,
@@ -666,6 +656,37 @@ port map
    p1_rd_count                          =>  c3_p1_rd_count,
    p1_rd_overflow                       =>  c3_p1_rd_overflow,
    p1_rd_error                          =>  c3_p1_rd_error,
+   p2_cmd_clk                           =>  c3_p2_cmd_clk,
+   p2_cmd_en                            =>  c3_p2_cmd_en,
+   p2_cmd_instr                         =>  c3_p2_cmd_instr,
+   p2_cmd_bl                            =>  c3_p2_cmd_bl,
+   p2_cmd_byte_addr                     =>  c3_p2_cmd_byte_addr,
+   p2_cmd_empty                         =>  c3_p2_cmd_empty,
+   p2_cmd_full                          =>  c3_p2_cmd_full,
+   p2_wr_clk                            =>  c3_p2_wr_clk,
+   p2_wr_en                             =>  c3_p2_wr_en,
+   p2_wr_mask                           =>  c3_p2_wr_mask,
+   p2_wr_data                           =>  c3_p2_wr_data,
+   p2_wr_full                           =>  c3_p2_wr_full,
+   p2_wr_empty                          =>  c3_p2_wr_empty,
+   p2_wr_count                          =>  c3_p2_wr_count,
+   p2_wr_underrun                       =>  c3_p2_wr_underrun,
+   p2_wr_error                          =>  c3_p2_wr_error,
+   p3_cmd_clk                           =>  c3_p3_cmd_clk,
+   p3_cmd_en                            =>  c3_p3_cmd_en,
+   p3_cmd_instr                         =>  c3_p3_cmd_instr,
+   p3_cmd_bl                            =>  c3_p3_cmd_bl,
+   p3_cmd_byte_addr                     =>  c3_p3_cmd_byte_addr,
+   p3_cmd_empty                         =>  c3_p3_cmd_empty,
+   p3_cmd_full                          =>  c3_p3_cmd_full,
+   p3_rd_clk                            =>  c3_p3_rd_clk,
+   p3_rd_en                             =>  c3_p3_rd_en,
+   p3_rd_data                           =>  c3_p3_rd_data,
+   p3_rd_full                           =>  c3_p3_rd_full,
+   p3_rd_empty                          =>  c3_p3_rd_empty,
+   p3_rd_count                          =>  c3_p3_rd_count,
+   p3_rd_overflow                       =>  c3_p3_rd_overflow,
+   p3_rd_error                          =>  c3_p3_rd_error,
    selfrefresh_enter                    =>  c3_selfrefresh_enter,
    selfrefresh_mode                     =>  c3_selfrefresh_mode
 );
