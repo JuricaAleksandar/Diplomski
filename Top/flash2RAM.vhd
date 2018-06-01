@@ -59,7 +59,7 @@ end flash2RAM;
 
 architecture Behavioral of flash2RAM is
 
-	type tTRANSFER_STATE is (IDLE, SET_FLASH_CMD, WAIT_DATA, READ_DATA, SET_RAM_CMD, DONE);
+	type tTRANSFER_STATE is (IDLE, SET_FLASH_CMD, DUMMY, WAIT_DATA, READ_DATA, SET_RAM_CMD, DONE);
 	signal sSTATE, sNEXT_STATE : tTRANSFER_STATE;
 
 	signal sWR_DATA : STD_LOGIC_VECTOR (23 downto 0);
@@ -123,7 +123,7 @@ begin
 	-- Flash address generator
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
-			sFLASH_ADDR <= (22 => '1', others => '0');
+			sFLASH_ADDR <= (22 => '1', 1 downto 0 => '1', others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sFLASH_ADDR_EN = '1') then
 				sFLASH_ADDR <= sFLASH_ADDR + sRD_COUNT;
@@ -158,7 +158,7 @@ begin
 	process(sSTATE, iREADY, iDATA_VALID, sPIXEL_COUNTER, sBYTE_COUNTER, sPOS_Y) begin
 		case sSTATE is
 			when IDLE =>
-				if(sPOS_Y = 512) then
+				if(sPOS_Y = 512) then 
 					sNEXT_STATE <= DONE;
 				else
 					if(iREADY = '1') then
@@ -169,6 +169,9 @@ begin
 				end if;
 				
 			when SET_FLASH_CMD =>
+				sNEXT_STATE <= DUMMY;
+				
+			when DUMMY =>
 				sNEXT_STATE <= WAIT_DATA;
 				
 			when WAIT_DATA =>
@@ -215,7 +218,7 @@ begin
 				oCMD_EN <= '0';
 				sREG_EN <= '0';
 				sRAM_ADDR_EN <= '0';
-				sFLASH_ADDR_EN <= '1';
+				sFLASH_ADDR_EN <= '0';
 				sCLR_REG <= '0';
 				
 			when WAIT_DATA =>
@@ -225,6 +228,15 @@ begin
 				sREG_EN <= '0';
 				sRAM_ADDR_EN <= '0';
 				sFLASH_ADDR_EN <= '0';
+				sCLR_REG <= '0';
+				
+			when DUMMY =>
+				oRD_START <= '0';
+				oDONE <= '0';
+				oCMD_EN <= '0';
+				sREG_EN <= '0';
+				sRAM_ADDR_EN <= '0';
+				sFLASH_ADDR_EN <= '1';
 				sCLR_REG <= '0';
 				
 			when READ_DATA =>

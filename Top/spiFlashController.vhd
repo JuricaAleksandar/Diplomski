@@ -92,6 +92,9 @@ architecture Behavioral of spiFlashController is
 	signal sDATA_VALID_REG : STD_LOGIC;
 	signal sRD_COUNT : STD_LOGIC_VECTOR (7 downto 0);
 	
+	attribute clock_signal : string;
+	attribute clock_signal of sCLK : signal is "yes";
+	
 begin
 	
 	sOUT <= "000" & sMOSI_SHREG(31);
@@ -368,17 +371,19 @@ begin
 		end case;
 	end process;
 
-	process(sSTATE) begin
+	process(sSTATE, iRD_ADDR) begin
+		sT <= (others => '1');
 		oREADY <= '0';
+		sREC_STATUS <= '0';
+		sREC_DATA <= '0';
+		sCONTROL <= '0';
+		sCNT_EN <= '0';
+		sMOSI_REG_IN <= (others => '0');
+				
 		case sSTATE is		
 			when IDLE|IDLE1|IDLE2 =>
-				sT <= (others => '1');
 				onCS <= '1';
 				sEN <= '0';
-				sCONTROL <= '0';
-				sMOSI_REG_IN <= (others => '0');
-				sREC_STATUS <= '0';
-				sREC_DATA <= '0';
 				sCNT_EN <= '1';
 				
 			when WREN_CMD =>
@@ -387,29 +392,16 @@ begin
 				sEN <= '0';
 				sCONTROL <= '1';
 				sMOSI_REG_IN <= x"06000000"; -- 0x06 CMD
-				sREC_STATUS <= '0';
-				sREC_DATA <= '0';
-				sCNT_EN <= '0';
 				
 			when SEND|SEND1|SEND2|SEND3 =>
 				sT <= (0 => '0', others => '1');
 				onCS <= '0';
 				sEN <= '1';
-				sCONTROL <= '0';
-				sMOSI_REG_IN <= (others => '0');
-				sREC_STATUS <= '0';
-				sREC_DATA <= '0';
-				sCNT_EN <= '0';
 				
 			when END_CMD =>
 				sT <= (0 => '0', others => '1');
 				onCS <= '0';
 				sEN <= '0';
-				sCONTROL <= '0';
-				sMOSI_REG_IN <= (others => '0');
-				sREC_STATUS <= '0';
-				sREC_DATA <= '0';
-				sCNT_EN <= '0';
 			
 			when RDSR_CMD =>
 				sT <= (0 => '0', others => '1');
@@ -417,29 +409,16 @@ begin
 				sEN <= '0';
 				sCONTROL <= '1';
 				sMOSI_REG_IN <= x"05000000"; -- 0x05 CMD
-				sREC_STATUS <= '0';
-				sREC_DATA <= '0';
-				sCNT_EN <= '0';
 			
 			when RECEIVE1 =>
-				sT <= (others => '1');
 				onCS <= '0';
 				sEN <= '1';
-				sCONTROL <= '0';
-				sMOSI_REG_IN <= (others => '0');
 				sREC_STATUS <= '1';
-				sREC_DATA <= '0';
-				sCNT_EN <= '0';
 			
 			when END_CMD1 =>
-				sT <= (others => '1');
 				onCS <= '0';
 				sEN <= '0';
-				sCONTROL <= '0';
-				sMOSI_REG_IN <= (others => '0');
 				sREC_STATUS <= '1';
-				sREC_DATA <= '0';
-				sCNT_EN <= '0';
 			
 			when WRSR_CMD =>
 				sT <= (0 => '0', others => '1');
@@ -447,9 +426,6 @@ begin
 				sEN <= '0';
 				sCONTROL <= '1';
 				sMOSI_REG_IN <= x"01400000"; -- 0x01 CMD 0x40 DATA
-				sREC_STATUS <= '0';
-				sREC_DATA <= '0';
-				sCNT_EN <= '0';
 				
 			when QREAD_CMD =>
 				sT <= (0 => '0', others => '1');
@@ -457,49 +433,24 @@ begin
 				sEN <= '0';
 				sCONTROL <= '1';
 				sMOSI_REG_IN <= x"6B" & iRD_ADDR; -- 0x6B CMD Input DATA
-				sREC_STATUS <= '0';
-				sREC_DATA <= '0';
-				sCNT_EN <= '0';
 			
 			when DUMMY =>
-				sT <= (others => '1');
 				onCS <= '0';
 				sEN <= '1';
-				sCONTROL <= '0';
-				sMOSI_REG_IN <= (others => '0');
-				sREC_STATUS <= '0';
-				sREC_DATA <= '0';
-				sCNT_EN <= '0';
 				
 			when RECEIVE2 =>
-				sT <= (others => '1');
 				onCS <= '0';
 				sEN <= '1';
-				sCONTROL <= '0';
-				sMOSI_REG_IN <= (others => '0');
-				sREC_STATUS <= '0';
 				sREC_DATA <= '1';
-				sCNT_EN <= '0';
 			
 			when END_CMD2 =>
-				sT <= (others => '1');
 				onCS <= '0';
 				sEN <= '0';
-				sCONTROL <= '0';
-				sMOSI_REG_IN <= (others => '0');
-				sREC_STATUS <= '0';
 				sREC_DATA <= '1';
-				sCNT_EN <= '0';
 				
 			when others =>
-				sT <= (others => '1');
 				onCS <= '1';
 				sEN <= '0';
-				sCONTROL <= '0';
-				sMOSI_REG_IN <= (others => '0');
-				sREC_STATUS <= '0';
-				sREC_DATA <= '0';
-				sCNT_EN <= '0';
 				oREADY <= '1';
 				
 		end case;
