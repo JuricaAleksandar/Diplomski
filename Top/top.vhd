@@ -64,8 +64,8 @@ entity top is
 			  onCS : out  STD_LOGIC;
            ioSIO : inout  STD_LOGIC_VECTOR (3 downto 0);
            onRESET : out  STD_LOGIC;
---			  iFILTER_MODE : in STD_LOGIC_VECTOR (1 downto 0);
-			  oLED : out STD_LOGIC_VECTOR (4 downto 0));
+			  iFILTER_MODE : in STD_LOGIC_VECTOR (1 downto 0);
+			  iSPLIT_SCREEN : in STD_LOGIC);
 end top;
 
 architecture Behavioral of top is
@@ -267,7 +267,6 @@ begin
 	port map(
 		iCLK => sCLK,
 		iRST => sRST,
-		iCALIB_DONE => sCALIB_DONE,
 		iRD_EN => sFLASH_RD_EN,
 		iRD_START => sFLASH_RD_START,
 		iRD_ADDR => sFLASH_RD_ADDR,
@@ -285,6 +284,7 @@ begin
 	port map(
 		iCLK => sCLK,
 		iRST => sRST,
+		iCALIB_DONE => sCALIB_DONE,
 		iREADY => sFLASH_READY,
 		iDATA_VALID => sFLASH_DATA_VALID,
 		iDATA => sFLASH_DATA,
@@ -314,7 +314,7 @@ begin
 		iCLK => sCLK,
 		iRST => sRST,
 		iSTART => sFLASH_DONE,
-		iMODE => "11",
+		iMODE => iFILTER_MODE,
 		oCMD_EN => sP1_CMD_EN,
 		oCMD_INSTR => sP1_CMD_INSTR,
 		oCMD_BL => sP1_CMD_BL,

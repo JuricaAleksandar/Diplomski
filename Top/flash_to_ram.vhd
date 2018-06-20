@@ -33,6 +33,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity flash_to_ram is
     Port ( iCLK : in  STD_LOGIC;
            iRST : in  STD_LOGIC;
+			  iCALIB_DONE : in STD_LOGIC;
            iREADY : in  STD_LOGIC;
            iDATA_VALID : in  STD_LOGIC;
            iDATA : in  STD_LOGIC_VECTOR (7 downto 0);
@@ -59,7 +60,17 @@ end flash_to_ram;
 
 architecture Behavioral of flash_to_ram is
 
-	type tTRANSFER_STATE is (IDLE, SET_FLASH_CMD, DUMMY, WAIT_DATA, READ_DATA, SET_RAM_CMD, DONE);
+	type tTRANSFER_STATE is
+	(
+		IDLE,
+		SET_FLASH_CMD,
+		INC_FLASH_ADDR,
+		WAIT_DATA,
+		READ_DATA,
+		SET_RAM_CMD,
+		DONE
+	);
+	
 	signal sSTATE, sNEXT_STATE : tTRANSFER_STATE;
 
 	signal sWR_DATA : STD_LOGIC_VECTOR (23 downto 0);
@@ -69,7 +80,7 @@ architecture Behavioral of flash_to_ram is
 	signal sRD_COUNT : STD_LOGIC_VECTOR (7 downto 0);
 	signal sFLASH_ADDR : STD_LOGIC_VECTOR (23 downto 0);
 	signal sPOS_X : STD_LOGIC_VECTOR (3 downto 0);
-	signal sPOS_Y : STD_LOGIC_VECTOR (9 downto 0);
+	signal sPOS_Y : STD_LOGIC_VECTOR (8 downto 0);
 	signal sFLASH_ADDR_EN : STD_LOGIC;
 	signal sRAM_ADDR_EN : STD_LOGIC;
 	signal sCLR_REG : STD_LOGIC;
@@ -155,23 +166,19 @@ begin
 		end if;
 	end process;
 
-	process(sSTATE, iREADY, iDATA_VALID, sPIXEL_COUNTER, sBYTE_COUNTER, sPOS_Y) begin
+	process(sSTATE, iREADY, iCALIB_DONE, iDATA_VALID, sPIXEL_COUNTER, sBYTE_COUNTER, sPOS_Y) begin
 		case sSTATE is
 			when IDLE =>
-				if(sPOS_Y = 512) then 
-					sNEXT_STATE <= DONE;
+				if(iREADY = '1' and iCALIB_DONE = '1') then
+					sNEXT_STATE <= SET_FLASH_CMD;
 				else
-					if(iREADY = '1') then
-						sNEXT_STATE <= SET_FLASH_CMD;
-					else
-						sNEXT_STATE <= IDLE;
-					end if;
+					sNEXT_STATE <= IDLE;
 				end if;
 				
 			when SET_FLASH_CMD =>
-				sNEXT_STATE <= DUMMY;
+				sNEXT_STATE <= INC_FLASH_ADDR;
 				
-			when DUMMY =>
+			when INC_FLASH_ADDR =>
 				sNEXT_STATE <= WAIT_DATA;
 				
 			when WAIT_DATA =>
@@ -193,7 +200,11 @@ begin
 				end if;
 				
 			when SET_RAM_CMD =>
-				sNEXT_STATE <= IDLE;
+				if(sPOS_Y = 511) then 
+					sNEXT_STATE <= DONE;
+				else
+					sNEXT_STATE <= IDLE;
+				end if;
 			
 			when others =>
 				sNEXT_STATE <= DONE;
@@ -216,7 +227,7 @@ begin
 			when SET_FLASH_CMD =>
 				oRD_START <= '1';
 				
-			when DUMMY =>
+			when INC_FLASH_ADDR =>
 				sFLASH_ADDR_EN <= '1';
 				
 			when READ_DATA =>
@@ -238,7 +249,7 @@ begin
 	oRD_EN <= '1';
 	oRD_COUNT <= sRD_COUNT;
 	sRD_COUNT <= (6 downto 5 => '1', others => '0');
-	oCMD_BYTE_ADDR <= "000000" & sPOS_Y & "000" & sPOS_X & "0000000";
+	oCMD_BYTE_ADDR <= "0000000" & sPOS_Y & "000" & sPOS_X & "0000000";
 	oCMD_INSTR <= (others => '0');
 	oCMD_BL <= (4 downto 0 => '1', others => '0');
 	oWR_MASK <= (others => '0');

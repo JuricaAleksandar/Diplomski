@@ -32,7 +32,6 @@ use UNISIM.VComponents.all;
 entity spi_flash_controller is
     Port ( iCLK : in  STD_LOGIC;
            iRST : in  STD_LOGIC;
-			  iCALIB_DONE : in STD_LOGIC;
 			  iRD_EN : in STD_LOGIC;
 			  iRD_START : in STD_LOGIC;
 			  iRD_ADDR : in STD_LOGIC_VECTOR (23 downto 0);
@@ -270,7 +269,7 @@ begin
 		end if;
 	end process;
 
-	process(sSTATE, sBIT_COUNTER, sMISO_SHREG,  sCOUNTER, iRD_START, sRD_COUNT, iCALIB_DONE) begin
+	process(sSTATE, sBIT_COUNTER, sMISO_SHREG,  sCOUNTER, iRD_START, sRD_COUNT) begin
 		case sSTATE is			
 			when RESET_SETUP =>
 				if(sCOUNTER = 3) then
@@ -294,11 +293,7 @@ begin
 				end if;
 					
 			when IDLE =>
-				if(iCALIB_DONE = '1') then
-					sNEXT_STATE <= WREN_CMD;
-				else
-					sNEXT_STATE <= IDLE;
-				end if;
+				sNEXT_STATE <= WREN_CMD;
 					
 			when WREN_CMD =>
 				sNEXT_STATE <= SEND;
