@@ -42,7 +42,8 @@ ARCHITECTURE behavior OF spi_flash_controller_tb IS
     COMPONENT spi_flash_controller
     PORT(
          iCLK : IN  std_logic;
-         inRST : IN  std_logic;
+         iRST : IN  std_logic;
+			iCALIB_DONE : in STD_LOGIC;
 			iRD_EN : in STD_LOGIC;
 			iRD_START : in STD_LOGIC;
 			iRD_ADDR : in STD_LOGIC_VECTOR (23 downto 0);
@@ -71,11 +72,12 @@ ARCHITECTURE behavior OF spi_flash_controller_tb IS
 
    --Inputs
    signal iCLK : std_logic := '0';
-   signal inRST : std_logic := '0';
+   signal iRST : std_logic := '1';
 	signal iRD_EN : STD_LOGIC;
 	signal iRD_START : STD_LOGIC;
 	signal iRD_ADDR : STD_LOGIC_VECTOR (23 downto 0);
 	signal iRD_COUNT : STD_LOGIC_VECTOR (7 downto 0);
+	signal iCALIB_DONE : STD_LOGIC;
 	
 	--BiDirs
    signal ioSIO : std_logic_vector(3 downto 0);
@@ -96,7 +98,8 @@ BEGIN
 	-- Instantiate the Unit Under Test (UUT)
    uut: spi_flash_controller PORT MAP (
           iCLK => iCLK,
-          inRST => inRST,
+          iRST => iRST,
+			 iCALIB_DONE => iCALIB_DONE,
 			 iRD_EN => iRD_EN,
 			 iRD_START => iRD_START,
 			 iRD_ADDR => iRD_ADDR,
@@ -134,22 +137,28 @@ BEGIN
    -- Stimulus process
    stim_proc: process
    begin	
+		iCALIB_DONE <= '1';
 		iRD_EN <= '0';
 		iRD_START <= '0';
 		iRD_ADDR <= (others => '0');
 		iRD_COUNT <= (others => '0');
-      inRST <= '0';
+      iRST <= '1';
       wait for 300 us;	
-		inRST <= '1';
-		wait for 20 us;
+		iRST <= '0';
+		wait until oREADY = '1';
 		iRD_START <= '1';
-		iRD_ADDR <= (others => '0');
+		iRD_ADDR <= x"400000";
 		iRD_COUNT <= (6 downto 5 => '1', others => '0');
-		wait for iCLK_period;
+		wait for 2*iCLK_period;
 		iRD_ADDR <= (others => '0');
 		iRD_COUNT <= (others => '0');
 		iRD_START <= '0';
 		iRD_EN <= '1';
+		wait until oREADY = '1';
+		wait for 100us;
+		iRST <= '1';
+		wait for 300 us;
+		iRST <= '0';
       wait;
    end process;
 

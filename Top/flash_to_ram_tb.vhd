@@ -210,11 +210,14 @@ BEGIN
    stim_proc: process
    begin		
       iRST <= '1';
-		iCALIB_DONE <= '0';
+		iCALIB_DONE <= '1';
       wait for 300 us;	
 		iRST <= '0';
-		wait for 50 us;
-		iCALIB_DONE <= '1';
+		wait until oDONE = '1';
+		wait for 2*iCLK_period;
+		iRST <= '1';
+		wait for 2*iCLK_period;
+		iRST <= '0';
 		wait;
    end process;
 

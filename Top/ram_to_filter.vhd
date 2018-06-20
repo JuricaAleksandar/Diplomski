@@ -126,7 +126,8 @@ begin
 	
 	oCMD_BYTE_ADDR <= "0000000" & sPOS_Y & "000" & sPOS_X & "00";
 	
-	oCMD_INSTR <= "001";
+	oCMD_INSTR <= "011" when iMODE = "11" or iMODE = "10"
+		else "001";
 	
 	--- Buffer address generator
 	process(iCLK) begin

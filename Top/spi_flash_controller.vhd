@@ -50,6 +50,9 @@ architecture Behavioral of spi_flash_controller is
 
 	type tREADER_STATE is 
 	(
+		RESET_SETUP,
+		RESETTING,
+		RESET_RECOVERY,
 		IDLE,
 		WREN_CMD,
 		SEND,
@@ -80,12 +83,12 @@ architecture Behavioral of spi_flash_controller is
 	signal sCONTROL : STD_LOGIC;
 	signal sEN : STD_LOGIC;
 	signal sBIT_COUNTER : STD_LOGIC_VECTOR (8 downto 0);
-	signal sCLK : STD_LOGIC;
-	signal snCLK : STD_LOGIC;
+	signal sSPI_CLK : STD_LOGIC;
+	signal snSPI_CLK : STD_LOGIC;
 	signal sMISO_SHREG : STD_LOGIC_VECTOR (7 downto 0);
 	signal sREC_STATUS : STD_LOGIC;
 	signal sREC_DATA : STD_LOGIC;
-	signal sCOUNTER : STD_LOGIC_VECTOR (3 downto 0);
+	signal sCOUNTER : STD_LOGIC_VECTOR (23 downto 0); ---- 3 downto 0
 	signal sCNT_EN : STD_LOGIC;
 	signal sDATA : STD_LOGIC_VECTOR (7 downto 0);
 	signal sDATA_VALID : STD_LOGIC;
@@ -93,13 +96,12 @@ architecture Behavioral of spi_flash_controller is
 	signal sRD_COUNT : STD_LOGIC_VECTOR (7 downto 0);
 	
 	attribute clock_signal : string;
-	attribute clock_signal of sCLK : signal is "yes";
+	attribute clock_signal of sSPI_CLK : signal is "yes";
 	
 begin
 	
 	sOUT <= "000" & sMOSI_SHREG(31);
-	snCLK <= not sCLK;
-	onRESET <= '1';
+	snSPI_CLK <= not sSPI_CLK;
 	oDATA_VALID <= sDATA_VALID_REG;
 	oDATA <= sDATA;
 	
@@ -113,8 +115,8 @@ begin
 	port map                       
 	(
 		Q              =>  oSCLK,
-		C0             =>  sCLK,
-		C1             =>  snCLK,
+		C0             =>  sSPI_CLK,
+		C1             =>  snSPI_CLK,
 		CE             =>  '1',
 		D0             =>  '1',
 		D1             =>  '0',
@@ -186,12 +188,12 @@ begin
 	-- SPI clock generator
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
-			sCLK <= '0';
+			sSPI_CLK <= '0';
 		elsif(iCLK'event and iCLK = '1') then
 			if(sEN = '1') then
-				sCLK <= not sCLK;
+				sSPI_CLK <= not sSPI_CLK;
 			else
-				sCLK <= '0';
+				sSPI_CLK <= '0';
 			end if;
 		end if;
 	end process;
@@ -202,7 +204,7 @@ begin
 			sMOSI_SHREG <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sCONTROL = '0') then
-				if(sCLK = '1') then
+				if(sSPI_CLK = '1') then
 					sMOSI_SHREG <= sMOSI_SHREG(30 downto 0) & '0';
 				end if;
 			else
@@ -216,7 +218,7 @@ begin
 		if(iRST = '1') then
 			sMISO_SHREG <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
-			if(sCLK = '1') then
+			if(sSPI_CLK = '1') then
 				if (sREC_STATUS = '1') then
 					sMISO_SHREG <= sMISO_SHREG(6 downto 0) & sIN(1);
 				elsif (sREC_DATA = '1') then
@@ -232,7 +234,7 @@ begin
 			sBIT_COUNTER <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sEN = '1') then
-				if(sCLK = '0') then
+				if(sSPI_CLK = '0') then
 					sBIT_COUNTER <= sBIT_COUNTER + 1;
 				end if;
 			else
@@ -262,14 +264,35 @@ begin
 	-- Flash reader automate
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
-			sSTATE <= IDLE;
+			sSTATE <= RESET_SETUP;
 		elsif(iCLK'event and iCLK = '1') then
 			sSTATE <= sNEXT_STATE;
 		end if;
 	end process;
 
 	process(sSTATE, sBIT_COUNTER, sMISO_SHREG,  sCOUNTER, iRD_START, sRD_COUNT, iCALIB_DONE) begin
-		case sSTATE is
+		case sSTATE is			
+			when RESET_SETUP =>
+				if(sCOUNTER = 3) then
+					sNEXT_STATE <= RESETTING;
+				else
+					sNEXT_STATE <= RESET_SETUP;
+				end if;
+			
+			when RESETTING =>
+				if(sCOUNTER = 1010) then
+					sNEXT_STATE <= RESET_RECOVERY;
+				else
+					sNEXT_STATE <= RESETTING;
+				end if;
+			
+			when RESET_RECOVERY =>
+				if(sCOUNTER = 10002000) then
+					sNEXT_STATE <= IDLE;
+				else
+					sNEXT_STATE <= RESET_RECOVERY;
+				end if;
+					
 			when IDLE =>
 				if(iCALIB_DONE = '1') then
 					sNEXT_STATE <= WREN_CMD;
@@ -315,12 +338,16 @@ begin
 				end if;
 				
 			when END_CMD1 =>
-				if(sMISO_SHREG(1) = '1') then
-					sNEXT_STATE <= IDLE2;
-				elsif(sMISO_SHREG(6) = '1' and sMISO_SHREG(0) = '0') then
-					sNEXT_STATE <= READY;
+				if(sMISO_SHREG(0) = '0') then
+					if(sMISO_SHREG(1) = '1') then
+						sNEXT_STATE <= IDLE2;
+					elsif(sMISO_SHREG(6) = '1') then
+						sNEXT_STATE <= READY;
+					else
+						sNEXT_STATE <= IDLE;
+					end if;
 				else
-					sNEXT_STATE <= IDLE;
+					sNEXT_STATE <= IDLE1;
 				end if;
 				
 			when IDLE2 =>
@@ -381,12 +408,19 @@ begin
 		sCONTROL <= '0';
 		sCNT_EN <= '0';
 		sMOSI_REG_IN <= (others => '0');
-				
+		onRESET <= '1';
+		
 		case sSTATE is		
-			when IDLE|IDLE1|IDLE2 =>
+			when IDLE|IDLE1|IDLE2|RESET_SETUP|RESET_RECOVERY =>
 				onCS <= '1';
 				sEN <= '0';
 				sCNT_EN <= '1';
+				
+			when RESETTING =>
+				onCS <= '1';
+				sEN <= '0';
+				sCNT_EN <= '1';
+				onRESET <= '0';
 				
 			when WREN_CMD =>
 				sT <= (0 => '0', others => '1');

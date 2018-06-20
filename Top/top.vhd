@@ -53,17 +53,19 @@ entity top is
 			  ioRAM_DQ : inout STD_LOGIC_VECTOR (15 downto 0);
 			  ioRZQ : inout STD_LOGIC;
 			  ioZIO : inout STD_LOGIC;
-		     onBLANK : out STD_LOGIC; 
+		     onBLANK : out STD_LOGIC;
 			  onSYNC : out STD_LOGIC;
 			  onPSAVE : out STD_LOGIC;
 		     oH_SYNC : out STD_LOGIC;
 			  oV_SYNC : out STD_LOGIC;
 			  oRGB : out STD_LOGIC_VECTOR (23 downto 0);
 			  oVGA_CLK : out STD_LOGIC;
-			  oSCLK : OUT  std_logic;
-			  onCS : OUT  std_logic;
-           ioSIO : INOUT  std_logic_vector(3 downto 0);
-           onRESET : OUT  std_logic);
+			  oSCLK : out  STD_LOGIC;
+			  onCS : out  STD_LOGIC;
+           ioSIO : inout  STD_LOGIC_VECTOR (3 downto 0);
+           onRESET : out  STD_LOGIC;
+--			  iFILTER_MODE : in STD_LOGIC_VECTOR (1 downto 0);
+			  oLED : out STD_LOGIC_VECTOR (4 downto 0));
 end top;
 
 architecture Behavioral of top is
@@ -71,7 +73,6 @@ architecture Behavioral of top is
 	signal sINV_RST : STD_LOGIC;
 	signal sCLK : STD_LOGIC;
 	signal sRST : STD_LOGIC;
-	signal sWR_RGB : STD_LOGIC_VECTOR (23 downto 0);
 	signal sCALIB_DONE : STD_LOGIC;
 	
 	--- Port 1 command signals ---
@@ -145,7 +146,7 @@ architecture Behavioral of top is
 
 	signal sLOCKED : STD_LOGIC;
 	signal sGEN_CLK : STD_LOGIC;
-	signal snPLL_CLK : STD_LOGIC;
+	signal snGEN_CLK : STD_LOGIC;
 	
 	signal sPIXEL_Y, sPIXEL_X : STD_LOGIC_VECTOR(10 downto 0);
 	signal sVIDEO_ON, sH_SYNC, sV_SYNC : STD_LOGIC;
@@ -162,12 +163,16 @@ architecture Behavioral of top is
 	signal sFLASH_DATA_VALID : STD_LOGIC;
 	signal sFLASH_DATA : STD_LOGIC_VECTOR (7 downto 0);
 	
+	signal sLED : STD_LOGIC;
+	
 begin
 	
+	oLED <= sLED & sFILTER_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
+	
 	imcb : entity work.memControllerBlock
-	generic map(
-			C3_SIMULATION => "TRUE"
-	)
+--	generic map(
+--			C3_SIMULATION => "TRUE"
+--	)
 	port map(
 		c3_sys_clk_p  					=>  iCLK_DIFF_P,
 		c3_sys_clk_n    				=>  iCLK_DIFF_N,
@@ -387,7 +392,7 @@ begin
 	(
 		Q              =>  oVGA_CLK,
 		C0             =>  sGEN_CLK,
-		C1             =>  snPLL_CLK,
+		C1             =>  snGEN_CLK,
 		CE             =>  '1',
 		D0             =>  '1',
 		D1             =>  '0',
@@ -403,7 +408,7 @@ begin
 	
 	onRAM_CS <= '0';
 
-	snPLL_CLK <= not sGEN_CLK;
+	snGEN_CLK <= not sGEN_CLK;
 
 	sINV_RST <= not inRST;
 	
@@ -417,6 +422,14 @@ begin
 	
 	sSTART <= '1' when (sPIXEL_X = 1342 and sPIXEL_Y = 805)
 				else '0';
+	
+	process(sCLK, sRST) begin
+		if(sRST = '1') then
+			sLED <= '0';
+		elsif(sCLK'event and sCLK = '1') then
+			sLED <= '1';
+		end if;
+	end process;
 	
 end Behavioral;
 
