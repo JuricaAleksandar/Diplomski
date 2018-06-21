@@ -65,7 +65,8 @@ entity top is
            ioSIO : inout  STD_LOGIC_VECTOR (3 downto 0);
            onRESET : out  STD_LOGIC;
 			  iFILTER_MODE : in STD_LOGIC_VECTOR (1 downto 0);
-			  iSPLIT_SCREEN : in STD_LOGIC);
+			  iSPLIT_SCREEN : in STD_LOGIC;
+			  oLED : out STD_LOGIC_VECTOR (3 downto 0));
 end top;
 
 architecture Behavioral of top is
@@ -163,11 +164,9 @@ architecture Behavioral of top is
 	signal sFLASH_DATA_VALID : STD_LOGIC;
 	signal sFLASH_DATA : STD_LOGIC_VECTOR (7 downto 0);
 	
-	signal sLED : STD_LOGIC;
-	
 begin
 	
-	oLED <= sLED & sFILTER_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
+	oLED <= sFILTER_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
 	
 	imcb : entity work.memControllerBlock
 --	generic map(
@@ -412,6 +411,7 @@ begin
 
 	sINV_RST <= not inRST;
 	
+	--- SDRAM controller port clocks
 	sP1_CMD_CLK <= sCLK;
 	sP1_WR_CLK <= sCLK;
 	sP1_RD_CLK <= sCLK;
@@ -422,14 +422,6 @@ begin
 	
 	sSTART <= '1' when (sPIXEL_X = 1342 and sPIXEL_Y = 805)
 				else '0';
-	
-	process(sCLK, sRST) begin
-		if(sRST = '1') then
-			sLED <= '0';
-		elsif(sCLK'event and sCLK = '1') then
-			sLED <= '1';
-		end if;
-	end process;
 	
 end Behavioral;
 

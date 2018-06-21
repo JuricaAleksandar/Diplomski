@@ -57,7 +57,17 @@ architecture Behavioral of pixel_buffer is
 	constant H_RESOLUTION : natural := 512;
 	constant V_RESOLUTION : natural := 512;
 
-	type tREAD_STATE is (IDLE, SET_CMD, WAIT_UPDATE, WAIT_DATA, WAIT_FIFO);
+	type tREAD_STATE is
+	(
+		IDLE,
+		SET_CMD,
+		WAIT_UPDATE,
+		WAIT_DATA,
+		WAIT_FIFO,
+		WAIT_EMPTY,
+		RST_ALL
+	);
+	
 	signal sSTATE, sNEXT_STATE : tREAD_STATE;
 
 	signal sFIFO_FULL : STD_LOGIC;
@@ -71,6 +81,8 @@ architecture Behavioral of pixel_buffer is
 	signal sFIFO_BURST_COUNT : STD_LOGIC_VECTOR(3 downto 0);
 	signal sREAD_COUNT : STD_LOGIC_VECTOR(2 downto 0);
 	signal sBURST_READ : STD_LOGIC;
+	signal sFIFI_RD_EN_CLR : STD_LOGIC;
+	signal sPOS_CLR : STD_LOGIC;
 	
 begin
 		
@@ -90,6 +102,8 @@ begin
 		elsif(iRD_CLK'event and iRD_CLK = '1') then
 			if(sFIFO_FULL = '1' and iSTART = '1' and sFIFO_EMPTY = '0') then
 				sFIFO_RD_EN <= '1';
+			elsif(sFIFI_RD_EN_CLR = '1') then
+				sFIFO_RD_EN <= '0';
 			end if;
 		end if;
 	end process;
@@ -149,6 +163,9 @@ begin
 				else
 					sPOS_X <= sPOS_X + 1;
 				end if;
+			elsif(sPOS_CLR = '1') then
+				sPOS_X <= (others => '0');
+				sPOS_Y <= (others => '0');
 			end if;
 		end if;
 	end process;
@@ -162,7 +179,7 @@ begin
 		end if;
 	end process;
 	
-	process(sSTATE, sFIFO_BURST_COUNT, iCMD_FULL, sFIFO_FULL, iDONE) begin
+	process(sSTATE, sFIFO_BURST_COUNT, iCMD_FULL, sFIFO_FULL, sFIFO_EMPTY, iDONE, iRD_EMPTY) begin
 		case sSTATE is
 			when IDLE =>
 				if(sFIFO_FULL = '0' and iDONE = '1') then
@@ -172,7 +189,21 @@ begin
 				end if;
 				
 			when SET_CMD =>
-				sNEXT_STATE <= WAIT_UPDATE;
+				if(iDONE = '0') then
+					sNEXT_STATE <= WAIT_EMPTY;
+				else
+					sNEXT_STATE <= WAIT_UPDATE;
+				end if;
+			
+			when WAIT_EMPTY =>
+				if(iRD_EMPTY = '1' and sFIFO_EMPTY = '1') then
+					sNEXT_STATE <= RST_ALL;
+				else
+					sNEXT_STATE <= WAIT_EMPTY;
+				end if;
+				
+			when RST_ALL =>
+				sNEXT_STATE <= IDLE;
 				
 			when WAIT_UPDATE =>
 				sNEXT_STATE <= WAIT_DATA;
@@ -203,10 +234,20 @@ begin
 			when SET_CMD =>
 				oCMD_EN <= '1';
 				sPOS_WE <= '1';
+				sFIFI_RD_EN_CLR <= '0';
+				sPOS_CLR <= '0';
+				
+			when RST_ALL =>
+				oCMD_EN <= '0';
+				sPOS_WE <= '0';
+				sFIFI_RD_EN_CLR <= '1';
+				sPOS_CLR <= '1';
 				
 			when others =>
 				oCMD_EN <= '0';
 				sPOS_WE <= '0';
+				sFIFI_RD_EN_CLR <= '0';
+				sPOS_CLR <= '0';
 				
 		end case;
 	end process;

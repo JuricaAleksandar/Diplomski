@@ -100,6 +100,7 @@ architecture Behavioral of ram_to_filter is
 	signal sREAD_PIX_RST : STD_LOGIC;
 	signal sBUFFER_ADDR : STD_LOGIC_VECTOR (3 downto 0);
 	signal sBUF_ADDR_RST : STD_LOGIC;
+	signal sPADDING : STD_LOGIC_VECTOR (23 downto 0);
 	
 begin
 
@@ -112,9 +113,8 @@ begin
 		else (others => '0');
 		
 	sCMD_COUNT <= x"3" when iMODE = "11"
-		else x"1" when iMODE = "01"
-		else x"9" when iMODE = "10"
-		else x"0";
+		else x"1" when iMODE = "01" or iMODE = "00"
+		else x"9";
 	
 	sPOS_X_OFFSET <= (0 => '1', others => '0') when iMODE = "11"
 		else (2 => '1', others => '0') when iMODE = "01"
@@ -128,6 +128,27 @@ begin
 	
 	oCMD_INSTR <= "011" when iMODE = "11" or iMODE = "10"
 		else "001";
+	
+	--- Impulse noise pixel counter
+--	process(iCLK, iRST) begin
+--		if(iRST = '1') then
+--			sWHITE_COUNT <= (others => '0');
+--			sBLACK_COUNT <= (others => '0');
+--		elsif(iCLK'event and iCLK = '1') then
+--			if(sERROR_CNT_EN = '1') then
+--	
+--			end if;
+--		end if;
+--	end process;
+	
+	--- Padding generator
+--	process(iCLK, iRST) begin
+--		if(iRST = '1') then
+--			sPADDING <= (others => '0');
+--		elsif(iCLK'event and iCLK = '1') then
+--			sPADDING <= not sPADDING;
+--		end if;
+--	end process;
 	
 	--- Buffer address generator
 	process(iCLK) begin
@@ -330,13 +351,13 @@ begin
 					sNEXT_STATE <= INC_BASE_ADDR;
 				end if;
 			
-			when others =>
+			when INC_BASE_ADDR =>
 				if(sBASE_POS_Y = 511 and sBASE_POS_X = 511) then
 					sNEXT_STATE <= IDLE;
 				else
 					sNEXT_STATE <= SET_BL;
 				end if;
-			
+
 		end case;
 	end process;
 	
@@ -407,7 +428,7 @@ begin
 				
 			when WRITE_PADDING =>
 				oWR_EN <= '1';
-				oWR_DATA <= (others => '0');
+				oWR_DATA <= (others => '0');--sPADDING;
 				sBUF_ADDR_RST <= '0';
 				
 			when others =>
@@ -415,7 +436,7 @@ begin
 				sBASE_POS_EN <= '1';
 				sCMD_CNT_EN <= '1';
 				sREAD_PIX_RST <= '1';
-				
+			
 		end case;
 	end process;
 

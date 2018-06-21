@@ -87,7 +87,7 @@ architecture Behavioral of spi_flash_controller is
 	signal sMISO_SHREG : STD_LOGIC_VECTOR (7 downto 0);
 	signal sREC_STATUS : STD_LOGIC;
 	signal sREC_DATA : STD_LOGIC;
-	signal sCOUNTER : STD_LOGIC_VECTOR (23 downto 0); ---- 3 downto 0
+	signal sCOUNTER : STD_LOGIC_VECTOR (23 downto 0);
 	signal sCNT_EN : STD_LOGIC;
 	signal sDATA : STD_LOGIC_VECTOR (7 downto 0);
 	signal sDATA_VALID : STD_LOGIC;

@@ -108,67 +108,27 @@ ARCHITECTURE behavior OF pixel_buffer_tb IS
 	signal sRST : STD_LOGIC;
 	signal sCALIB_DONE : STD_LOGIC;
 	
-	--- Port 0 command signals ---
-	signal sP0_CMD_CLK : STD_LOGIC;
-	signal sP0_CMD_EN : STD_LOGIC;
-	signal sP0_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
-	signal sP0_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
-	signal sP0_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
-	signal sP0_CMD_EMPTY : STD_LOGIC;
-	signal sP0_CMD_FULL : STD_LOGIC;
+	--- Port 3 command signals ---
+	signal sP3_CMD_CLK : STD_LOGIC;
+	signal sP3_CMD_EN : STD_LOGIC;
+	signal sP3_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
+	signal sP3_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
+	signal sP3_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
+	signal sP3_CMD_EMPTY : STD_LOGIC;
+	signal sP3_CMD_FULL : STD_LOGIC;
 	
-	--- Port 0 write signals ---
-	signal sP0_WR_CLK : STD_LOGIC;
-	signal sP0_WR_EN : STD_LOGIC;
-	signal sP0_WR_MASK : STD_LOGIC_VECTOR (3 downto 0);
-	signal sP0_WR_DATA : STD_LOGIC_VECTOR (31 downto 0);
-	signal sP0_WR_FULL : STD_LOGIC;
-	signal sP0_WR_EMPTY  : STD_LOGIC;
-	signal sP0_WR_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-	signal sP0_WR_UNDERRUN : STD_LOGIC;
-	signal sP0_WR_ERROR : STD_LOGIC;
-	
-	--- Port 0 read signals ---
-	signal sP0_RD_CLK : STD_LOGIC;
-	signal sP0_RD_EN : STD_LOGIC;
-	signal sP0_RD_DATA : STD_LOGIC_VECTOR (31 downto 0);
-	signal sP0_RD_FULL : STD_LOGIC;
-	signal sP0_RD_EMPTY : STD_LOGIC;
-	signal sP0_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-	signal sP0_RD_OVERFLOW : STD_LOGIC;
-	signal sP0_RD_ERROR : STD_LOGIC;
-	
-	--- Port 1 command signals ---
-	signal sP1_CMD_CLK : STD_LOGIC;
-	signal sP1_CMD_EN : STD_LOGIC;
-	signal sP1_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
-	signal sP1_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
-	signal sP1_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
-	signal sP1_CMD_EMPTY : STD_LOGIC;
-	signal sP1_CMD_FULL : STD_LOGIC;
-	
-	--- Port 1 write signals ---
-	signal sP1_WR_CLK : STD_LOGIC;
-	signal sP1_WR_EN : STD_LOGIC;
-	signal sP1_WR_MASK : STD_LOGIC_VECTOR (3 downto 0);
-	signal sP1_WR_DATA : STD_LOGIC_VECTOR (31 downto 0);
-	signal sP1_WR_FULL : STD_LOGIC;
-	signal sP1_WR_EMPTY  : STD_LOGIC;
-	signal sP1_WR_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-	signal sP1_WR_UNDERRUN : STD_LOGIC;
-	signal sP1_WR_ERROR : STD_LOGIC;
-	
-	--- Port 1 read signals ---
-	signal sP1_RD_CLK : STD_LOGIC;
-	signal sP1_RD_EN : STD_LOGIC;
-	signal sP1_RD_DATA : STD_LOGIC_VECTOR (31 downto 0);
-	signal sP1_RD_FULL : STD_LOGIC;
-	signal sP1_RD_EMPTY : STD_LOGIC;
-	signal sP1_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-	signal sP1_RD_OVERFLOW : STD_LOGIC;
-	signal sP1_RD_ERROR : STD_LOGIC;
+	--- Port 3 read signals ---
+	signal sP3_RD_CLK : STD_LOGIC;
+	signal sP3_RD_EN : STD_LOGIC;
+	signal sP3_RD_DATA : STD_LOGIC_VECTOR (31 downto 0);
+	signal sP3_RD_FULL : STD_LOGIC;
+	signal sP3_RD_EMPTY : STD_LOGIC;
+	signal sP3_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
+	signal sP3_RD_OVERFLOW : STD_LOGIC;
+	signal sP3_RD_ERROR : STD_LOGIC;
 
 	signal sINV_RST : STD_LOGIC;
+	
   -- Clock period definitions
    constant iCLK_DIFF_period : time := 20 ns;
 	constant sPIXEL_CLK_period : time := 15.39 ns;
@@ -188,44 +148,28 @@ ARCHITECTURE behavior OF pixel_buffer_tb IS
 BEGIN
  
 	onRAM_CS <= '0';
-	sP0_CMD_CLK <= sCLK;
-	sP0_WR_CLK <= sCLK;
-	sP0_RD_CLK <= sCLK;
-	sP1_CMD_CLK <= sCLK;
-	sP1_WR_CLK <= sCLK;
-	sP1_RD_CLK <= sCLK;
- 
-	sP1_CMD_INSTR <= "000";
-	sP1_CMD_BL <= (others => '0');
-	sP1_CMD_BYTE_ADDR <= (others => '0');
-	sP1_CMD_EN <= '0';
-	sP1_WR_EN <= '0';
-	sP1_WR_MASK <= (others => '1');
-	sP1_RD_EN <= '0';
-	sP1_WR_DATA <= (others => '0');
-	sP0_WR_DATA <= (others => '0');
-	sP0_WR_MASK <= (others => '1');
-	sP0_WR_EN <= '0';
- 
+	sP3_CMD_CLK <= sCLK;
+	sP3_RD_CLK <= sCLK;
+	
 	-- Instantiate the Unit Under Test (UUT)
    uut: entity work.pixel_buffer PORT MAP (
           iWR_CLK => sCLK,
           iRD_CLK => sPIXEL_CLK,
           iRST => sRST,
 			 iDONE => iDONE,
-          oCMD_EN => sP0_CMD_EN,
-          oCMD_INSTR => sP0_CMD_INSTR,
-          oCMD_BL => sP0_CMD_BL,
-          oCMD_BYTE_ADDR => sP0_CMD_BYTE_ADDR,
-          iCMD_EMPTY => sP0_CMD_EMPTY,
-          iCMD_FULL => sP0_CMD_FULL,
-          oRD_EN => sP0_RD_EN,
-          iRD_DATA => sP0_RD_DATA,
-          iRD_FULL => sP0_RD_FULL,
-          iRD_EMPTY => sP0_RD_EMPTY,
-          iRD_OVERFLOW => sP0_RD_OVERFLOW,
-          iRD_ERROR => sP0_RD_ERROR,
-          iRD_COUNT => sP0_RD_COUNT,
+          oCMD_EN => sP3_CMD_EN,
+          oCMD_INSTR => sP3_CMD_INSTR,
+          oCMD_BL => sP3_CMD_BL,
+          oCMD_BYTE_ADDR => sP3_CMD_BYTE_ADDR,
+          iCMD_EMPTY => sP3_CMD_EMPTY,
+          iCMD_FULL => sP3_CMD_FULL,
+          oRD_EN => sP3_RD_EN,
+          iRD_DATA => sP3_RD_DATA,
+          iRD_FULL => sP3_RD_FULL,
+          iRD_EMPTY => sP3_RD_EMPTY,
+          iRD_OVERFLOW => sP3_RD_OVERFLOW,
+          iRD_ERROR => sP3_RD_ERROR,
+          iRD_COUNT => sP3_RD_COUNT,
 			 iVIDEO_ON => oVIDEO_ON,
 			 iSTART => iSTART,
 			 oRGB => oRGB
@@ -263,59 +207,67 @@ BEGIN
 		mcb3_rzq        								 =>  ioRZQ,
 		mcb3_zio        								 =>  ioZIO,
 
-		c3_p0_cmd_clk                           =>  sP0_CMD_CLK,
-		c3_p0_cmd_en                            =>  sP0_CMD_EN,
-		c3_p0_cmd_instr                         =>  sP0_CMD_INSTR,
-		c3_p0_cmd_bl                            =>  sP0_CMD_BL,
-		c3_p0_cmd_byte_addr                     =>  sP0_CMD_BYTE_ADDR,
-		c3_p0_cmd_empty                         =>  sP0_CMD_EMPTY,
-		c3_p0_cmd_full                          =>  sP0_CMD_FULL,
+		c3_p1_cmd_clk              =>  sCLK,
+		c3_p1_cmd_en               =>  '0',
+		c3_p1_cmd_instr            =>  (others => '0'),
+		c3_p1_cmd_bl               =>  (others => '0'),
+		c3_p1_cmd_byte_addr        =>  (others => '0'),
+		c3_p1_cmd_empty            =>  open,
+		c3_p1_cmd_full             =>  open,
 		
-		c3_p0_wr_clk                            =>  sP0_WR_CLK,
-		c3_p0_wr_en                             =>  sP0_WR_EN,
-		c3_p0_wr_mask                           =>  sP0_WR_MASK,
-		c3_p0_wr_data                           =>  sP0_WR_DATA,
-		c3_p0_wr_full                           =>  sP0_WR_FULL,
-		c3_p0_wr_empty                          =>  sP0_WR_EMPTY,
-		c3_p0_wr_count                          =>  sP0_WR_COUNT,
-		c3_p0_wr_underrun                       =>  sP0_WR_UNDERRUN,
-		c3_p0_wr_error                          =>  sP0_WR_ERROR,
+		c3_p1_wr_clk               =>  sCLK,
+		c3_p1_wr_en                =>  '0',
+		c3_p1_wr_mask              =>  (others => '0'),
+		c3_p1_wr_data              =>  (others => '0'),
+		c3_p1_wr_full              =>  open,
+		c3_p1_wr_empty             =>  open,
+		c3_p1_wr_count             =>  open,
+		c3_p1_wr_underrun          =>  open,
+		c3_p1_wr_error             =>  open,
 		
-		c3_p0_rd_clk                            =>  sP0_RD_CLK,
-		c3_p0_rd_en                             =>  sP0_RD_EN,
-		c3_p0_rd_data                           =>  sP0_RD_DATA,
-		c3_p0_rd_full                           =>  sP0_RD_FULL,
-		c3_p0_rd_empty                          =>  sP0_RD_EMPTY,
-		c3_p0_rd_count                          =>  sP0_RD_COUNT,
-		c3_p0_rd_overflow                       =>  sP0_RD_OVERFLOW,
-		c3_p0_rd_error                          =>  sP0_RD_ERROR,
+		c3_p1_rd_clk               =>  sCLK,
+		c3_p1_rd_en                =>  '0',
+		c3_p1_rd_data              =>  open,
+		c3_p1_rd_full              =>  open,
+		c3_p1_rd_empty             =>  open,
+		c3_p1_rd_count             =>  open,
+		c3_p1_rd_overflow          =>  open,
+		c3_p1_rd_error             =>  open,
 		
-		c3_p1_cmd_clk                           =>  sP1_CMD_CLK,
-		c3_p1_cmd_en                            =>  sP1_CMD_EN,
-		c3_p1_cmd_instr                         =>  sP1_CMD_INSTR,
-		c3_p1_cmd_bl                            =>  sP1_CMD_BL,
-		c3_p1_cmd_byte_addr                     =>  sP1_CMD_BYTE_ADDR,
-		c3_p1_cmd_empty                         =>  sP1_CMD_EMPTY,
-		c3_p1_cmd_full                          =>  sP1_CMD_FULL,
+		c3_p2_cmd_clk              =>  sCLK,
+		c3_p2_cmd_en               =>  '0',
+		c3_p2_cmd_instr            =>  (others => '0'),
+		c3_p2_cmd_bl               =>  (others => '0'),
+		c3_p2_cmd_byte_addr        =>  (others => '0'),
+		c3_p2_cmd_empty            =>  open,
+		c3_p2_cmd_full             =>  open,
 		
-		c3_p1_wr_clk                            =>  sP1_WR_CLK,
-		c3_p1_wr_en                             =>  sP1_WR_EN,
-		c3_p1_wr_mask                           =>  sP1_WR_MASK,
-		c3_p1_wr_data                           =>  sP1_WR_DATA,
-		c3_p1_wr_full                           =>  sP1_WR_FULL,
-		c3_p1_wr_empty                          =>  sP1_WR_EMPTY,
-		c3_p1_wr_count                          =>  sP1_WR_COUNT,
-		c3_p1_wr_underrun                       =>  sP1_WR_UNDERRUN,
-		c3_p1_wr_error                          =>  sP1_WR_ERROR,
+		c3_p2_wr_clk               =>  sCLK,
+		c3_p2_wr_en                =>  '0',
+		c3_p2_wr_mask              =>  (others => '0'),
+		c3_p2_wr_data              =>  (others => '0'),
+		c3_p2_wr_full              =>  open,
+		c3_p2_wr_empty             =>  open,
+		c3_p2_wr_count             =>  open,
+		c3_p2_wr_underrun          =>  open,
+		c3_p2_wr_error             =>  open,
 		
-		c3_p1_rd_clk                            =>  sP1_RD_CLK,
-		c3_p1_rd_en                             =>  sP1_RD_EN,
-		c3_p1_rd_data                           =>  sP1_RD_DATA,
-		c3_p1_rd_full                           =>  sP1_RD_FULL,
-		c3_p1_rd_empty                          =>  sP1_RD_EMPTY,
-		c3_p1_rd_count                          =>  sP1_RD_COUNT,
-		c3_p1_rd_overflow                       =>  sP1_RD_OVERFLOW,
-		c3_p1_rd_error                          =>  sP1_RD_ERROR
+		c3_p3_cmd_clk              =>  sP3_CMD_CLK,
+		c3_p3_cmd_en               =>  sP3_CMD_EN,
+		c3_p3_cmd_instr            =>  sP3_CMD_INSTR,
+		c3_p3_cmd_bl               =>  sP3_CMD_BL,
+		c3_p3_cmd_byte_addr        =>  sP3_CMD_BYTE_ADDR,
+		c3_p3_cmd_empty            =>  sP3_CMD_EMPTY,
+		c3_p3_cmd_full             =>  sP3_CMD_FULL,
+		
+		c3_p3_rd_clk               =>  sP3_RD_CLK,
+		c3_p3_rd_en                =>  sP3_RD_EN,
+		c3_p3_rd_data              =>  sP3_RD_DATA,
+		c3_p3_rd_full              =>  sP3_RD_FULL,
+		c3_p3_rd_empty             =>  sP3_RD_EMPTY,
+		c3_p3_rd_count             =>  sP3_RD_COUNT,
+		c3_p3_rd_overflow          =>  sP3_RD_OVERFLOW,
+		c3_p3_rd_error             =>  sP3_RD_ERROR
 	);
 	
 	zio_pulldown3 : PULLDOWN port map(O => ioZIO);
@@ -423,7 +375,7 @@ BEGIN
 			  oH_SYNC => open,
 			  oV_SYNC => open);
 
-	iSTART <= '1' when (oPIXEL_X = 1342 and oPIXEL_Y = 15)--805)
+	iSTART <= '1' when (oPIXEL_X = 1342 and (oPIXEL_Y = 15 or oPIXEL_Y = 45))--805)
 				else '0';
 
    -- Stimulus process
@@ -434,6 +386,10 @@ BEGIN
       wait for 100 us;	
 		inRST <= '1';
 		wait for 100 us;
+		iDONE <= '1';
+		wait for 300 us;
+		iDONE <= '0';
+		wait for 500 us;
 		iDONE <= '1';
       wait;
    end process;
