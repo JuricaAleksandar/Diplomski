@@ -78,7 +78,9 @@ ARCHITECTURE behavior OF top_tb IS
 			oSCLK : OUT  std_logic;
 		   onCS : OUT  std_logic;
 		   ioSIO : INOUT  std_logic_vector(3 downto 0);
-		   onRESET : OUT  std_logic
+		   onRESET : OUT  std_logic;
+			iSPLIT_SCREEN : IN std_logic;
+			iFILTER_MODE : IN std_logic_vector(1 downto 0)
         );
     END COMPONENT;
     
@@ -127,7 +129,9 @@ ARCHITECTURE behavior OF top_tb IS
    signal iCLK_DIFF_N : std_logic;
 	signal iCLK : std_logic;
    signal inRST : std_logic;
-
+	signal iSPLIT_SCREEN : std_logic;
+	signal iFILTER_MODE : std_logic_vector(1 downto 0);
+	
 	--BiDirs
    signal ioRAM_UDQS : std_logic;
    signal ionRAM_UDQS : std_logic;
@@ -250,7 +254,9 @@ BEGIN
 			 oSCLK => oSCLK,
 			 onCS => onCS,
 			 onRESET => onRESET,
-			 ioSIO => ioSIO
+			 ioSIO => ioSIO,
+			 iSPLIT_SCREEN => iSPLIT_SCREEN,
+			 iFILTER_MODE => iFILTER_MODE
         );
 
    -- Clock process definitions
@@ -315,6 +321,8 @@ BEGIN
    stim_proc: process
    begin		
       inRST <= '0';
+		iSPLIT_SCREEN <= '0';
+		iFILTER_MODE <= "01";
       wait for 300 us;	
 		inRST <= '1';
       wait;

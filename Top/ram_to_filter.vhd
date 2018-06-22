@@ -77,7 +77,8 @@ architecture Behavioral of ram_to_filter is
 		CHECK_READY,
 		WRITE_PIXEL,
 		WRITE_PADDING,
-		INC_BASE_ADDR
+		INC_BASE_ADDR,
+		DONE
 	);
 
 	signal sSTATE, sNEXT_STATE : tSTATE;
@@ -275,9 +276,9 @@ begin
 			when CHECK_ADDR =>
 				if((sPOS_Y - sBASE_POS_Y) > sPOS_Y_OFFSET and sBASE_POS_Y < sPOS_Y_OFFSET) then
 					sNEXT_STATE <= Y_LOW;
-				elsif((sBASE_POS_Y - sPOS_Y) > sPOS_Y_OFFSET and sBASE_POS_Y > 511 - sPOS_Y_OFFSET) then
+				elsif(sPOS_Y < sPOS_Y_OFFSET and sBASE_POS_Y > 511 - sPOS_Y_OFFSET) then
 					sNEXT_STATE <= Y_HIGH;
-				elsif(sBASE_POS_X < sPOS_X_OFFSET and ((sPOS_X - sBASE_POS_X) > sPOS_X_OFFSET)) then
+				elsif(sPOS_X > sBASE_POS_X and sBASE_POS_X < sPOS_X_OFFSET) then
 					sNEXT_STATE <= X_LOW;
 				elsif(('0' & sPOS_X) + ('0' & sCMD_BL_REG) > 511) then
 					sNEXT_STATE <= X_HIGH;
@@ -353,11 +354,14 @@ begin
 			
 			when INC_BASE_ADDR =>
 				if(sBASE_POS_Y = 511 and sBASE_POS_X = 511) then
-					sNEXT_STATE <= IDLE;
+					sNEXT_STATE <= DONE;
 				else
 					sNEXT_STATE <= SET_BL;
 				end if;
-
+			
+			when others =>
+				sNEXT_STATE <= DONE;
+			
 		end case;
 	end process;
 	
@@ -431,11 +435,13 @@ begin
 				oWR_DATA <= (others => '0');--sPADDING;
 				sBUF_ADDR_RST <= '0';
 				
-			when others =>
+			when INC_BASE_ADDR =>
 				oDONE <= '1';
 				sBASE_POS_EN <= '1';
 				sCMD_CNT_EN <= '1';
 				sREAD_PIX_RST <= '1';
+			
+			when others =>
 			
 		end case;
 	end process;

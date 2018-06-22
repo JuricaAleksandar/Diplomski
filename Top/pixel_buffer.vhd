@@ -65,7 +65,7 @@ architecture Behavioral of pixel_buffer is
 		WAIT_DATA,
 		WAIT_FIFO,
 		WAIT_EMPTY,
-		RST_ALL
+		RST_POS
 	);
 	
 	signal sSTATE, sNEXT_STATE : tREAD_STATE;
@@ -81,7 +81,6 @@ architecture Behavioral of pixel_buffer is
 	signal sFIFO_BURST_COUNT : STD_LOGIC_VECTOR(3 downto 0);
 	signal sREAD_COUNT : STD_LOGIC_VECTOR(2 downto 0);
 	signal sBURST_READ : STD_LOGIC;
-	signal sFIFI_RD_EN_CLR : STD_LOGIC;
 	signal sPOS_CLR : STD_LOGIC;
 	
 begin
@@ -102,7 +101,7 @@ begin
 		elsif(iRD_CLK'event and iRD_CLK = '1') then
 			if(sFIFO_FULL = '1' and iSTART = '1' and sFIFO_EMPTY = '0') then
 				sFIFO_RD_EN <= '1';
-			elsif(sFIFI_RD_EN_CLR = '1') then
+			elsif(sFIFO_EMPTY = '1' and sFIFO_FULL = '0') then
 				sFIFO_RD_EN <= '0';
 			end if;
 		end if;
@@ -197,12 +196,12 @@ begin
 			
 			when WAIT_EMPTY =>
 				if(iRD_EMPTY = '1' and sFIFO_EMPTY = '1') then
-					sNEXT_STATE <= RST_ALL;
+					sNEXT_STATE <= RST_POS;
 				else
 					sNEXT_STATE <= WAIT_EMPTY;
 				end if;
 				
-			when RST_ALL =>
+			when RST_POS =>
 				sNEXT_STATE <= IDLE;
 				
 			when WAIT_UPDATE =>
@@ -234,19 +233,16 @@ begin
 			when SET_CMD =>
 				oCMD_EN <= '1';
 				sPOS_WE <= '1';
-				sFIFI_RD_EN_CLR <= '0';
 				sPOS_CLR <= '0';
 				
-			when RST_ALL =>
+			when RST_POS =>
 				oCMD_EN <= '0';
 				sPOS_WE <= '0';
-				sFIFI_RD_EN_CLR <= '1';
 				sPOS_CLR <= '1';
 				
 			when others =>
 				oCMD_EN <= '0';
 				sPOS_WE <= '0';
-				sFIFI_RD_EN_CLR <= '0';
 				sPOS_CLR <= '0';
 				
 		end case;
