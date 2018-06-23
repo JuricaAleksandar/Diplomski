@@ -49,7 +49,8 @@ entity pixel_buffer is
            iRD_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
 			  iVIDEO_ON : in STD_LOGIC;
 			  iSTART : in STD_LOGIC;
-			  oRGB : out STD_LOGIC_VECTOR (23 downto 0));
+			  oRGB : out STD_LOGIC_VECTOR (23 downto 0);
+			  oBLANK : out STD_LOGIC);
 end pixel_buffer;
 
 architecture Behavioral of pixel_buffer is
@@ -82,6 +83,7 @@ architecture Behavioral of pixel_buffer is
 	signal sREAD_COUNT : STD_LOGIC_VECTOR(2 downto 0);
 	signal sBURST_READ : STD_LOGIC;
 	signal sPOS_CLR : STD_LOGIC;
+	signal sCROSS_REG1, sCROSS_REG2 : STD_LOGIC;
 	
 begin
 		
@@ -95,13 +97,21 @@ begin
 	
 	oRD_EN <= '1' when (iRD_COUNT > 0 and sFIFO_FULL = '0') else '0';
 		
+	--- Clock domain crossing registers
+	process(iWR_CLK) begin
+		if(iWR_CLK'event and iWR_CLK = '1') then
+			sCROSS_REG1 <= sFIFO_EMPTY;
+			sCROSS_REG2 <= sCROSS_REG1;
+		end if;
+	end process;
+		
 	process(iRD_CLK, iRST) begin
 		if(iRST = '1') then
 			sFIFO_RD_EN <= '0';
 		elsif(iRD_CLK'event and iRD_CLK = '1') then
-			if(sFIFO_FULL = '1' and iSTART = '1' and sFIFO_EMPTY = '0') then
+			if(iSTART = '1' and sFIFO_EMPTY = '0') then
 				sFIFO_RD_EN <= '1';
-			elsif(sFIFO_EMPTY = '1' and sFIFO_FULL = '0') then
+			elsif(sFIFO_EMPTY = '1') then
 				sFIFO_RD_EN <= '0';
 			end if;
 		end if;
@@ -178,7 +188,7 @@ begin
 		end if;
 	end process;
 	
-	process(sSTATE, sFIFO_BURST_COUNT, iCMD_FULL, sFIFO_FULL, sFIFO_EMPTY, iDONE, iRD_EMPTY) begin
+	process(sSTATE, sFIFO_BURST_COUNT, iCMD_FULL, sFIFO_FULL, sCROSS_REG2, iDONE, iRD_EMPTY) begin
 		case sSTATE is
 			when IDLE =>
 				if(sFIFO_FULL = '0' and iDONE = '1') then
@@ -195,7 +205,7 @@ begin
 				end if;
 			
 			when WAIT_EMPTY =>
-				if(iRD_EMPTY = '1' and sFIFO_EMPTY = '1') then
+				if(iRD_EMPTY = '1' and sCROSS_REG2 = '1') then
 					sNEXT_STATE <= RST_POS;
 				else
 					sNEXT_STATE <= WAIT_EMPTY;
@@ -229,26 +239,35 @@ begin
 	end process;
 	
 	process(sSTATE) begin
-		case sSTATE is
+		case sSTATE is	
+			when IDLE =>
+				oCMD_EN <= '0';
+				sPOS_WE <= '0';
+				sPOS_CLR <= '0';
+				oBLANK <= '1';
+				
 			when SET_CMD =>
 				oCMD_EN <= '1';
 				sPOS_WE <= '1';
 				sPOS_CLR <= '0';
+				oBLANK <= '0';
 				
 			when RST_POS =>
 				oCMD_EN <= '0';
 				sPOS_WE <= '0';
 				sPOS_CLR <= '1';
+				oBLANK <= '0';
 				
 			when others =>
 				oCMD_EN <= '0';
 				sPOS_WE <= '0';
 				sPOS_CLR <= '0';
+				oBLANK <= '0';
 				
 		end case;
 	end process;
 	
-	fifo : entity work.fif0
+	fifo : entity work.pixel_fifo
 		port map(
 		 rst => iRST,
 		 wr_clk => iWR_CLK,

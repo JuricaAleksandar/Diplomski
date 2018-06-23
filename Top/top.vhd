@@ -66,7 +66,8 @@ entity top is
            onRESET : out  STD_LOGIC;
 			  iFILTER_MODE : in STD_LOGIC_VECTOR (1 downto 0);
 			  iSPLIT_SCREEN : in STD_LOGIC;
-			  oLED : out STD_LOGIC_VECTOR (3 downto 0));
+			  oLED : out STD_LOGIC_VECTOR (4 downto 0);
+			  iJOY : in STD_LOGIC);
 end top;
 
 architecture Behavioral of top is
@@ -164,9 +165,23 @@ architecture Behavioral of top is
 	signal sFLASH_DATA_VALID : STD_LOGIC;
 	signal sFLASH_DATA : STD_LOGIC_VECTOR (7 downto 0);
 	
+	signal sFILTER_DONE_REG : STD_LOGIC;
+	signal sBLANK : STD_LOGIC;
 begin
 	
-	oLED <= sFILTER_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
+	oLED <= sFILTER_DONE_REG & sFILTER_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
+	
+	process(sCLK, sRST) begin
+		if(sRST = '1') then
+			sFILTER_DONE_REG <= '0';
+		elsif(sCLK'event and sCLK = '1') then
+			if(iJOY = '1') then
+				sFILTER_DONE_REG <= sFILTER_DONE;
+			else
+				sFILTER_DONE_REG <= '0';
+			end if;
+		end if;
+	end process;
 	
 	imcb : entity work.memControllerBlock
 --	generic map(
@@ -343,7 +358,7 @@ begin
 		iWR_CLK => sCLK,
 		iRD_CLK => sGEN_CLK,
 		iRST => sRST,
-		iDONE => sFILTER_DONE,
+		iDONE => sFILTER_DONE_REG,
 		oCMD_EN => sP3_CMD_EN,
 		oCMD_INSTR => sP3_CMD_INSTR,
 		oCMD_BL => sP3_CMD_BL,
@@ -359,7 +374,8 @@ begin
 		iRD_COUNT => sP3_RD_COUNT,
 		iVIDEO_ON => sVIDEO_ON,
 		iSTART => sSTART,
-		oRGB => oRGB
+		oRGB => oRGB,
+		oBLANK => sBLANK
 	);
 	
 	ivgasync : entity work.vga_sync
@@ -400,7 +416,9 @@ begin
 	);
 	
 	onSYNC <= sH_SYNC and sV_SYNC;
-	onBLANK <= sVIDEO_ON;
+	onBLANK <= sVIDEO_ON when sBLANK = '0'
+		else '1';
+		
 	onPSAVE <= '1';
 	oH_SYNC <= sH_SYNC;
 	oV_SYNC <= sV_SYNC;

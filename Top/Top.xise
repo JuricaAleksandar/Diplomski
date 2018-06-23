@@ -46,10 +46,6 @@
       <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="89"/>
       <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="89"/>
     </file>
-    <file xil_pn:name="ipcore_dir/fif0.xco" xil_pn:type="FILE_COREGEN">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="3"/>
-    </file>
     <file xil_pn:name="pixel_buffer.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="7"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="7"/>
@@ -120,13 +116,17 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="4"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="4"/>
     </file>
+    <file xil_pn:name="ipcore_dir/pixel_fifo.xco" xil_pn:type="FILE_COREGEN">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="96"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="3"/>
+    </file>
     <file xil_pn:name="ipcore_dir/memControllerBlock.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="ipcore_dir/fif0.xise" xil_pn:type="FILE_COREGENISE">
+    <file xil_pn:name="ipcore_dir/dcm65MHz.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="ipcore_dir/dcm65MHz.xise" xil_pn:type="FILE_COREGENISE">
+    <file xil_pn:name="ipcore_dir/pixel_fifo.xise" xil_pn:type="FILE_COREGENISE">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
   </files>
