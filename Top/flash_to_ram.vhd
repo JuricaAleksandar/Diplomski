@@ -134,7 +134,7 @@ begin
 	-- Flash address generator
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
-			sFLASH_ADDR <= (22 => '1', 1 downto 0 => '1', others => '0');
+			sFLASH_ADDR <= (22 => '1', others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sFLASH_ADDR_EN = '1') then
 				sFLASH_ADDR <= sFLASH_ADDR + sRD_COUNT;

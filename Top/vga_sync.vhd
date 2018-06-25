@@ -29,9 +29,11 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity vga_sync is
     Port ( iCLK : in  STD_LOGIC;
            inRST : in  STD_LOGIC;
+			  iSPLIT_SCREEN : in STD_LOGIC;
            oPIXEL_X : out  STD_LOGIC_VECTOR (10 downto 0);
            oPIXEL_Y : out  STD_LOGIC_VECTOR (10 downto 0);
-           oVIDEO_ON : out  STD_LOGIC;
+           oVIDEO_ON_DELAY : out  STD_LOGIC;
+			  oVIDEO_ON : out STD_LOGIC;
 			  oH_SYNC : out STD_LOGIC;
 			  oV_SYNC : out STD_LOGIC);
 end vga_sync;
@@ -51,10 +53,12 @@ architecture Behavioral of vga_sync is
 	signal sH_COUNT, sH_COUNT_NEXT : STD_LOGIC_VECTOR (10 downto 0);
 	signal sV_COUNT, sV_COUNT_NEXT : STD_LOGIC_VECTOR (10 downto 0);
 	
-	signal sH_SYNC, sH_SYNC_NEXT : STD_LOGIC;
-	signal sV_SYNC, sV_SYNC_NEXT : STD_LOGIC;
+	signal sH_SYNC : STD_LOGIC;
+	signal sV_SYNC : STD_LOGIC;
 	
-	signal sVIDEO_ON, sVIDEO_ON_NEXT : STD_LOGIC;
+	signal sVIDEO_ON, sVIDEO_ON_DELAY : STD_LOGIC;
+	
+	signal sSPLIT_SCREEN_VIDEO_ON, sSINGLE_IMAGE_VIDEO_ON : STD_LOGIC;
 	
 begin
 	
@@ -76,33 +80,36 @@ begin
 		end if;
 	end process;
 
-	sH_SYNC_NEXT <= '0' when (sH_COUNT_NEXT >= cH_DISPLAY + cH_FP and sH_COUNT_NEXT < cH_DISPLAY + cH_FP + cH_RETR)
+	sH_SYNC <= '0' when (sH_COUNT_NEXT >= cH_DISPLAY + cH_FP and sH_COUNT_NEXT < cH_DISPLAY + cH_FP + cH_RETR)
 					else '1';
 					
-	sV_SYNC_NEXT <= '0' when (sV_COUNT_NEXT >= cV_DISPLAY + cV_FP and sV_COUNT_NEXT < cV_DISPLAY + cV_FP + cV_RETR)
+	sV_SYNC <= '0' when (sV_COUNT_NEXT >= cV_DISPLAY + cV_FP and sV_COUNT_NEXT < cV_DISPLAY + cV_FP + cV_RETR)
 					else '1';			
 
-	sVIDEO_ON_NEXT <= '1' when (sH_COUNT_NEXT < cH_DISPLAY/2 + 256 and sH_COUNT_NEXT >= cH_DISPLAY/2 - 256 and sV_COUNT_NEXT < cV_DISPLAY/2 + 256 and sV_COUNT_NEXT >= cV_DISPLAY/2 - 256)
+	sSINGLE_IMAGE_VIDEO_ON <= '1' when (sH_COUNT_NEXT < cH_DISPLAY/2 + 256 and sH_COUNT_NEXT >= cH_DISPLAY/2 - 256 and sV_COUNT_NEXT < cV_DISPLAY/2 + 256 and sV_COUNT_NEXT >= cV_DISPLAY/2 - 256)
 					else '0';
+					
+	sSPLIT_SCREEN_VIDEO_ON <= '1' when (sH_COUNT_NEXT < cH_DISPLAY and sV_COUNT_NEXT < cV_DISPLAY/2 + 256 and sV_COUNT_NEXT >= cV_DISPLAY/2 - 256)
+					else '0';		
+					
+	sVIDEO_ON <= sSINGLE_IMAGE_VIDEO_ON when iSPLIT_SCREEN = '0'
+		else sSPLIT_SCREEN_VIDEO_ON;
 					
 	process(iCLK,inRST) begin
 		if(inRST = '0') then
 			sH_COUNT <= (others => '0');
 			sV_COUNT <= (others => '0');
-			sH_SYNC <= '1';
-			sV_SYNC <= '1';
-			sVIDEO_ON <= '0';
+			sVIDEO_ON_DELAY <= '0';
 		elsif(iCLK'event and iCLK = '1') then
 			sH_COUNT <= sH_COUNT_NEXT;
 			sV_COUNT <= sV_COUNT_NEXT;
-			sH_SYNC <= sH_SYNC_NEXT;
-			sV_SYNC <= sV_SYNC_NEXT;
-			sVIDEO_ON <= sVIDEO_ON_NEXT;
+			sVIDEO_ON_DELAY <= sVIDEO_ON;
 		end if;
 	end process;
 
 	oPIXEL_X <= sH_COUNT;
 	oPIXEL_Y <= sV_COUNT;
+	oVIDEO_ON_DELAY <= sVIDEO_ON_DELAY;
 	oVIDEO_ON <= sVIDEO_ON;
 	oH_SYNC <= sH_SYNC;
 	oV_SYNC <= sV_SYNC;

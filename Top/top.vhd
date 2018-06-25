@@ -151,7 +151,7 @@ architecture Behavioral of top is
 	signal snGEN_CLK : STD_LOGIC;
 	
 	signal sPIXEL_Y, sPIXEL_X : STD_LOGIC_VECTOR(10 downto 0);
-	signal sVIDEO_ON, sH_SYNC, sV_SYNC : STD_LOGIC;
+	signal sVIDEO_ON, sVIDEO_ON_DELAY, sH_SYNC, sV_SYNC : STD_LOGIC;
 	
 	signal sFLASH_DONE : STD_LOGIC;
 	signal sFILTER_DONE : STD_LOGIC;
@@ -167,21 +167,11 @@ architecture Behavioral of top is
 	
 	signal sFILTER_DONE_REG : STD_LOGIC;
 	signal sBLANK : STD_LOGIC;
+	signal sSPLIT_SCREEN_REG : STD_LOGIC;
+	
 begin
 	
 	oLED <= sFILTER_DONE_REG & sFILTER_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
-	
-	process(sCLK, sRST) begin
-		if(sRST = '1') then
-			sFILTER_DONE_REG <= '0';
-		elsif(sCLK'event and sCLK = '1') then
-			if(iJOY = '1') then
-				sFILTER_DONE_REG <= sFILTER_DONE;
-			else
-				sFILTER_DONE_REG <= '0';
-			end if;
-		end if;
-	end process;
 	
 	imcb : entity work.memControllerBlock
 --	generic map(
@@ -358,6 +348,7 @@ begin
 		iWR_CLK => sCLK,
 		iRD_CLK => sGEN_CLK,
 		iRST => sRST,
+		iSPLIT_SCREEN => iSPLIT_SCREEN,
 		iDONE => sFILTER_DONE_REG,
 		oCMD_EN => sP3_CMD_EN,
 		oCMD_INSTR => sP3_CMD_INSTR,
@@ -382,8 +373,10 @@ begin
 	port map(
 		iCLK => sGEN_CLK,
 		inRST => sLOCKED,
+		iSPLIT_SCREEN => iSPLIT_SCREEN,
 		oPIXEL_X => sPIXEL_X,
 		oPIXEL_Y => sPIXEL_Y,
+		oVIDEO_ON_DELAY => sVIDEO_ON_DELAY,
 		oVIDEO_ON => sVIDEO_ON, 
 		oH_SYNC => sH_SYNC, 
 		oV_SYNC => sV_SYNC
@@ -415,11 +408,30 @@ begin
 		S              =>  '0'
 	);
 	
+	process(sCLK, sRST) begin
+		if(sRST = '1') then
+			sFILTER_DONE_REG <= '0';
+		elsif(sCLK'event and sCLK = '1') then
+			if(sSPLIT_SCREEN_REG /= iSPLIT_SCREEN) then
+				sFILTER_DONE_REG <= '0';
+			elsif(sBLANK = '1') then
+				sFILTER_DONE_REG <= sFILTER_DONE;
+			end if;
+		end if;
+	end process;
+	
+	process(sCLK) begin
+		if(sCLK'event and sCLK = '1') then
+			sSPLIT_SCREEN_REG <= iSPLIT_SCREEN;
+		end if;
+	end process;
+	
 	onSYNC <= sH_SYNC and sV_SYNC;
-	onBLANK <= sVIDEO_ON when sBLANK = '0'
+	
+	onBLANK <= sVIDEO_ON_DELAY when sBLANK = '0'
 		else '1';
 		
-	onPSAVE <= '1';
+	onPSAVE <= not sBLANK;
 	oH_SYNC <= sH_SYNC;
 	oV_SYNC <= sV_SYNC;
 	

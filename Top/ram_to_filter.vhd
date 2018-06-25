@@ -130,27 +130,6 @@ begin
 	oCMD_INSTR <= "011" when iMODE = "11" or iMODE = "10"
 		else "001";
 	
-	--- Impulse noise pixel counter
---	process(iCLK, iRST) begin
---		if(iRST = '1') then
---			sWHITE_COUNT <= (others => '0');
---			sBLACK_COUNT <= (others => '0');
---		elsif(iCLK'event and iCLK = '1') then
---			if(sERROR_CNT_EN = '1') then
---	
---			end if;
---		end if;
---	end process;
-	
-	--- Padding generator
---	process(iCLK, iRST) begin
---		if(iRST = '1') then
---			sPADDING <= (others => '0');
---		elsif(iCLK'event and iCLK = '1') then
---			sPADDING <= not sPADDING;
---		end if;
---	end process;
-	
 	--- Buffer address generator
 	process(iCLK) begin
 		if(iCLK'event and iCLK ='1') then

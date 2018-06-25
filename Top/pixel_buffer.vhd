@@ -33,6 +33,7 @@ entity pixel_buffer is
     Port ( iWR_CLK : in  STD_LOGIC;
 			  iRD_CLK : in STD_LOGIC;
            iRST : in  STD_LOGIC;
+			  iSPLIT_SCREEN : in STD_LOGIC;
 			  iDONE : in STD_LOGIC;
            oCMD_EN : out  STD_LOGIC;
            oCMD_INSTR : out  STD_LOGIC_VECTOR (2 downto 0);
@@ -75,7 +76,7 @@ architecture Behavioral of pixel_buffer is
 	signal sFIFO_EMPTY : STD_LOGIC;
 	signal sFIFO_RD_EN : STD_LOGIC;
 	signal sFIFO_WR_EN : STD_LOGIC;
-	signal sPOS_X : STD_LOGIC_VECTOR(5 downto 0);
+	signal sPOS_X,sPOS_X_LIMIT : STD_LOGIC_VECTOR(6 downto 0);
 	signal sPOS_Y : STD_LOGIC_VECTOR(8 downto 0);
 	signal sPOS_WE : STD_LOGIC;
 	signal sCOMBINED_EN : STD_LOGIC;
@@ -87,9 +88,13 @@ architecture Behavioral of pixel_buffer is
 	
 begin
 		
+	sPOS_X_LIMIT <= (6 => '0', others => '1') when iSPLIT_SCREEN = '0'
+		else (others => '1');
+		
 	oCMD_INSTR <= "001"; -- Read instuction code
 	oCMD_BL <= (5 downto 3 => '0',others => '1'); -- Burst length 8
-	oCMD_BYTE_ADDR <= "0000000" & sPOS_Y & "001" & sPOS_X & "00000";
+	oCMD_BYTE_ADDR <= ("0000000" & sPOS_Y & "001" & sPOS_X(5 downto 0) & "00000") when iSPLIT_SCREEN = '0'
+		else ("0000000" & sPOS_Y & "00" & sPOS_X & "00000");
 		
 	sCOMBINED_EN <= sFIFO_RD_EN and iVIDEO_ON;
 		
@@ -162,7 +167,7 @@ begin
 			sPOS_Y <= (others => '0');
 		elsif(iWR_CLK'event and iWR_CLK = '1') then
 			if(sPOS_WE = '1') then
-				if(sPOS_X = H_RESOLUTION/8 - 1) then
+				if(sPOS_X = sPOS_X_LIMIT) then
 					sPOS_X <= (others => '0');
 					if(sPOS_Y = V_RESOLUTION - 1) then
 						sPOS_Y <= (others => '0');
