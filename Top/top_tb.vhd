@@ -322,10 +322,10 @@ BEGIN
    begin		
       inRST <= '0';
 		iSPLIT_SCREEN <= '0';
-		iFILTER_MODE <= "01";
+		iFILTER_MODE <= "11";
       wait for 300 us;	
 		inRST <= '1';
-      wait;
+		wait;
    end process;
 
 END;

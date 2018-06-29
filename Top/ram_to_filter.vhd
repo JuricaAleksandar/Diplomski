@@ -34,9 +34,12 @@ entity ram_to_filter is
     Port ( iCLK : in  STD_LOGIC;
            iRST : in  STD_LOGIC;
 			  iSTART : in STD_LOGIC;
+			  iRESTART : in STD_LOGIC;
+			  oRESTARTED : out STD_LOGIC;
 			  iCMD_PORT_STATE : in STD_LOGIC;
 			  iMODE : in STD_LOGIC_VECTOR (1 downto 0);
 			  iREADY_WR : in STD_LOGIC;
+			  oDONE : out STD_LOGIC;
 			  oCMD_EN : out  STD_LOGIC;
            oCMD_INSTR : out  STD_LOGIC_VECTOR (2 downto 0);
            oCMD_BL : out  STD_LOGIC_VECTOR (5 downto 0);
@@ -50,10 +53,11 @@ entity ram_to_filter is
            iRD_OVERFLOW : in  STD_LOGIC;
            iRD_ERROR : in  STD_LOGIC;
            iRD_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
+			  oUV_CONV_START : out STD_LOGIC;
 			  oWR_EN : out  STD_LOGIC;
            oWR_ADDR : out  STD_LOGIC_VECTOR (3 downto 0);
            oWR_DATA : out  STD_LOGIC_VECTOR (23 downto 0);
-			  oDONE : out STD_LOGIC);
+			  oWR_DONE : out STD_LOGIC);
 			  
 end ram_to_filter;
 
@@ -99,9 +103,9 @@ architecture Behavioral of ram_to_filter is
 	signal sREAD_PIX_CNT : STD_LOGIC_VECTOR (3 downto 0);
 	signal sREAD_PIX_EN : STD_LOGIC;
 	signal sREAD_PIX_RST : STD_LOGIC;
-	signal sBUFFER_ADDR : STD_LOGIC_VECTOR (3 downto 0);
+	signal sBUFFER_ADDR, sINDEX : STD_LOGIC_VECTOR (3 downto 0);
 	signal sBUF_ADDR_RST : STD_LOGIC;
-	signal sPADDING : STD_LOGIC_VECTOR (23 downto 0);
+	signal sINDEX_DEC_BL, sINDEX_DEC_ONE,sINDEX_RST : STD_LOGIC;
 	
 begin
 
@@ -130,9 +134,26 @@ begin
 	oCMD_INSTR <= "011" when iMODE = "11" or iMODE = "10"
 		else "001";
 	
+	--- Filtered pixel index
+	process(iCLK) begin
+		if(iCLK'event and iCLK = '1') then
+			if(sINDEX_RST = '1') then
+				sINDEX <= "0100";
+			elsif(sINDEX_DEC_BL = '1') then
+				sINDEX <= sINDEX - sCMD_BL_REG(3 downto 0) - 1;
+			elsif(sINDEX_DEC_ONE = '1') then
+				if((iMODE = "11" and sBASE_POS_Y = 0) or iMODE = "01") then
+					sINDEX <= sINDEX - 1;
+				else
+					sINDEX <= sINDEX - 2;
+				end if;
+			end if;
+		end if;
+	end process;
+	
 	--- Buffer address generator
 	process(iCLK) begin
-		if(iCLK'event and iCLK ='1') then
+		if(iCLK'event and iCLK = '1') then
 			if(iRST = '1' or sBUF_ADDR_RST = '1') then
 				sBUFFER_ADDR <= (others => '0');
 			else
@@ -237,7 +258,7 @@ begin
 	end process;
 	
 	--- FSM next state generator
-	process(sSTATE, iCMD_PORT_STATE, sCMD_BL_REG, iSTART, sCMD_CNT, iRD_COUNT, sCMD_COUNT, sBASE_POS_Y, sBASE_POS_X, sPOS_Y, sPOS_X, sPOS_Y_OFFSET, sPOS_X_OFFSET, sREAD_PIX_CNT, iREADY_WR, sBUFFER_ADDR, iCMD_FULL) begin
+	process(sSTATE, iRESTART, iCMD_PORT_STATE, sCMD_BL_REG, iSTART, sCMD_CNT, iRD_COUNT, sCMD_COUNT, sBASE_POS_Y, sBASE_POS_X, sPOS_Y, sPOS_X, sPOS_Y_OFFSET, sPOS_X_OFFSET, sREAD_PIX_CNT, iREADY_WR, sBUFFER_ADDR, iCMD_FULL) begin
 		case sSTATE is
 			when IDLE =>
 				if(iSTART = '1') then
@@ -339,12 +360,16 @@ begin
 				end if;
 			
 			when others =>
-				sNEXT_STATE <= DONE;
+				if(iRESTART = '0') then
+					sNEXT_STATE <= DONE;
+				else
+					sNEXT_STATE <= IDLE;
+				end if;
 			
 		end case;
 	end process;
 	
-	process(sSTATE, iRD_DATA) begin
+	process(sSTATE, iRD_DATA, sINDEX, sBUFFER_ADDR) begin
 		oCMD_EN <= '0';
 		sCMD_CNT_CONTROL <= '0';
 		sBASE_POS_EN <= '0';
@@ -361,14 +386,24 @@ begin
 		sBUF_ADDR_RST <= '1';
 		oWR_EN <= '0';
 		oWR_DATA <= (others => '0');
+		oWR_DONE <= '0';
 		oDONE <= '0';
+		oRESTARTED <= '0';
+		sINDEX_DEC_BL <= '0';
+		sINDEX_DEC_ONE <= '0';
+		sINDEX_RST <= '0';
+		oUV_CONV_START <= '0';
 		
 		case sSTATE is
-			when IDLE|CHECK_ADDR|CHECK_COUNT|CHECK_READY|WAIT_DATA|WAIT_FIFO =>
+			when IDLE =>
+				oRESTARTED <= '1';
+				
+			when CHECK_ADDR|CHECK_COUNT|CHECK_READY|WAIT_DATA|WAIT_FIFO =>
 		
 			when SET_BL =>
 				sCMD_BL_CONTROL <= '1';
 				sCMD_BL_EN <= '1';
+				sINDEX_RST <= '1';
 				
 			when GEN_ADDR =>
 				sPOS_X_EN <= '1';
@@ -379,6 +414,7 @@ begin
 				sPOS_Y_CONTROL <= '1';
 				sCMD_CNT_CONTROL <= '1';
 				sCMD_CNT_EN <= '1';
+				sINDEX_DEC_BL <= '1';
 				
 			when Y_HIGH =>
 				sCMD_CNT_CONTROL <= '1';
@@ -388,6 +424,7 @@ begin
 				sPOS_X_EN <= '1';
 				sPOS_X_CONTROL <= '1';
 				sCMD_BL_EN <= '1';
+				sINDEX_DEC_ONE <= '1';
 				
 			when X_HIGH =>
 				sCMD_BL_EN <= '1';
@@ -408,20 +445,27 @@ begin
 				oRD_EN <= '1';
 				oWR_DATA <= iRD_DATA(23 downto 0);
 				sBUF_ADDR_RST <= '0';
+				if(sINDEX = sBUFFER_ADDR) then
+					oUV_CONV_START <= '1';
+				end if;
 				
 			when WRITE_PADDING =>
 				oWR_EN <= '1';
-				oWR_DATA <= (others => '0');--sPADDING;
+				oWR_DATA <= (others => '0');
 				sBUF_ADDR_RST <= '0';
+				if(sINDEX = sBUFFER_ADDR) then
+					oUV_CONV_START <= '1';
+				end if;
 				
 			when INC_BASE_ADDR =>
-				oDONE <= '1';
+				oWR_DONE <= '1';
 				sBASE_POS_EN <= '1';
 				sCMD_CNT_EN <= '1';
 				sREAD_PIX_RST <= '1';
 			
 			when others =>
-			
+				oDONE <= '1';
+				
 		end case;
 	end process;
 

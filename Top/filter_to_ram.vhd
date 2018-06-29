@@ -33,8 +33,10 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity filter_to_ram is
     Port ( iCLK : in  STD_LOGIC;
            iRST : in  STD_LOGIC;
+			  iRESTART : in STD_LOGIC;
+			  oRESTARTED : out STD_LOGIC;
 			  oWR_CMD : out STD_LOGIC;
-			  iDATA_VALID : in STD_LOGIC_VECTOR (2 downto 0);
+			  iDATA_VALID : in STD_LOGIC;
 			  iDATA : in STD_LOGIC_VECTOR (23 downto 0);
 			  oDONE : out STD_LOGIC;
            oCMD_EN : out  STD_LOGIC;
@@ -57,6 +59,7 @@ architecture Behavioral of filter_to_ram is
 	
 	type tSTATE is
 	(
+		RESTARTED,
 		IDLE,
 		ADD_TO_FIFO,
 		SET_CMD,
@@ -67,7 +70,6 @@ architecture Behavioral of filter_to_ram is
 	signal sPOS_X : STD_LOGIC_VECTOR (3 downto 0);
 	signal sPOS_Y : STD_LOGIC_VECTOR (8	downto 0);
 	signal sPOS_EN : STD_LOGIC;
-	signal sDATA_VALID_REG : STD_LOGIC_VECTOR (2 downto 0);
 	signal sREG_CLR : STD_LOGIC;
 	
 begin
@@ -78,31 +80,11 @@ begin
 	oWR_MASK <= (others => '0');
 	oWR_DATA <= (7 downto 0 => '0') & iDATA;
 	
-	process(iCLK, iRST) begin
-		if(iRST = '1') then
-			sDATA_VALID_REG <= (others => '0');
-		elsif(iCLK'event and iCLK = '1') then
-			if(sREG_CLR = '0') then
-				if(iDATA_VALID(0) = '1') then
-					sDATA_VALID_REG(0) <= '1';
-				end if;
-				if(iDATA_VALID(1) = '1') then
-					sDATA_VALID_REG(1) <= '1';
-				end if;
-				if(iDATA_VALID(2) = '1') then
-					sDATA_VALID_REG(2) <= '1';
-				end if;
-			else
-				sDATA_VALID_REG <= (others => '0');
-			end if;
-		end if;
-	end process;
-	
 	--- RAM address generator
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
 			sPOS_X <= (others => '0');
-			sPOS_Y <= (others => '0');
+			sPOS_Y <= (others => '0'); 
 		elsif(iCLK'event and iCLK = '1') then
 			if(sPOS_EN = '1') then
 				sPOS_X <= sPOS_X + 1;
@@ -122,10 +104,10 @@ begin
 		end if;
 	end process;
 
-	process(sSTATE, sDATA_VALID_REG, iWR_COUNT, sPOS_X, sPOS_Y) begin
+	process(sSTATE, iRESTART, iDATA_VALID, iWR_COUNT, sPOS_X, sPOS_Y) begin
 		case sSTATE is
 			when IDLE =>
-				if(sDATA_VALID_REG = "111") then
+				if(iDATA_VALID = '1') then
 					sNEXT_STATE <= ADD_TO_FIFO;
 				else
 					sNEXT_STATE <= IDLE;
@@ -145,8 +127,15 @@ begin
 					sNEXT_STATE <= IDLE;
 				end if;
 			
+			when DONE =>
+				if(iRESTART = '1') then
+					sNEXT_STATE <= RESTARTED;
+				else
+					sNEXT_STATE <= DONE;
+				end if;
+				
 			when others =>
-				sNEXT_STATE <= DONE;
+				sNEXT_STATE <= IDLE;
 			
 		end case;
 	end process;
@@ -158,7 +147,8 @@ begin
 		oWR_EN <= '0';
 		sREG_CLR <= '0';
 		oWR_CMD <= '0';
-				
+		oRESTARTED <= '0';
+		
 		case sSTATE is
 			when IDLE =>
 			
@@ -171,8 +161,11 @@ begin
 				sPOS_EN <= '1';
 				oWR_CMD <= '1';
 			
-			when others =>
+			when DONE =>
 				oDONE <= '1';
+			
+			when others =>
+				oRESTARTED <= '1';
 			
 		end case;
 	end process;

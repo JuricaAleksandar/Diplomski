@@ -200,7 +200,7 @@ begin
 				end if;
 				
 			when SET_RAM_CMD =>
-				if(sPOS_Y = 511) then 
+				if(sPOS_Y = 3) then -------------------------------------------- 511 ------------------------------------------------------
 					sNEXT_STATE <= DONE;
 				else
 					sNEXT_STATE <= IDLE;

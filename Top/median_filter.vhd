@@ -55,20 +55,21 @@ entity median_filter is
 			  iWR_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
 			  iWR_UNDERRUN : in  STD_LOGIC;
 			  iWR_ERROR : in  STD_LOGIC;
+			  oLOAD_IMAGE_DONE : out STD_LOGIC;
 			  oDONE : out STD_LOGIC);
 end median_filter;
 
 architecture Behavioral of median_filter is
 
 	signal sCMD_PORT_STATE : STD_LOGIC;
-	signal sWR_DONE : STD_LOGIC;
-	signal sWR_EN : STD_LOGIC;
-	signal sWR_ADDR : STD_LOGIC_VECTOR (3 downto 0);
-	signal sWR_DATA : STD_LOGIC_VECTOR (23 downto 0);
-	signal sREADY_VECTOR : STD_LOGIC_VECTOR (2 downto 0);
+	signal sWR_DONE, sWR_DONE_DELAY : STD_LOGIC;
+	signal sWR_EN, sWR_EN_DELAY : STD_LOGIC;
+	signal sWR_ADDR, sWR_ADDR_DELAY : STD_LOGIC_VECTOR (3 downto 0);
+	signal sRGB_DATA_IN : STD_LOGIC_VECTOR (23 downto 0);
+	signal sYUV_DATA_IN : STD_LOGIC_VECTOR (23 downto 0);
 	signal sREADY : STD_LOGIC;
 	signal sREAD_DATA : STD_LOGIC_VECTOR (23 downto 0);
-	signal sDATA_VALID : STD_LOGIC_VECTOR (2 downto 0);
+	signal sDATA_VALID : STD_LOGIC;
 	
 	signal sRD_CMD_EN : STD_LOGIC;
 	signal sRD_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
@@ -80,9 +81,15 @@ architecture Behavioral of median_filter is
 	signal sWR_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
 	signal sWR_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
 	
+	signal sMODE_REG : STD_LOGIC_VECTOR (1 downto 0);
+	signal sRTOF_RESTART : STD_LOGIC;
+	signal sRTOF_RESTARTED : STD_LOGIC;
+	signal sFTOR_RESTART : STD_LOGIC;
+	signal sFTOR_RESTARTED : STD_LOGIC;
+	
+	signal sUV_CONV_START : STD_LOGIC;
+	
 begin
-
-	sREADY <= sREADY_VECTOR(2) and sREADY_VECTOR(1) and sREADY_VECTOR(0);
 
 	oCMD_EN <= sWR_CMD_EN when sCMD_PORT_STATE = '1'
 		else sRD_CMD_EN;
@@ -96,6 +103,36 @@ begin
 	oCMD_BYTE_ADDR <= sWR_CMD_BYTE_ADDR when sCMD_PORT_STATE = '1'
 		else sRD_CMD_BYTE_ADDR;
 
+	process(iCLK) begin
+		if(iCLK'event and iCLK = '1') then
+			sMODE_REG <= iMODE;
+		end if;
+	end process;
+	
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
+			sRTOF_RESTART <= '0';
+		elsif(iCLK'event and iCLK = '1') then
+			if(sRTOF_RESTARTED = '1') then
+				sRTOF_RESTART <= '0';
+			elsif(sMODE_REG /= iMODE) then
+				sRTOF_RESTART <= '1';
+			end if;
+		end if;
+	end process;
+	
+	process(iCLK, iRST) begin
+		if(iRST = '1') then
+			sFTOR_RESTART <= '0';
+		elsif(iCLK'event and iCLK = '1') then
+			if(sFTOR_RESTARTED = '1') then
+				sFTOR_RESTART <= '0';
+			elsif(sMODE_REG /= iMODE) then
+				sFTOR_RESTART <= '1';
+			end if;
+		end if;
+	end process;
+
 	r2f : entity work.ram_to_filter
 	port map(
 		iCLK => iCLK,
@@ -103,6 +140,8 @@ begin
 		iCMD_PORT_STATE => sCMD_PORT_STATE,
 		iSTART => iSTART,
 		iMODE => iMODE,
+		iRESTART => sRTOF_RESTART,
+		oRESTARTED => sRTOF_RESTARTED,
 		iREADY_WR => sREADY,
 		oCMD_EN => sRD_CMD_EN,
 		oCMD_INSTR => sRD_CMD_INSTR,
@@ -117,58 +156,51 @@ begin
 		iRD_OVERFLOW => iRD_OVERFLOW,
 		iRD_ERROR => iRD_ERROR,
 		iRD_COUNT => iRD_COUNT,
+		oUV_CONV_START => sUV_CONV_START,
 		oWR_EN => sWR_EN,
       oWR_ADDR => sWR_ADDR,
-	   oWR_DATA => sWR_DATA,
-		oDONE => sWR_DONE
+	   oWR_DATA => sRGB_DATA_IN,
+		oWR_DONE => sWR_DONE,
+		oDONE => oLOAD_IMAGE_DONE
 	);
 	
-	sort_red : entity work.selection_sort
+	conv1 : entity work.RGB_to_YUV
 	port map
 	(
 		iCLK => iCLK,
 		iRST => iRST,
+		iUV_START => sUV_CONV_START,
+		iUV_RESTART => '1',
+		iWR_DONE => sWR_DONE,
 		iWR_EN => sWR_EN,
 		iWR_ADDR => sWR_ADDR,
-		iWR_DATA => sWR_DATA(23 downto 16),
-		iSTART => sWR_DONE,
+		iRGB => sRGB_DATA_IN,
+		oWR_EN => sWR_EN_DELAY,
+      oWR_ADDR => sWR_ADDR_DELAY,
+		oWR_DONE => sWR_DONE_DELAY,
+		oYUV => sYUV_DATA_IN
+	);
+	
+	sort_y : entity work.selection_sort
+	port map
+	(
+		iCLK => iCLK,
+		iRST => iRST,
+		iWR_EN => sWR_EN_DELAY,
+		iWR_ADDR => sWR_ADDR_DELAY,
+		iWR_DATA => sYUV_DATA_IN(23 downto 16),
+		iSTART => sWR_DONE_DELAY,
 		oDATA => sREAD_DATA(23 downto 16),
-		oDATA_VALID => sDATA_VALID(2),
-		oREADY => sREADY_VECTOR(2)
-	);
-
-	sort_green : entity work.selection_sort
-	port map
-	(
-		iCLK => iCLK,
-		iRST => iRST,
-		iWR_EN => sWR_EN,
-		iWR_ADDR => sWR_ADDR,
-		iWR_DATA => sWR_DATA(15 downto 8),
-		iSTART => sWR_DONE,
-		oDATA => sREAD_DATA(15 downto 8),
-		oDATA_VALID => sDATA_VALID(1),
-		oREADY => sREADY_VECTOR(1)
-	);
-	
-	sort_blue : entity work.selection_sort
-	port map
-	(
-		iCLK => iCLK,
-		iRST => iRST,
-		iWR_EN => sWR_EN,
-		iWR_ADDR => sWR_ADDR,
-		iWR_DATA => sWR_DATA(7 downto 0),
-		iSTART => sWR_DONE,
-		oDATA => sREAD_DATA(7 downto 0),
-		oDATA_VALID => sDATA_VALID(0),
-		oREADY => sREADY_VECTOR(0)
+		oDATA_VALID => sDATA_VALID,
+		oREADY => sREADY
 	);
 
 	f2r : entity work.filter_to_ram
 	port map(
 		iCLK => iCLK,
 		iRST => iRST,
+		iRESTART => sFTOR_RESTART,
+		oRESTARTED => sFTOR_RESTARTED,
 		oWR_CMD => sCMD_PORT_STATE,
 		iDATA_VALID => sDATA_VALID,
 		iDATA => sREAD_DATA,

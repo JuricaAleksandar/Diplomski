@@ -66,8 +66,7 @@ entity top is
            onRESET : out  STD_LOGIC;
 			  iFILTER_MODE : in STD_LOGIC_VECTOR (1 downto 0);
 			  iSPLIT_SCREEN : in STD_LOGIC;
-			  oLED : out STD_LOGIC_VECTOR (4 downto 0);
-			  iJOY : in STD_LOGIC);
+			  oLED : out STD_LOGIC_VECTOR (5 downto 0));
 end top;
 
 architecture Behavioral of top is
@@ -169,14 +168,16 @@ architecture Behavioral of top is
 	signal sBLANK : STD_LOGIC;
 	signal sSPLIT_SCREEN_REG : STD_LOGIC;
 	
+	signal sFILTER_READ_DONE : STD_LOGIC;
+	
 begin
 	
-	oLED <= sFILTER_DONE_REG & sFILTER_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
+	oLED <= sFILTER_DONE_REG & sFILTER_DONE & sFILTER_READ_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
 	
 	imcb : entity work.memControllerBlock
---	generic map(
---			C3_SIMULATION => "TRUE"
---	)
+	generic map(
+			C3_SIMULATION => "TRUE"
+	)
 	port map(
 		c3_sys_clk_p  					=>  iCLK_DIFF_P,
 		c3_sys_clk_n    				=>  iCLK_DIFF_N,
@@ -340,7 +341,8 @@ begin
 		iWR_COUNT => sP1_WR_COUNT,
 		iWR_UNDERRUN => sP1_WR_UNDERRUN,
 		iWR_ERROR => sP1_WR_ERROR,
-		oDONE => sFILTER_DONE
+		oDONE => sFILTER_DONE,
+		oLOAD_IMAGE_DONE => sFILTER_READ_DONE
 	);
 	
 	pbuffer : entity work.pixel_buffer

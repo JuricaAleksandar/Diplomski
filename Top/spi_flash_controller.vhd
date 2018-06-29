@@ -286,7 +286,7 @@ begin
 				end if;
 			
 			when RESET_RECOVERY =>
-				if(sCOUNTER = 10002000) then
+				if(sCOUNTER = 4500) then ---------------------------------------------- 10002000 ---------------------------------------------
 					sNEXT_STATE <= IDLE;
 				else
 					sNEXT_STATE <= RESET_RECOVERY;
