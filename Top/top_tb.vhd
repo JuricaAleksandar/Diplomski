@@ -80,7 +80,8 @@ ARCHITECTURE behavior OF top_tb IS
 		   ioSIO : INOUT  std_logic_vector(3 downto 0);
 		   onRESET : OUT  std_logic;
 			iSPLIT_SCREEN : IN std_logic;
-			iFILTER_MODE : IN std_logic_vector(1 downto 0)
+			iFILTER_MODE : IN std_logic_vector(1 downto 0);
+			oLED : out STD_LOGIC_VECTOR (5 downto 0)
         );
     END COMPONENT;
     
@@ -161,7 +162,8 @@ ARCHITECTURE behavior OF top_tb IS
 	signal oV_SYNC : STD_LOGIC;
 	signal oRGB : STD_LOGIC_VECTOR(23 downto 0);
 	signal oVGA_CLK : STD_LOGIC;
-
+	signal oLED : STD_LOGIC_VECTOR(5 downto 0);
+	
    -- Clock period definitions
    constant iCLK_DIFF_period : time := 20 ns;
 	constant iCLK_period : time := 41.67 ns;
@@ -256,7 +258,8 @@ BEGIN
 			 onRESET => onRESET,
 			 ioSIO => ioSIO,
 			 iSPLIT_SCREEN => iSPLIT_SCREEN,
-			 iFILTER_MODE => iFILTER_MODE
+			 iFILTER_MODE => iFILTER_MODE,
+			 oLED => oLED
         );
 
    -- Clock process definitions
@@ -325,6 +328,14 @@ BEGIN
 		iFILTER_MODE <= "11";
       wait for 300 us;	
 		inRST <= '1';
+		wait for 300 us;
+		iFILTER_MODE <= "10";
+		wait until oLED(4) = '1';
+		iFILTER_MODE <= "00";
+		wait until oLED(4) = '1';
+		iFILTER_MODE <= "01";
+		wait until oLED(4) = '1';
+		iFILTER_MODE <= "10";
 		wait;
    end process;
 

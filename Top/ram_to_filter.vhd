@@ -57,12 +57,19 @@ entity ram_to_filter is
 			  oWR_EN : out  STD_LOGIC;
            oWR_ADDR : out  STD_LOGIC_VECTOR (3 downto 0);
            oWR_DATA : out  STD_LOGIC_VECTOR (23 downto 0);
-			  oWR_DONE : out STD_LOGIC);
+			  oWR_DONE : out STD_LOGIC;
+			  oDIRECT_WRITE_EN : out STD_LOGIC;
+			  oMODE_IN_EN : out STD_LOGIC);
 			  
 end ram_to_filter;
 
 architecture Behavioral of ram_to_filter is
 
+	constant cH_WIDTH : integer := 8;
+	constant	cV_WIDTH : integer := 8;
+	constant cH_SIZE : STD_LOGIC_VECTOR (cH_WIDTH downto 0) := (others => '1');
+	constant cV_SIZE : STD_LOGIC_VECTOR (cV_WIDTH downto 0) := (others => '1');
+	
 	type tSTATE is
 	(
 		IDLE,
@@ -78,10 +85,13 @@ architecture Behavioral of ram_to_filter is
 		CHECK_COUNT,
 		WAIT_FIFO,
 		WAIT_DATA,
+		DIRECT_WRITE_PREPARE,
+		DIRECT_WRITE,
 		CHECK_READY,
 		WRITE_PIXEL,
 		WRITE_PADDING,
 		INC_BASE_ADDR,
+		DELAY,
 		DONE
 	);
 
@@ -89,12 +99,15 @@ architecture Behavioral of ram_to_filter is
 
 	signal sCMD_CNT : STD_LOGIC_VECTOR (3 downto 0);
 	signal sCMD_CNT_EN : STD_LOGIC;
-	signal sBASE_POS_X, sBASE_POS_Y: STD_LOGIC_VECTOR (8 downto 0);
+	signal sBASE_POS_X : STD_LOGIC_VECTOR (cH_WIDTH downto 0);
+	signal sBASE_POS_Y: STD_LOGIC_VECTOR (cV_WIDTH downto 0);
 	signal sBASE_POS_EN : STD_LOGIC;
 	signal sCMD_COUNT : STD_LOGIC_VECTOR (3 downto 0);
 	signal sCMD_CNT_CONTROL : STD_LOGIC;
-	signal sPOS_X_OFFSET, sPOS_Y_OFFSET : STD_LOGIC_VECTOR (8 downto 0);
-	signal sPOS_X, sPOS_Y : STD_LOGIC_VECTOR (8 downto 0);
+	signal sPOS_X_OFFSET : STD_LOGIC_VECTOR (cH_WIDTH downto 0);
+	signal sPOS_Y_OFFSET : STD_LOGIC_VECTOR (cV_WIDTH downto 0);
+	signal sPOS_X : STD_LOGIC_VECTOR (cH_WIDTH downto 0);
+	signal sPOS_Y : STD_LOGIC_VECTOR (cV_WIDTH downto 0);
 	signal sPOS_X_CONTROL, sPOS_Y_CONTROL : STD_LOGIC;
 	signal sPOS_X_EN, sPOS_Y_EN : STD_LOGIC;
 	signal sCMD_BL, sCMD_BL_REG : STD_LOGIC_VECTOR (5 downto 0);
@@ -106,6 +119,8 @@ architecture Behavioral of ram_to_filter is
 	signal sBUFFER_ADDR, sINDEX : STD_LOGIC_VECTOR (3 downto 0);
 	signal sBUF_ADDR_RST : STD_LOGIC;
 	signal sINDEX_DEC_BL, sINDEX_DEC_ONE,sINDEX_RST : STD_LOGIC;
+	signal sDELAY_COUNTER : STD_LOGIC_VECTOR (11 downto 0);
+	signal sDELAY_CNT_EN : STD_LOGIC;
 	
 begin
 
@@ -133,6 +148,16 @@ begin
 	
 	oCMD_INSTR <= "011" when iMODE = "11" or iMODE = "10"
 		else "001";
+	
+	process(iCLK) begin
+		if(iCLK'event and iCLK = '1') then
+			if(sDELAY_CNT_EN = '1') then
+				sDELAY_COUNTER <= sDELAY_COUNTER + 1;
+			else
+				sDELAY_COUNTER <= (others => '0');
+			end if;
+		end if;
+	end process;
 	
 	--- Filtered pixel index
 	process(iCLK) begin
@@ -226,7 +251,7 @@ begin
 		elsif(iCLK'event and iCLK = '1') then
 			if(sBASE_POS_EN = '1') then
 				sBASE_POS_X <= sBASE_POS_X + 1;
-				if(sBASE_POS_X = 511) then
+				if(sBASE_POS_X = cH_SIZE) then
 					sBASE_POS_Y <= sBASE_POS_Y + 1;
 				end if;
 			end if;
@@ -258,7 +283,7 @@ begin
 	end process;
 	
 	--- FSM next state generator
-	process(sSTATE, iRESTART, iCMD_PORT_STATE, sCMD_BL_REG, iSTART, sCMD_CNT, iRD_COUNT, sCMD_COUNT, sBASE_POS_Y, sBASE_POS_X, sPOS_Y, sPOS_X, sPOS_Y_OFFSET, sPOS_X_OFFSET, sREAD_PIX_CNT, iREADY_WR, sBUFFER_ADDR, iCMD_FULL) begin
+	process(sSTATE, iRESTART, sDELAY_COUNTER, iMODE, iCMD_PORT_STATE, sCMD_BL_REG, iSTART, sCMD_CNT, iRD_COUNT, sCMD_COUNT, sBASE_POS_Y, sBASE_POS_X, sPOS_Y, sPOS_X, sPOS_Y_OFFSET, sPOS_X_OFFSET, sREAD_PIX_CNT, iREADY_WR, sBUFFER_ADDR, iCMD_FULL) begin
 		case sSTATE is
 			when IDLE =>
 				if(iSTART = '1') then
@@ -276,11 +301,11 @@ begin
 			when CHECK_ADDR =>
 				if((sPOS_Y - sBASE_POS_Y) > sPOS_Y_OFFSET and sBASE_POS_Y < sPOS_Y_OFFSET) then
 					sNEXT_STATE <= Y_LOW;
-				elsif(sPOS_Y < sPOS_Y_OFFSET and sBASE_POS_Y > 511 - sPOS_Y_OFFSET) then
+				elsif(sPOS_Y < sPOS_Y_OFFSET and sBASE_POS_Y > cV_SIZE - sPOS_Y_OFFSET) then
 					sNEXT_STATE <= Y_HIGH;
 				elsif(sPOS_X > sBASE_POS_X and sBASE_POS_X < sPOS_X_OFFSET) then
 					sNEXT_STATE <= X_LOW;
-				elsif(('0' & sPOS_X) + ('0' & sCMD_BL_REG) > 511) then
+				elsif(('0' & sPOS_X) + ('0' & sCMD_BL_REG) > cH_SIZE) then
 					sNEXT_STATE <= X_HIGH;
 				else
 					sNEXT_STATE <= SET_CMD;
@@ -300,7 +325,11 @@ begin
 				end if;
 			
 			when WAIT_CMD_PORT =>
-				sNEXT_STATE <= CHECK_COUNT;
+				if(iCMD_PORT_STATE = '1') then
+					sNEXT_STATE <= WAIT_CMD_PORT;
+				else
+					sNEXT_STATE <= CHECK_COUNT;
+				end if;
 			
 			when CHECK_COUNT =>
 				if(sCMD_CNT < sCMD_COUNT) then
@@ -324,8 +353,18 @@ begin
 				if(iRD_COUNT < sREAD_PIX_CNT) then
 					sNEXT_STATE <= WAIT_DATA;
 				else
-					sNEXT_STATE <= CHECK_READY;
+					if(iMODE = "00") then
+						sNEXT_STATE <= DIRECT_WRITE_PREPARE;
+					else
+						sNEXT_STATE <= CHECK_READY;
+					end if;
 				end if;
+				
+			when DIRECT_WRITE_PREPARE =>
+				sNEXT_STATE <= DIRECT_WRITE;
+				
+			when DIRECT_WRITE =>
+				sNEXT_STATE <= INC_BASE_ADDR;
 				
 			when CHECK_READY =>
 				if(iREADY_WR = '1') then
@@ -353,10 +392,17 @@ begin
 				end if;
 			
 			when INC_BASE_ADDR =>
-				if(sBASE_POS_Y = 511 and sBASE_POS_X = 511) then
+				if(sBASE_POS_Y = cV_SIZE and sBASE_POS_X = cH_SIZE) then
 					sNEXT_STATE <= DONE;
 				else
+					sNEXT_STATE <= DELAY;
+				end if;
+			
+			when DELAY =>
+				if(sDELAY_COUNTER = x"00FF") then
 					sNEXT_STATE <= SET_BL;
+				else
+					sNEXT_STATE <= DELAY;
 				end if;
 			
 			when others =>
@@ -393,10 +439,14 @@ begin
 		sINDEX_DEC_ONE <= '0';
 		sINDEX_RST <= '0';
 		oUV_CONV_START <= '0';
+		oDIRECT_WRITE_EN <= '0';
+		oMODE_IN_EN <= '0';
+		sDELAY_CNT_EN <= '0';
 		
 		case sSTATE is
 			when IDLE =>
 				oRESTARTED <= '1';
+				oMODE_IN_EN <= '1';
 				
 			when CHECK_ADDR|CHECK_COUNT|CHECK_READY|WAIT_DATA|WAIT_FIFO =>
 		
@@ -440,6 +490,14 @@ begin
 			when WAIT_CMD_PORT =>
 				oCMD_EN <= '1';
 			
+			when DIRECT_WRITE_PREPARE =>
+				oDIRECT_WRITE_EN <= '1';
+				oWR_DATA <= iRD_DATA(23 downto 0);
+			
+			when DIRECT_WRITE =>
+				oRD_EN <= '1';
+				oWR_DATA <= iRD_DATA(23 downto 0);
+			
 			when WRITE_PIXEL =>
 				oWR_EN <= '1';
 				oRD_EN <= '1';
@@ -462,6 +520,9 @@ begin
 				sBASE_POS_EN <= '1';
 				sCMD_CNT_EN <= '1';
 				sREAD_PIX_RST <= '1';
+			
+			when DELAY =>
+				sDELAY_CNT_EN <= '1';
 			
 			when others =>
 				oDONE <= '1';

@@ -43,7 +43,8 @@ entity RGB_to_YUV is
 			oWR_DONE : out STD_LOGIC;
 			oWR_EN : out STD_LOGIC;
 			oWR_ADDR : out  STD_LOGIC_VECTOR (3 downto 0);
-			oYUV : out  STD_LOGIC_VECTOR (23 downto 0)
+			oY : out  STD_LOGIC_VECTOR (7 downto 0);
+			oUV : out STD_LOGIC_VECTOR (15 downto 0)
 		);
 		
 end RGB_to_YUV;
@@ -62,7 +63,7 @@ begin
 		iCLK => iCLK,
 		iRST => iCLK,
 		iRGB => iRGB,
-		oY => oYUV(23 downto 16)
+		oY => oY
 	);
 	
 	calc_chroma : entity work.calculate_chroma
@@ -73,7 +74,7 @@ begin
 		iSTART => iUV_START,
 		iRESTART => iUV_RESTART,
 		iRGB => iRGB,
-		oUV => oYUV(15 downto 0)
+		oUV => oUV
 	);
 	
 	process(iCLK, iRST) begin

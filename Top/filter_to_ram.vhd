@@ -57,6 +57,11 @@ end filter_to_ram;
 
 architecture Behavioral of filter_to_ram is
 	
+	constant cH_WIDTH : integer := 3;
+	constant	cV_WIDTH : integer := 8;
+	constant cH_SIZE : STD_LOGIC_VECTOR (cH_WIDTH downto 0) := (others => '1');
+	constant cV_SIZE : STD_LOGIC_VECTOR (cV_WIDTH downto 0) := (others => '1');
+	
 	type tSTATE is
 	(
 		RESTARTED,
@@ -67,10 +72,9 @@ architecture Behavioral of filter_to_ram is
 	);
 
 	signal sSTATE, sNEXT_STATE : tSTATE;
-	signal sPOS_X : STD_LOGIC_VECTOR (3 downto 0);
-	signal sPOS_Y : STD_LOGIC_VECTOR (8	downto 0);
+	signal sPOS_X : STD_LOGIC_VECTOR (cH_WIDTH downto 0);
+	signal sPOS_Y : STD_LOGIC_VECTOR (cV_WIDTH	downto 0);
 	signal sPOS_EN : STD_LOGIC;
-	signal sREG_CLR : STD_LOGIC;
 	
 begin
 	
@@ -80,7 +84,7 @@ begin
 	oWR_MASK <= (others => '0');
 	oWR_DATA <= (7 downto 0 => '0') & iDATA;
 	
-	--- RAM address generator
+	--- RAM address generator ---
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
 			sPOS_X <= (others => '0');
@@ -88,23 +92,24 @@ begin
 		elsif(iCLK'event and iCLK = '1') then
 			if(sPOS_EN = '1') then
 				sPOS_X <= sPOS_X + 1;
-				if(sPOS_X = 15) then
+				if(sPOS_X = cH_SIZE) then
 					sPOS_Y <= sPOS_Y + 1;
 				end if;
 			end if;
 		end if;
 	end process;
 	
-	--- FSM register
+	--- FSM register ---
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
-			sSTATE <= IDLE;
+			sSTATE <= RESTARTED;
 		elsif(iCLK'event and iCLK = '1') then
 			sSTATE <= sNEXT_STATE;
 		end if;
 	end process;
 
-	process(sSTATE, iRESTART, iDATA_VALID, iWR_COUNT, sPOS_X, sPOS_Y) begin
+	--- Next state logic ---
+	process(sSTATE, iRESTART, iDATA_VALID, iWR_COUNT, sPOS_X, sPOS_Y, iCMD_FULL) begin
 		case sSTATE is
 			when IDLE =>
 				if(iDATA_VALID = '1') then
@@ -114,14 +119,14 @@ begin
 				end if;
 				
 			when ADD_TO_FIFO =>
-				if(iWR_COUNT = 31) then
+				if(iWR_COUNT >= 31) then
 					sNEXT_STATE <= SET_CMD;
 				else
 					sNEXT_STATE <= IDLE;
-				end if;
+				end if;			
 			
 			when SET_CMD =>
-				if(sPOS_X = 15 and sPOS_Y = 511) then
+				if(sPOS_X = cH_SIZE and sPOS_Y = cV_SIZE) then
 					sNEXT_STATE <= DONE;
 				else
 					sNEXT_STATE <= IDLE;
@@ -140,12 +145,12 @@ begin
 		end case;
 	end process;
 	
+	--- State output logic --- 
 	process(sSTATE) begin
 		oCMD_EN <= '0';
 		oDONE <= '0';
 		sPOS_EN <= '0';
 		oWR_EN <= '0';
-		sREG_CLR <= '0';
 		oWR_CMD <= '0';
 		oRESTARTED <= '0';
 		
@@ -153,7 +158,6 @@ begin
 			when IDLE =>
 			
 			when ADD_TO_FIFO =>
-				sREG_CLR <= '1';
 				oWR_EN <= '1';
 				
 			when SET_CMD =>

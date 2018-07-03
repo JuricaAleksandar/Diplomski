@@ -2,15 +2,15 @@
 -- Company: 
 -- Engineer:
 --
--- Create Date:   18:37:07 06/29/2018
+-- Create Date:   19:08:13 07/02/2018
 -- Design Name:   
--- Module Name:   D:/Diplomski/Top/YUV_to_RGB_tb.vhd
+-- Module Name:   D:/Diplomski/Top/switch_debouncer_tb.vhd
 -- Project Name:  Top
 -- Target Device:  
 -- Tool versions:  
 -- Description:   
 -- 
--- VHDL Test Bench Created by ISE for module: YUV_to_RGB
+-- VHDL Test Bench Created by ISE for module: switch_debouncer
 -- 
 -- Dependencies:
 -- 
@@ -32,21 +32,19 @@ USE ieee.std_logic_1164.ALL;
 -- arithmetic functions with Signed or Unsigned values
 --USE ieee.numeric_std.ALL;
  
-ENTITY YUV_to_RGB_tb IS
-END YUV_to_RGB_tb;
+ENTITY switch_debouncer_tb IS
+END switch_debouncer_tb;
  
-ARCHITECTURE behavior OF YUV_to_RGB_tb IS 
+ARCHITECTURE behavior OF switch_debouncer_tb IS 
  
     -- Component Declaration for the Unit Under Test (UUT)
  
-    COMPONENT YUV_to_RGB
+    COMPONENT switch_debouncer
     PORT(
          iCLK : IN  std_logic;
          iRST : IN  std_logic;
-			iDATA_VALID : IN std_logic;
-         iYUV : IN  std_logic_vector(23 downto 0);
-         oRGB : OUT  std_logic_vector(23 downto 0);
-			oDATA_VALID : OUT std_logic
+         iMODE : IN  std_logic_vector(1 downto 0);
+         oMODE : OUT  std_logic_vector(1 downto 0)
         );
     END COMPONENT;
     
@@ -54,26 +52,22 @@ ARCHITECTURE behavior OF YUV_to_RGB_tb IS
    --Inputs
    signal iCLK : std_logic := '0';
    signal iRST : std_logic := '0';
-   signal iYUV : std_logic_vector(23 downto 0) := (others => '0');
-	signal iDATA_VALID : std_logic;
-	
+   signal iMODE : std_logic_vector(1 downto 0) := (others => '0');
+
  	--Outputs
-   signal oRGB : std_logic_vector(23 downto 0);
-	signal oDATA_VALID : std_logic;
-	
+   signal oMODE : std_logic_vector(1 downto 0);
+
    -- Clock period definitions
    constant iCLK_period : time := 10 ns;
  
 BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
-   uut: YUV_to_RGB PORT MAP (
+   uut: switch_debouncer PORT MAP (
           iCLK => iCLK,
           iRST => iRST,
-			 iDATA_VALID => iDATA_VALID,
-          iYUV => iYUV,
-          oRGB => oRGB,
-			 oDATA_VALID => oDATA_VALID
+          iMODE => iMODE,
+          oMODE => oMODE
         );
 
    -- Clock process definitions
@@ -90,14 +84,27 @@ BEGIN
    stim_proc: process
    begin		
       iRST <= '1';
-		iYUV <= x"123456";
-		iDATA_VALID <= '1';
       wait for 100 ns;	
 		iRST <= '0';
-      wait for iCLK_period*10;
-
-      -- insert stimulus here 
-
+      iMODE <= "00";
+		wait for iCLK_period;
+		iMODE <= "10";
+		wait for iCLK_period;
+		iMODE <= "00";
+		wait for iCLK_period;
+		iMODE <= "10";
+		wait for iCLK_period;
+		iMODE <= "00";
+		wait for iCLK_period;
+		iMODE <= "10";
+		wait for iCLK_period;
+		iMODE <= "00";
+		wait for iCLK_period;
+		iMODE <= "10";
+		wait for iCLK_period;
+		iMODE <= "11";
+		wait for 5 ms;
+		iMODE <= "10";
       wait;
    end process;
 

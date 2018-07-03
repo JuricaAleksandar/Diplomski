@@ -231,7 +231,7 @@ begin
 		end case;
 	end process;
 	
-	process(sSTATE) begin
+	process(sSTATE, sRGB) begin
 		sRGB_EN <= '0';
 	
 		sCEM <= '1';

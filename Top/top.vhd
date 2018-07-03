@@ -169,10 +169,22 @@ architecture Behavioral of top is
 	signal sSPLIT_SCREEN_REG : STD_LOGIC;
 	
 	signal sFILTER_READ_DONE : STD_LOGIC;
+	signal sFILTER_MODE : STD_LOGIC_VECTOR (1 downto 0);
+	signal sSPLIT_SCREEN : STD_LOGIC;
 	
 begin
 	
 	oLED <= sFILTER_DONE_REG & sFILTER_DONE & sFILTER_READ_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
+	
+	sw_db : entity work.switch_debouncer
+	port map(
+		iCLK => sCLK,
+		iRST => sRST,
+		iMODE => iFILTER_MODE,
+		iSPLIT_SCREEN => iSPLIT_SCREEN,
+		oMODE => sFILTER_MODE,
+		oSPLIT_SCREEN => sSPLIT_SCREEN
+	);
 	
 	imcb : entity work.memControllerBlock
 	generic map(
@@ -319,7 +331,7 @@ begin
 		iCLK => sCLK,
 		iRST => sRST,
 		iSTART => sFLASH_DONE,
-		iMODE => iFILTER_MODE,
+		iMODE => sFILTER_MODE,
 		oCMD_EN => sP1_CMD_EN,
 		oCMD_INSTR => sP1_CMD_INSTR,
 		oCMD_BL => sP1_CMD_BL,
@@ -350,7 +362,7 @@ begin
 		iWR_CLK => sCLK,
 		iRD_CLK => sGEN_CLK,
 		iRST => sRST,
-		iSPLIT_SCREEN => iSPLIT_SCREEN,
+		iSPLIT_SCREEN => sSPLIT_SCREEN,
 		iDONE => sFILTER_DONE_REG,
 		oCMD_EN => sP3_CMD_EN,
 		oCMD_INSTR => sP3_CMD_INSTR,
@@ -375,7 +387,7 @@ begin
 	port map(
 		iCLK => sGEN_CLK,
 		inRST => sLOCKED,
-		iSPLIT_SCREEN => iSPLIT_SCREEN,
+		iSPLIT_SCREEN => sSPLIT_SCREEN,
 		oPIXEL_X => sPIXEL_X,
 		oPIXEL_Y => sPIXEL_Y,
 		oVIDEO_ON_DELAY => sVIDEO_ON_DELAY,
@@ -414,7 +426,7 @@ begin
 		if(sRST = '1') then
 			sFILTER_DONE_REG <= '0';
 		elsif(sCLK'event and sCLK = '1') then
-			if(sSPLIT_SCREEN_REG /= iSPLIT_SCREEN) then
+			if(sSPLIT_SCREEN_REG /= sSPLIT_SCREEN) then
 				sFILTER_DONE_REG <= '0';
 			elsif(sBLANK = '1') then
 				sFILTER_DONE_REG <= sFILTER_DONE;
@@ -424,16 +436,16 @@ begin
 	
 	process(sCLK) begin
 		if(sCLK'event and sCLK = '1') then
-			sSPLIT_SCREEN_REG <= iSPLIT_SCREEN;
+			sSPLIT_SCREEN_REG <= sSPLIT_SCREEN;
 		end if;
 	end process;
 	
 	onSYNC <= sH_SYNC and sV_SYNC;
 	
 	onBLANK <= sVIDEO_ON_DELAY when sBLANK = '0'
-		else '1';
+		else '0';
 		
-	onPSAVE <= not sBLANK;
+	onPSAVE <= '1';
 	oH_SYNC <= sH_SYNC;
 	oV_SYNC <= sV_SYNC;
 	
