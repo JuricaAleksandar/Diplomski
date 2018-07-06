@@ -79,7 +79,6 @@ architecture Behavioral of median_filter is
 	signal sWR_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
 	signal sWR_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
 	
-	signal sMODE_OLD_STATE : STD_LOGIC_VECTOR (1 downto 0);
 	signal sRTOF_RESTART : STD_LOGIC;
 	signal sRTOF_RESTARTED : STD_LOGIC;
 	signal sFTOR_RESTART : STD_LOGIC;
@@ -89,7 +88,7 @@ architecture Behavioral of median_filter is
 	signal sFILTER_DATA, sFILTER_DATA_REG : STD_LOGIC_VECTOR (23 downto 0);
 	signal sFILTER_DATA_VALID, sFILTER_DATA_VALID_REG : STD_LOGIC;
 	signal sDIRECT_WRITE : STD_LOGIC;
-	signal sMODE_IN_EN : STD_LOGIC;
+	signal sMODE_IN_EN : STD_LOGIC_VECTOR(1 downto 0);
 	signal sMODE : STD_LOGIC_VECTOR (1 downto 0);
 	
 begin
@@ -114,25 +113,19 @@ begin
 
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
-			if(sMODE_IN_EN = '1') then
+			if(sMODE_IN_EN = "11") then
 				sMODE <= iMODE;
 			end if;
 		end if;
 	end process;
 
-	process(iCLK) begin
-		if(iCLK'event and iCLK = '1') then
-			sMODE_OLD_STATE <= iMODE;
-		end if;
-	end process;
-	
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
 			sRTOF_RESTART <= '0';
 		elsif(iCLK'event and iCLK = '1') then
 			if(sRTOF_RESTARTED = '1') then
 				sRTOF_RESTART <= '0';
-			elsif(sMODE_OLD_STATE /= iMODE) then
+			elsif(sMODE /= iMODE and sMODE_IN_EN = "11") then
 				sRTOF_RESTART <= '1';
 			end if;
 		end if;
@@ -144,7 +137,7 @@ begin
 		elsif(iCLK'event and iCLK = '1') then
 			if(sFTOR_RESTARTED = '1') then
 				sFTOR_RESTART <= '0';
-			elsif(sMODE_OLD_STATE /= iMODE) then
+			elsif(sMODE /= iMODE and sMODE_IN_EN = "11") then
 				sFTOR_RESTART <= '1';
 			end if;
 		end if;
@@ -178,7 +171,7 @@ begin
 		oWR_DONE => sWR_DONE,
 		oDIRECT_WRITE_EN => sDIRECT_WRITE,
 		oDONE => oLOAD_IMAGE_DONE,
-		oMODE_IN_EN => sMODE_IN_EN
+		oMODE_IN_EN => sMODE_IN_EN(0)
 	);
 	
 	conv1 : entity work.RGB_to_YUV
@@ -245,7 +238,8 @@ begin
 		oWR_DATA => oWR_DATA,
 		iWR_FULL => iWR_FULL,
 		iWR_EMPTY => iWR_EMPTY,
-		iWR_COUNT => iWR_COUNT
+		iWR_COUNT => iWR_COUNT,
+		oMODE_IN_EN => sMODE_IN_EN(1)
 	);
 
 end Behavioral;

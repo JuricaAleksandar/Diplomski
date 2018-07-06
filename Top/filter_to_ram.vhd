@@ -50,7 +50,8 @@ entity filter_to_ram is
            oWR_DATA : out  STD_LOGIC_VECTOR (31 downto 0);
            iWR_FULL : in  STD_LOGIC;
            iWR_EMPTY : in  STD_LOGIC;
-           iWR_COUNT : in  STD_LOGIC_VECTOR (6 downto 0));
+           iWR_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
+			  oMODE_IN_EN : out STD_LOGIC);
 end filter_to_ram;
 
 architecture Behavioral of filter_to_ram is
@@ -151,6 +152,7 @@ begin
 		oWR_EN <= '0';
 		oWR_CMD <= '0';
 		oRESTARTED <= '0';
+		oMODE_IN_EN <= '0';
 		
 		case sSTATE is
 			when IDLE =>
@@ -165,9 +167,11 @@ begin
 			
 			when DONE =>
 				oDONE <= '1';
+				oMODE_IN_EN <= '1';
 			
 			when others =>
 				oRESTARTED <= '1';
+				oMODE_IN_EN <= '1';
 			
 		end case;
 	end process;

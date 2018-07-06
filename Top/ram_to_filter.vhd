@@ -524,6 +524,7 @@ begin
 			
 			when others =>
 				oDONE <= '1';
+				oMODE_IN_EN <= '1';
 				
 		end case;
 	end process;

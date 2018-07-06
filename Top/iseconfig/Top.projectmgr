@@ -11,18 +11,19 @@
          <ClosedNode>/memCntrlTop - Behavioral D:|Diplomski|Top|memCntrlTop.vhd/pbuffer - pixelBuffer - Behavioral</ClosedNode>
          <ClosedNode>/pixelBuffer - Behavioral D:|Diplomski|Top|pixelBuffer.vhd</ClosedNode>
          <ClosedNode>/top - Behavioral D:|Diplomski|Top|memCntrlTop.vhd</ClosedNode>
+         <ClosedNode>/top - Behavioral D:|Diplomski|Top|top.vhd/mf - median_filter - Behavioral</ClosedNode>
          <ClosedNode>/top - Behavioral D:|Diplomski|Top|top.vhd/mf - median_filter - Behavioral/conv1 - RGB_to_YUV - Behavioral</ClosedNode>
          <ClosedNode>/top - Behavioral D:|Diplomski|Top|top.vhd/pbuffer - pixelBuffer - Behavioral</ClosedNode>
          <ClosedNode>/top - Behavioral D:|Diplomski|Top|top.vhd/pbuffer - pixel_buffer - Behavioral</ClosedNode>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem>f2r - filter_to_ram - Behavioral (D:/Diplomski/Top/filter_to_ram.vhd)</SelectedItem>
+         <SelectedItem>mf - median_filter - Behavioral (D:/Diplomski/Top/median_filter.vhd)</SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
       <ViewHeaderState orientation="horizontal" >000000ff000000000000000100000001000000000000000000000000000000000202000000010000000100000064000001a8000000020000000000000000000000000200000064ffffffff000000810000000300000002000001a80000000100000003000000000000000100000003</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >true</UserChangedColumnWidths>
-      <CurrentItem>f2r - filter_to_ram - Behavioral (D:/Diplomski/Top/filter_to_ram.vhd)</CurrentItem>
+      <CurrentItem>mf - median_filter - Behavioral (D:/Diplomski/Top/median_filter.vhd)</CurrentItem>
    </ItemView>
    <ItemView engineview="SynthesisOnly" sourcetype="" guiview="Process" >
       <ClosedNodes>
@@ -72,13 +73,13 @@
          <ClosedNode>User Constraints</ClosedNode>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem></SelectedItem>
+         <SelectedItem>Check Syntax</SelectedItem>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
       <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000000000000000000019c000000010000000100000000000000000000000064ffffffff0000008100000000000000010000019c0000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
-      <CurrentItem></CurrentItem>
+      <CurrentItem>Check Syntax</CurrentItem>
    </ItemView>
    <ItemView engineview="SynthesisOnly" sourcetype="DESUT_UCF" guiview="Process" >
       <ClosedNodes>
@@ -171,13 +172,13 @@
          <ClosedNodesVersion>1</ClosedNodesVersion>
       </ClosedNodes>
       <SelectedItems>
-         <SelectedItem></SelectedItem>
+         <SelectedItem/>
       </SelectedItems>
       <ScrollbarPosition orientation="vertical" >0</ScrollbarPosition>
       <ScrollbarPosition orientation="horizontal" >0</ScrollbarPosition>
       <ViewHeaderState orientation="horizontal" >000000ff0000000000000001000000010000000000000000000000000000000000000000000000019c000000010000000100000000000000000000000064ffffffff0000008100000000000000010000019c0000000100000000</ViewHeaderState>
       <UserChangedColumnWidths orientation="horizontal" >false</UserChangedColumnWidths>
-      <CurrentItem></CurrentItem>
+      <CurrentItem/>
    </ItemView>
    <SourceProcessView>000000ff0000000000000002000001350000017301000000050100000002</SourceProcessView>
    <CurrentView>Implementation</CurrentView>
