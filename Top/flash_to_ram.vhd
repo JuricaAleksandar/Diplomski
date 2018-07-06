@@ -46,16 +46,10 @@ entity flash_to_ram is
            oCMD_INSTR : out  STD_LOGIC_VECTOR (2 downto 0);
            oCMD_BL : out  STD_LOGIC_VECTOR (5 downto 0);
            oCMD_BYTE_ADDR : out  STD_LOGIC_VECTOR (29 downto 0);
-           iCMD_EMPTY : in  STD_LOGIC;
-           iCMD_FULL : in  STD_LOGIC;
            oWR_EN : out  STD_LOGIC;
            oWR_MASK : out  STD_LOGIC_VECTOR (3 downto 0);
-           oWR_DATA : out  STD_LOGIC_VECTOR (31 downto 0);
-           iWR_FULL : in  STD_LOGIC;
-           iWR_EMPTY : in  STD_LOGIC;
-           iWR_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
-           iWR_UNDERRUN : in  STD_LOGIC;
-           iWR_ERROR : in  STD_LOGIC);
+           oWR_DATA : out  STD_LOGIC_VECTOR (31 downto 0)
+           );
 end flash_to_ram;
 
 architecture Behavioral of flash_to_ram is

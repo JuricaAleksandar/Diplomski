@@ -50,8 +50,6 @@ entity ram_to_filter is
            iRD_DATA : in  STD_LOGIC_VECTOR (31 downto 0);
            iRD_FULL : in  STD_LOGIC;
            iRD_EMPTY : in  STD_LOGIC;
-           iRD_OVERFLOW : in  STD_LOGIC;
-           iRD_ERROR : in  STD_LOGIC;
            iRD_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
 			  oUV_CONV_START : out STD_LOGIC;
 			  oWR_EN : out  STD_LOGIC;

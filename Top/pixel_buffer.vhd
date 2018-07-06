@@ -39,14 +39,10 @@ entity pixel_buffer is
            oCMD_INSTR : out  STD_LOGIC_VECTOR (2 downto 0);
            oCMD_BL : out  STD_LOGIC_VECTOR (5 downto 0);
            oCMD_BYTE_ADDR : out  STD_LOGIC_VECTOR (29 downto 0);
-           iCMD_EMPTY : in  STD_LOGIC;
            iCMD_FULL : in  STD_LOGIC;
            oRD_EN : out  STD_LOGIC;
            iRD_DATA : in  STD_LOGIC_VECTOR (31 downto 0);
-           iRD_FULL : in  STD_LOGIC;
            iRD_EMPTY : in  STD_LOGIC;
-           iRD_OVERFLOW : in  STD_LOGIC;
-           iRD_ERROR : in  STD_LOGIC;
            iRD_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
 			  iVIDEO_ON : in STD_LOGIC;
 			  iSTART : in STD_LOGIC;
@@ -58,7 +54,7 @@ architecture Behavioral of pixel_buffer is
 
 	constant H_RESOLUTION : natural := 512;
 	constant V_RESOLUTION : natural := 512;
-
+	
 	type tREAD_STATE is
 	(
 		IDLE,

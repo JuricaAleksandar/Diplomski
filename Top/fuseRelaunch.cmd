@@ -1,1 +1,1 @@
--intstyle "ise" -incremental -lib "secureip" -o "D:/Diplomski/Top/switch_debouncer_tb_isim_beh.exe" -prj "D:/Diplomski/Top/switch_debouncer_tb_beh.prj" "work.switch_debouncer_tb" 
+-intstyle "ise" -incremental -lib "secureip" -o "D:/Diplomski/Top/lcd_controller_tb_isim_beh.exe" -prj "D:/Diplomski/Top/lcd_controller_tb_beh.prj" "work.lcd_controller_tb" 

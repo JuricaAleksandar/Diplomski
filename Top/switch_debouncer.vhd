@@ -56,7 +56,7 @@ begin
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
 			sMODE_COUNTER <= (others => '0');
-			sMODE_SET <= '0';
+			sMODE_SET <= '1';
 		elsif(iCLK'event and iCLK = '1') then
 			if(sMODE_SET = '0') then
 				if((sMODE_FF(0) /= sMODE_FF(1))) then
@@ -84,7 +84,7 @@ begin
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
 			sSS_COUNTER <= (others => '0');
-			sSS_SET <= '0';
+			sSS_SET <= '1';
 		elsif(iCLK'event and iCLK = '1') then
 			if(sSS_SET = '0') then
 				if((sSS_FF(0) /= sSS_FF(1))) then

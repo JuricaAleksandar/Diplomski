@@ -66,6 +66,11 @@ entity top is
            onRESET : out  STD_LOGIC;
 			  iFILTER_MODE : in STD_LOGIC_VECTOR (1 downto 0);
 			  iSPLIT_SCREEN : in STD_LOGIC;
+			  oLCD_L : out STD_LOGIC;
+			  oLCD_RS : out STD_LOGIC;
+			  oLCD_RW : out STD_LOGIC;
+			  oLCD_EN : out STD_LOGIC;
+			  oLCD_DATA : out STD_LOGIC_VECTOR (3 downto 0);
 			  oLED : out STD_LOGIC_VECTOR (5 downto 0));
 end top;
 
@@ -93,8 +98,6 @@ architecture Behavioral of top is
 	signal sP1_WR_FULL : STD_LOGIC;
 	signal sP1_WR_EMPTY  : STD_LOGIC;
 	signal sP1_WR_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-	signal sP1_WR_UNDERRUN : STD_LOGIC;
-	signal sP1_WR_ERROR : STD_LOGIC;
 	
 	--- Port 1 read signals ---
 	signal sP1_RD_CLK : STD_LOGIC;
@@ -103,8 +106,6 @@ architecture Behavioral of top is
 	signal sP1_RD_FULL : STD_LOGIC;
 	signal sP1_RD_EMPTY : STD_LOGIC;
 	signal sP1_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-	signal sP1_RD_OVERFLOW : STD_LOGIC;
-	signal sP1_RD_ERROR : STD_LOGIC;
 	
 	--- Port 2 command signals ---
 	signal sP2_CMD_CLK : STD_LOGIC;
@@ -112,19 +113,12 @@ architecture Behavioral of top is
 	signal sP2_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
 	signal sP2_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
 	signal sP2_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
-	signal sP2_CMD_EMPTY : STD_LOGIC;
-	signal sP2_CMD_FULL : STD_LOGIC;
 	
 	--- Port 2 write signals ---
 	signal sP2_WR_CLK : STD_LOGIC;
 	signal sP2_WR_EN : STD_LOGIC;
 	signal sP2_WR_MASK : STD_LOGIC_VECTOR (3 downto 0);
 	signal sP2_WR_DATA : STD_LOGIC_VECTOR (31 downto 0);
-	signal sP2_WR_FULL : STD_LOGIC;
-	signal sP2_WR_EMPTY  : STD_LOGIC;
-	signal sP2_WR_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-	signal sP2_WR_UNDERRUN : STD_LOGIC;
-	signal sP2_WR_ERROR : STD_LOGIC;
 	
 	--- Port 3 command signals ---
 	signal sP3_CMD_CLK : STD_LOGIC;
@@ -132,18 +126,14 @@ architecture Behavioral of top is
 	signal sP3_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
 	signal sP3_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
 	signal sP3_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
-	signal sP3_CMD_EMPTY : STD_LOGIC;
 	signal sP3_CMD_FULL : STD_LOGIC;
 	
 	--- Port 3 read signals ---
 	signal sP3_RD_CLK : STD_LOGIC;
 	signal sP3_RD_EN : STD_LOGIC;
 	signal sP3_RD_DATA : STD_LOGIC_VECTOR (31 downto 0);
-	signal sP3_RD_FULL : STD_LOGIC;
 	signal sP3_RD_EMPTY : STD_LOGIC;
 	signal sP3_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-	signal sP3_RD_OVERFLOW : STD_LOGIC;
-	signal sP3_RD_ERROR : STD_LOGIC;
 
 	signal sLOCKED : STD_LOGIC;
 	signal sGEN_CLK : STD_LOGIC;
@@ -177,7 +167,8 @@ begin
 	oLED <= sFILTER_DONE_REG & sFILTER_DONE & sFILTER_READ_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
 	
 	sw_db : entity work.switch_debouncer
-	port map(
+	port map
+	(
 		iCLK => sCLK,
 		iRST => sRST,
 		iMODE => iFILTER_MODE,
@@ -186,10 +177,24 @@ begin
 		oSPLIT_SCREEN => sSPLIT_SCREEN
 	);
 	
+	lcd : entity work.lcd_controller
+   port map
+	(
+		iCLK => sCLK,
+		iRST => sRST,
+		iMODE => sFILTER_MODE,
+		iSPLIT_SCREEN => sSPLIT_SCREEN,
+		oRS => oLCD_RS,
+		oRW => oLCD_RW,
+		oEN => oLCD_EN,
+		oL => oLCD_L,
+		oDATA => oLCD_DATA
+	);
+	
 	imcb : entity work.memControllerBlock
-	generic map(
-			C3_SIMULATION => "TRUE"
-	)
+--	generic map(
+--			C3_SIMULATION => "TRUE"
+--	)
 	port map(
 		c3_sys_clk_p  					=>  iCLK_DIFF_P,
 		c3_sys_clk_n    				=>  iCLK_DIFF_N,
@@ -232,8 +237,8 @@ begin
 		c3_p1_wr_full              =>  sP1_WR_FULL,
 		c3_p1_wr_empty             =>  sP1_WR_EMPTY,
 		c3_p1_wr_count             =>  sP1_WR_COUNT,
-		c3_p1_wr_underrun          =>  sP1_WR_UNDERRUN,
-		c3_p1_wr_error             =>  sP1_WR_ERROR,
+		c3_p1_wr_underrun          =>  open,
+		c3_p1_wr_error             =>  open,
 		
 		c3_p1_rd_clk               =>  sP1_RD_CLK,
 		c3_p1_rd_en                =>  sP1_RD_EN,
@@ -241,43 +246,43 @@ begin
 		c3_p1_rd_full              =>  sP1_RD_FULL,
 		c3_p1_rd_empty             =>  sP1_RD_EMPTY,
 		c3_p1_rd_count             =>  sP1_RD_COUNT,
-		c3_p1_rd_overflow          =>  sP1_RD_OVERFLOW,
-		c3_p1_rd_error             =>  sP1_RD_ERROR,
+		c3_p1_rd_overflow          =>  open,
+		c3_p1_rd_error             =>  open,
 		
 		c3_p2_cmd_clk              =>  sP2_CMD_CLK,
 		c3_p2_cmd_en               =>  sP2_CMD_EN,
 		c3_p2_cmd_instr            =>  sP2_CMD_INSTR,
 		c3_p2_cmd_bl               =>  sP2_CMD_BL,
 		c3_p2_cmd_byte_addr        =>  sP2_CMD_BYTE_ADDR,
-		c3_p2_cmd_empty            =>  sP2_CMD_EMPTY,
-		c3_p2_cmd_full             =>  sP2_CMD_FULL,
+		c3_p2_cmd_empty            =>  open,
+		c3_p2_cmd_full             =>  open,
 		
 		c3_p2_wr_clk               =>  sP2_WR_CLK,
 		c3_p2_wr_en                =>  sP2_WR_EN,
 		c3_p2_wr_mask              =>  sP2_WR_MASK,
 		c3_p2_wr_data              =>  sP2_WR_DATA,
-		c3_p2_wr_full              =>  sP2_WR_FULL,
-		c3_p2_wr_empty             =>  sP2_WR_EMPTY,
-		c3_p2_wr_count             =>  sP2_WR_COUNT,
-		c3_p2_wr_underrun          =>  sP2_WR_UNDERRUN,
-		c3_p2_wr_error             =>  sP2_WR_ERROR,
+		c3_p2_wr_full              =>  open,
+		c3_p2_wr_empty             =>  open,
+		c3_p2_wr_count             =>  open,
+		c3_p2_wr_underrun          =>  open,
+		c3_p2_wr_error             =>  open,
 		
 		c3_p3_cmd_clk              =>  sP3_CMD_CLK,
 		c3_p3_cmd_en               =>  sP3_CMD_EN,
 		c3_p3_cmd_instr            =>  sP3_CMD_INSTR,
 		c3_p3_cmd_bl               =>  sP3_CMD_BL,
 		c3_p3_cmd_byte_addr        =>  sP3_CMD_BYTE_ADDR,
-		c3_p3_cmd_empty            =>  sP3_CMD_EMPTY,
+		c3_p3_cmd_empty            =>  open,
 		c3_p3_cmd_full             =>  sP3_CMD_FULL,
 		
 		c3_p3_rd_clk               =>  sP3_RD_CLK,
 		c3_p3_rd_en                =>  sP3_RD_EN,
 		c3_p3_rd_data              =>  sP3_RD_DATA,
-		c3_p3_rd_full              =>  sP3_RD_FULL,
+		c3_p3_rd_full              =>  open,
 		c3_p3_rd_empty             =>  sP3_RD_EMPTY,
 		c3_p3_rd_count             =>  sP3_RD_COUNT,
-		c3_p3_rd_overflow          =>  sP3_RD_OVERFLOW,
-		c3_p3_rd_error             =>  sP3_RD_ERROR
+		c3_p3_rd_overflow          =>  open,
+		c3_p3_rd_error             =>  open
 	);
 
 	sfc : entity work.spi_flash_controller
@@ -314,16 +319,9 @@ begin
 		oCMD_INSTR => sP2_CMD_INSTR,
 		oCMD_BL => sP2_CMD_BL,
 		oCMD_BYTE_ADDR => sP2_CMD_BYTE_ADDR,
-		iCMD_EMPTY => sP2_CMD_EMPTY,
-		iCMD_FULL => sP2_CMD_FULL,
 		oWR_EN => sP2_WR_EN,
 		oWR_MASK => sP2_WR_MASK,
-		oWR_DATA => sP2_WR_DATA,
-		iWR_FULL => sP2_WR_FULL,
-		iWR_EMPTY => sP2_WR_EMPTY,
-		iWR_COUNT => sP2_WR_COUNT,
-		iWR_UNDERRUN => sP2_WR_UNDERRUN,
-		iWR_ERROR => sP2_WR_ERROR
+		oWR_DATA => sP2_WR_DATA
 	);
 	
 	mf : entity work.median_filter
@@ -342,8 +340,6 @@ begin
 		iRD_DATA => sP1_RD_DATA,
 		iRD_FULL => sP1_RD_FULL,
 		iRD_EMPTY => sP1_RD_EMPTY,
-		iRD_OVERFLOW => sP1_RD_OVERFLOW,
-		iRD_ERROR => sP1_RD_ERROR,
 		iRD_COUNT => sP1_RD_COUNT,
 		oWR_EN => sP1_WR_EN,
 	   oWR_MASK => sP1_WR_MASK,
@@ -351,8 +347,6 @@ begin
 		iWR_FULL => sP1_WR_FULL,
 		iWR_EMPTY => sP1_WR_EMPTY,
 		iWR_COUNT => sP1_WR_COUNT,
-		iWR_UNDERRUN => sP1_WR_UNDERRUN,
-		iWR_ERROR => sP1_WR_ERROR,
 		oDONE => sFILTER_DONE,
 		oLOAD_IMAGE_DONE => sFILTER_READ_DONE
 	);
@@ -368,14 +362,10 @@ begin
 		oCMD_INSTR => sP3_CMD_INSTR,
 		oCMD_BL => sP3_CMD_BL,
 		oCMD_BYTE_ADDR => sP3_CMD_BYTE_ADDR,
-		iCMD_EMPTY => sP3_CMD_EMPTY,
 		iCMD_FULL => sP3_CMD_FULL,
 		oRD_EN => sP3_RD_EN,
 		iRD_DATA => sP3_RD_DATA,
-		iRD_FULL => sP3_RD_FULL,
 		iRD_EMPTY => sP3_RD_EMPTY,
-		iRD_OVERFLOW => sP3_RD_OVERFLOW,
-		iRD_ERROR => sP3_RD_ERROR,
 		iRD_COUNT => sP3_RD_COUNT,
 		iVIDEO_ON => sVIDEO_ON,
 		iSTART => sSTART,
@@ -455,7 +445,7 @@ begin
 
 	sINV_RST <= not inRST;
 	
-	--- SDRAM controller port clocks
+	--- SDRAM controller port clocks ---
 	sP1_CMD_CLK <= sCLK;
 	sP1_WR_CLK <= sCLK;
 	sP1_RD_CLK <= sCLK;

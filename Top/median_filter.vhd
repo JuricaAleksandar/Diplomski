@@ -44,8 +44,6 @@ entity median_filter is
            iRD_DATA : in  STD_LOGIC_VECTOR (31 downto 0);
            iRD_FULL : in  STD_LOGIC;
            iRD_EMPTY : in  STD_LOGIC;
-           iRD_OVERFLOW : in  STD_LOGIC;
-           iRD_ERROR : in  STD_LOGIC;
            iRD_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
 			  oWR_EN : out  STD_LOGIC;
 			  oWR_MASK : out  STD_LOGIC_VECTOR (3 downto 0);
@@ -53,8 +51,6 @@ entity median_filter is
 			  iWR_FULL : in  STD_LOGIC;
 			  iWR_EMPTY : in  STD_LOGIC;
 			  iWR_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
-			  iWR_UNDERRUN : in  STD_LOGIC;
-			  iWR_ERROR : in  STD_LOGIC;
 			  oLOAD_IMAGE_DONE : out STD_LOGIC;
 			  oDONE : out STD_LOGIC);
 			  
@@ -174,8 +170,6 @@ begin
 		iRD_DATA => iRD_DATA,
 		iRD_FULL => iRD_FULL,
 		iRD_EMPTY => iRD_EMPTY,
-		iRD_OVERFLOW => iRD_OVERFLOW,
-		iRD_ERROR => iRD_ERROR,
 		iRD_COUNT => iRD_COUNT,
 		oUV_CONV_START => sUV_CONV_START,
 		oWR_EN => sWR_EN,
@@ -251,9 +245,7 @@ begin
 		oWR_DATA => oWR_DATA,
 		iWR_FULL => iWR_FULL,
 		iWR_EMPTY => iWR_EMPTY,
-		iWR_COUNT => iWR_COUNT,
-		iWR_UNDERRUN => iWR_UNDERRUN,
-		iWR_ERROR => iWR_ERROR
+		iWR_COUNT => iWR_COUNT
 	);
 
 end Behavioral;

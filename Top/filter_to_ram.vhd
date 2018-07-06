@@ -50,9 +50,7 @@ entity filter_to_ram is
            oWR_DATA : out  STD_LOGIC_VECTOR (31 downto 0);
            iWR_FULL : in  STD_LOGIC;
            iWR_EMPTY : in  STD_LOGIC;
-           iWR_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
-           iWR_UNDERRUN : in  STD_LOGIC;
-           iWR_ERROR : in  STD_LOGIC);
+           iWR_COUNT : in  STD_LOGIC_VECTOR (6 downto 0));
 end filter_to_ram;
 
 architecture Behavioral of filter_to_ram is
