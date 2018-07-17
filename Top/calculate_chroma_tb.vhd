@@ -89,7 +89,7 @@ BEGIN
    -- Stimulus process
    stim_proc: process
    begin		
-      iRGB <= x"A3A3A3";
+      iRGB <= x"e2897d";
 		iRST <= '1';
       wait for 100 ns;	
 		iRST <= '0';

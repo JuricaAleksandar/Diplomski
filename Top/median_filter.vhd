@@ -34,6 +34,7 @@ entity median_filter is
            iRST : in  STD_LOGIC;
 			  iSTART : in STD_LOGIC;
 			  iMODE : in STD_LOGIC_VECTOR (1 downto 0);
+			  iDELAY_ON : in STD_LOGIC;
 			  oCMD_EN : out  STD_LOGIC;
            oCMD_INSTR : out  STD_LOGIC_VECTOR (2 downto 0);
            oCMD_BL : out  STD_LOGIC_VECTOR (5 downto 0);
@@ -110,7 +111,9 @@ begin
 	
 	sFILTER_DATA_VALID <= sDIRECT_WRITE when sMODE = "00"
 		else sCONV_DATA_VALID;
-
+	
+	---------------------------- Mode change detection and filter reset ---------------------------- 
+	
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
 			if(sMODE_IN_EN = "11") then
@@ -125,7 +128,7 @@ begin
 		elsif(iCLK'event and iCLK = '1') then
 			if(sRTOF_RESTARTED = '1') then
 				sRTOF_RESTART <= '0';
-			elsif(sMODE /= iMODE and sMODE_IN_EN = "11") then
+			elsif((sMODE /= iMODE and sMODE_IN_EN = "11") or iSTART = '0') then
 				sRTOF_RESTART <= '1';
 			end if;
 		end if;
@@ -137,12 +140,14 @@ begin
 		elsif(iCLK'event and iCLK = '1') then
 			if(sFTOR_RESTARTED = '1') then
 				sFTOR_RESTART <= '0';
-			elsif(sMODE /= iMODE and sMODE_IN_EN = "11") then
+			elsif((sMODE /= iMODE and sMODE_IN_EN = "11") or iSTART = '0') then
 				sFTOR_RESTART <= '1';
 			end if;
 		end if;
 	end process;
-
+	
+	-----------------------------------------------------------------------------------------------
+	
 	r2f : entity work.ram_to_filter
 	port map(
 		iCLK => iCLK,
@@ -150,6 +155,7 @@ begin
 		iCMD_PORT_STATE => sCMD_PORT_STATE,
 		iSTART => iSTART,
 		iMODE => sMODE,
+		iDELAY_ON => iDELAY_ON,
 		iRESTART => sRTOF_RESTART,
 		oRESTARTED => sRTOF_RESTARTED,
 		iREADY_WR => sREADY,
@@ -180,7 +186,7 @@ begin
 		iCLK => iCLK,
 		iRST => iRST,
 		iUV_START => sUV_CONV_START,
-		iUV_RESTART => '1',
+		iUV_RESTART => sSORT_DATA_VALID,
 		iWR_DONE => sWR_DONE,
 		iWR_EN => sWR_EN,
 		iWR_ADDR => sWR_ADDR,
@@ -221,6 +227,7 @@ begin
 	port map(
 		iCLK => iCLK,
 		iRST => iRST,
+		iSTART => iSTART,
 		iRESTART => sFTOR_RESTART,
 		oRESTARTED => sFTOR_RESTARTED,
 		oWR_CMD => sCMD_PORT_STATE,

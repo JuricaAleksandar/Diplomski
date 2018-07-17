@@ -41,13 +41,15 @@ ARCHITECTURE behavior OF vga_sync_tb IS
  
     COMPONENT vga_sync
     PORT(
-         iCLK : IN  std_logic;
-         inRST : IN  std_logic;
-         oPIXEL_X : OUT  std_logic_vector(10 downto 0);
-         oPIXEL_Y : OUT  std_logic_vector(10 downto 0);
-         oVIDEO_ON : OUT  std_logic;
-         oH_SYNC : OUT  std_logic;
-         oV_SYNC : OUT  std_logic
+         iCLK : in  STD_LOGIC;
+           inRST : in  STD_LOGIC;
+			  iSPLIT_SCREEN : in STD_LOGIC;
+           oPIXEL_X : out  STD_LOGIC_VECTOR (10 downto 0);
+           oPIXEL_Y : out  STD_LOGIC_VECTOR (10 downto 0);
+           oVIDEO_ON_DELAY : out  STD_LOGIC;
+			  oVIDEO_ON : out STD_LOGIC;
+			  oH_SYNC : out STD_LOGIC;
+			  oV_SYNC : out STD_LOGIC
         );
     END COMPONENT;
     
@@ -55,14 +57,16 @@ ARCHITECTURE behavior OF vga_sync_tb IS
    --Inputs
    signal iCLK : std_logic := '0';
    signal inRST : std_logic := '0';
-
+	signal iSPLIT_SCREEN : std_logic;
+	
  	--Outputs
    signal oPIXEL_X : std_logic_vector(10 downto 0);
    signal oPIXEL_Y : std_logic_vector(10 downto 0);
    signal oVIDEO_ON : std_logic;
    signal oH_SYNC : std_logic;
    signal oV_SYNC : std_logic;
-
+	signal oVIDEO_ON_DELAY : std_logic;
+	
    -- Clock period definitions
    constant iCLK_period : time := 10 ns;
  
@@ -72,11 +76,13 @@ BEGIN
    uut: vga_sync PORT MAP (
           iCLK => iCLK,
           inRST => inRST,
+			 iSPLIT_SCREEN => iSPLIT_SCREEN,
           oPIXEL_X => oPIXEL_X,
           oPIXEL_Y => oPIXEL_Y,
           oVIDEO_ON => oVIDEO_ON,
           oH_SYNC => oH_SYNC,
-          oV_SYNC => oV_SYNC
+          oV_SYNC => oV_SYNC,
+			 oVIDEO_ON_DELAY => oVIDEO_ON_DELAY
         );
 
    -- Clock process definitions
@@ -93,6 +99,7 @@ BEGIN
    stim_proc: process
    begin		
       inRST <= '0';
+		iSPLIT_SCREEN <= '0';
       wait for 100 ns;
 		inRST <= '1';
       wait;

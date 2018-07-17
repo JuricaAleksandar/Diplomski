@@ -1,8 +1,7 @@
-Creating log file D:\Diplomski\Top\memCntrlTop_xpa.log.
+Creating log file D:\Diplomski\Top\top_xpa.log.
 Loading device for application Rf_Device from file '6slx45.nph' in environment
 C:\Xilinx\14.6\ISE_DS\ISE\.
-   "memCntrlTop" is an NCD, version 3.2, device xc6slx45, package fgg676, speed
--2
+   "top" is an NCD, version 3.2, device xc6slx45, package fgg676, speed -2
 
 INFO:Power:1693 - 
    --------------------------------------------------------------
@@ -11,7 +10,7 @@ INFO:Power:1693 -
    --------------------------------------------------------------
 
 Design load 20% completeDesign load 25% completeDesign load 30% completeDesign load 60% completeDesign load 95% completeDesign load 100% completeRunning Vector-less Activity Propagation
-........
+..........
 Finished Running Vector-less Activity Propagation
 Finished Running Vector-less Activity Propagation 0 secs 
 WARNING:Power:1337 - Clock frequency for clock net "imcb/c3_pll_ce_0" is zero.
@@ -32,5 +31,5 @@ WARNING:Power:1369 - Clock frequency for one or more clocks was not found throug
      3. The clock frequency for clocks in the "By Type -> Clocks" view in the
         XPower Analyzer GUI and then applying "Update Power Analysis"
 
-Design 'memCntrlTop.ncd' and constraints 'memCntrlTop.pcf' opened successfully
+Design 'top.ncd' and constraints 'top.pcf' opened successfully
 

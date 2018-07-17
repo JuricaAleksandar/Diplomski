@@ -31,11 +31,9 @@ use UNISIM.VComponents.all;
 
 entity spi_flash_controller is
     Port ( iCLK : in  STD_LOGIC;
-           iRST : in  STD_LOGIC;
-			  iRD_EN : in STD_LOGIC;
+           inRST : in  STD_LOGIC;
 			  iRD_START : in STD_LOGIC;
 			  iRD_ADDR : in STD_LOGIC_VECTOR (23 downto 0);
-			  iRD_COUNT : in STD_LOGIC_VECTOR (7 downto 0);
 			  oREADY : out STD_LOGIC;
 			  oDATA_VALID : out STD_LOGIC;
 			  oDATA : out STD_LOGIC_VECTOR (7 downto 0);
@@ -49,6 +47,7 @@ architecture Behavioral of spi_flash_controller is
 
 	type tREADER_STATE is 
 	(
+		RESET_COUNTER,
 		RESET_SETUP,
 		RESETTING,
 		RESET_RECOVERY,
@@ -74,53 +73,53 @@ architecture Behavioral of spi_flash_controller is
 	
 	signal sSTATE, sNEXT_STATE : tREADER_STATE;
 	
+	signal snCLK : STD_LOGIC;
+	
 	signal sT : STD_LOGIC_VECTOR (3 downto 0);
 	signal sIN : STD_LOGIC_VECTOR (3 downto 0);
 	signal sOUT : STD_LOGIC_VECTOR (3 downto 0);
 	signal sMOSI_SHREG : STD_LOGIC_VECTOR (31 downto 0);
 	signal sMOSI_REG_IN : STD_LOGIC_VECTOR (31 downto 0);
 	signal sCONTROL : STD_LOGIC;
-	signal sEN : STD_LOGIC;
-	signal sBIT_COUNTER : STD_LOGIC_VECTOR (8 downto 0);
-	signal sSPI_CLK : STD_LOGIC;
-	signal snSPI_CLK : STD_LOGIC;
+	signal sEN, snEN : STD_LOGIC;
+	signal sBIT_COUNTER : STD_LOGIC_VECTOR (8 downto 0) := (others => '0');
 	signal sMISO_SHREG : STD_LOGIC_VECTOR (7 downto 0);
 	signal sREC_STATUS : STD_LOGIC;
 	signal sREC_DATA : STD_LOGIC;
-	signal sCOUNTER : STD_LOGIC_VECTOR (23 downto 0);
+	signal sCOUNTER : STD_LOGIC_VECTOR (22 downto 0) := (others => '0');
 	signal sCNT_EN : STD_LOGIC;
 	signal sDATA : STD_LOGIC_VECTOR (7 downto 0);
 	signal sDATA_VALID : STD_LOGIC;
-	signal sDATA_VALID_REG : STD_LOGIC;
 	signal sRD_COUNT : STD_LOGIC_VECTOR (7 downto 0);
 	
-	attribute clock_signal : string;
-	attribute clock_signal of sSPI_CLK : signal is "yes";
+	signal sCONTROL_VECTOR : STD_LOGIC_VECTOR (35 downto 0);
+	signal sMOSI_SEL : STD_LOGIC;
 	
 begin
 	
 	sOUT <= "000" & sMOSI_SHREG(31);
-	snSPI_CLK <= not sSPI_CLK;
-	oDATA_VALID <= sDATA_VALID_REG;
+	snCLK <= not iCLK;
+	oDATA_VALID <= sDATA_VALID;
 	oDATA <= sDATA;
+	snEN <= not sEN;
 	
 	-- SPI clock output register
 	CLK_ODDR2 : ODDR2            
 	generic map(
 		DDR_ALIGNMENT  =>  "NONE",
-		INIT           =>  '0',
+		INIT           =>  '1',
 		SRTYPE         =>  "SYNC"
 	)                              
 	port map                       
 	(
 		Q              =>  oSCLK,
-		C0             =>  sSPI_CLK,
-		C1             =>  snSPI_CLK,
-		CE             =>  '1',
-		D0             =>  '1',
-		D1             =>  '0',
+		C0             =>  iCLK,
+		C1             =>  snCLK,
+		CE             =>  sEN,
+		D0             =>  '0',
+		D1             =>  '1',
 		R              =>  '0',
-		S              =>  '0'
+		S              =>  snEN
 	);
 	
 	-- Four input/output tri-state buffers for cmd, address and data signals
@@ -160,22 +159,9 @@ begin
 		IO => ioSIO(3)
 	);
 	
-	-- Requested byte count register
-	process(iCLK, iRST) begin
-		if(iRST = '1') then
-			sRD_COUNT <= (others => '0');
-		elsif(iCLK'event and iCLK = '1') then
-			if(iRD_START = '1') then
-				sRD_COUNT <= iRD_COUNT;
-			end if;
-		end if;
-	end process;
-	
 	-- Cycle counter
-	process(iCLK, iRST) begin
-		if(iRST = '1') then
-			sCOUNTER <= (others => '0');
-		elsif(iCLK'event and iCLK = '1') then
+	process(iCLK) begin
+		if(iCLK'event and iCLK = '1') then
 			if(sCNT_EN = '1') then
 				sCOUNTER <= sCOUNTER + 1;
 			else
@@ -184,58 +170,41 @@ begin
 		end if;
 	end process;
 	
-	-- SPI clock generator
-	process(iCLK, iRST) begin
-		if(iRST = '1') then
-			sSPI_CLK <= '0';
-		elsif(iCLK'event and iCLK = '1') then
-			if(sEN = '1') then
-				sSPI_CLK <= not sSPI_CLK;
-			else
-				sSPI_CLK <= '0';
-			end if;
-		end if;
-	end process;
-	
 	-- MOSI shift register
-	process(iCLK, iRST) begin
-		if(iRST = '1') then
+	process(iCLK, inRST) begin
+		if(inRST = '0') then
 			sMOSI_SHREG <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
 			if(sCONTROL = '0') then
-				if(sSPI_CLK = '1') then
-					sMOSI_SHREG <= sMOSI_SHREG(30 downto 0) & '0';
-				end if;
+				sMOSI_SHREG <= sMOSI_SHREG(30 downto 0) & '0';
 			else
-				sMOSI_SHREG <= sMOSI_REG_IN;
+				if(sMOSI_SEL = '0') then
+					sMOSI_SHREG <= sMOSI_REG_IN;
+				else
+					sMOSI_SHREG <= x"6B" & iRD_ADDR;
+				end if;
 			end if;
 		end if;
 	end process;
 
 	-- MISO shift register
-	process(iCLK, iRST) begin
-		if(iRST = '1') then
+	process(iCLK, inRST) begin
+		if(inRST = '0') then
 			sMISO_SHREG <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
-			if(sSPI_CLK = '1') then
-				if (sREC_STATUS = '1') then
-					sMISO_SHREG <= sMISO_SHREG(6 downto 0) & sIN(1);
-				elsif (sREC_DATA = '1') then
-					sMISO_SHREG <= sMISO_SHREG(3 downto 0) & sIN;
-				end if;
+			if (sREC_STATUS = '1') then
+				sMISO_SHREG <= sMISO_SHREG(6 downto 0) & sIN(1);
+			elsif (sREC_DATA = '1') then
+				sMISO_SHREG <= sMISO_SHREG(3 downto 0) & sIN;
 			end if;
 		end if;
 	end process;
 
 	-- Transaction bits counter
-	process(iCLK, iRST) begin
-		if(iRST = '1') then
-			sBIT_COUNTER <= (others => '0');
-		elsif(iCLK'event and iCLK = '1') then
+	process(iCLK) begin
+		if(iCLK'event and iCLK = '1') then
 			if(sEN = '1') then
-				if(sSPI_CLK = '0') then
-					sBIT_COUNTER <= sBIT_COUNTER + 1;
-				end if;
+				sBIT_COUNTER <= sBIT_COUNTER + 1;
 			else
 				sBIT_COUNTER <= (others => '0');
 			end if;
@@ -243,51 +212,51 @@ begin
 	end process;
 
 	-- Output registers
-	process(iCLK, iRST) begin
-		if(iRST = '1') then
+	process(iCLK, inRST) begin
+		if(inRST = '0') then
 			sDATA <= (others => '0');
 			sDATA_VALID <= '0';
-			sDATA_VALID_REG <= '0';
 		elsif(iCLK'event and iCLK = '1') then
-				if(sREC_DATA = '1' and sBIT_COUNTER(0) = '0' and sBIT_COUNTER /= 40) then
-					sDATA <= sMISO_SHREG;
-					sDATA_VALID <= '1';
-				end if;
-				if(iRD_EN = '1' and sDATA_VALID = '1') then
-					sDATA_VALID <= '0';
-				end if;
-				sDATA_VALID_REG <= sDATA_VALID;
+			if(sREC_DATA = '1' and sBIT_COUNTER(0) = '1' and sBIT_COUNTER /= 41) then
+				sDATA <= sMISO_SHREG;
+				sDATA_VALID <= '1';
+			end if;
+			if(sDATA_VALID = '1') then
+				sDATA_VALID <= '0';
+			end if;
 		end if;
 	end process;
 
 	-- Flash reader automate
-	process(iCLK, iRST) begin
-		if(iRST = '1') then
-			sSTATE <= RESET_SETUP;
+	process(iCLK, inRST) begin
+		if(inRST = '0') then
+			sSTATE <= RESET_COUNTER;
 		elsif(iCLK'event and iCLK = '1') then
 			sSTATE <= sNEXT_STATE;
 		end if;
 	end process;
 
-	process(sSTATE, sBIT_COUNTER, sMISO_SHREG,  sCOUNTER, iRD_START, sRD_COUNT) begin
-		case sSTATE is			
+	process(sSTATE, sBIT_COUNTER, sMISO_SHREG,  sCOUNTER, iRD_START) begin
+		case sSTATE is		
+			when RESET_COUNTER =>
+				sNEXT_STATE <= RESET_SETUP;
+				
 			when RESET_SETUP =>
-				if(sCOUNTER = 3) then
+				if(sCOUNTER = 2) then
 					sNEXT_STATE <= RESETTING;
 				else
 					sNEXT_STATE <= RESET_SETUP;
 				end if;
 			
 			when RESETTING =>
-				if(sCOUNTER = 1010) then
+				if(sCOUNTER = 552) then
 					sNEXT_STATE <= RESET_RECOVERY;
 				else
 					sNEXT_STATE <= RESETTING;
 				end if;
 			
 			when RESET_RECOVERY =>
---				if(sCOUNTER = 4500) then 
-				if(sCOUNTER = 10002000) then
+				if(sCOUNTER = 5100552) then
 					sNEXT_STATE <= IDLE; 
 				else
 					sNEXT_STATE <= RESET_RECOVERY;
@@ -300,7 +269,7 @@ begin
 				sNEXT_STATE <= SEND;
 				
 			when SEND =>
-				if(sBIT_COUNTER = 8) then
+				if(sBIT_COUNTER = 7) then
 					sNEXT_STATE <= END_CMD;
 				else
 					sNEXT_STATE <= SEND;
@@ -310,7 +279,7 @@ begin
 				sNEXT_STATE <= IDLE1;
 				
 			when IDLE1 =>
-				if(sCOUNTER < 10) then
+				if(sCOUNTER < 6) then
 					sNEXT_STATE <= IDLE1;
 				else
 					sNEXT_STATE <= RDSR_CMD;
@@ -335,7 +304,7 @@ begin
 				
 			when END_CMD1 =>
 				if(sMISO_SHREG(0) = '0') then
-					if(sMISO_SHREG(1) = '1') then
+					if(sMISO_SHREG(1) = '1' and sMISO_SHREG(6) = '0') then
 						sNEXT_STATE <= IDLE2;
 					elsif(sMISO_SHREG(6) = '1') then
 						sNEXT_STATE <= READY;
@@ -353,7 +322,7 @@ begin
 				sNEXT_STATE <= SEND2;
 				
 			when SEND2 =>
-				if(sBIT_COUNTER = 16) then
+				if(sBIT_COUNTER = 15) then
 					sNEXT_STATE <= END_CMD;
 				else
 					sNEXT_STATE <= SEND2;
@@ -384,19 +353,19 @@ begin
 				end if;
 				
 			when RECEIVE2 =>
-				if(sBIT_COUNTER(8 downto 1) - 20 = sRD_COUNT) then
+				if(sBIT_COUNTER = 234) then
 					sNEXT_STATE <= END_CMD2;
 				else
 					sNEXT_STATE <= RECEIVE2;
 				end if;
 				
-			when END_CMD2 =>
+			when others =>
 				sNEXT_STATE <= READY;
 				
 		end case;
 	end process;
-
-	process(sSTATE, iRD_ADDR) begin
+	
+	process(sSTATE) begin
 		sT <= (others => '1');
 		oREADY <= '0';
 		sREC_STATUS <= '0';
@@ -405,8 +374,13 @@ begin
 		sCNT_EN <= '0';
 		sMOSI_REG_IN <= (others => '0');
 		onRESET <= '1';
+		sMOSI_SEL <= '0';
 		
 		case sSTATE is		
+			when RESET_COUNTER =>
+				onCS <= '1';
+				sEN <= '0';
+				
 			when IDLE|IDLE1|IDLE2|RESET_SETUP|RESET_RECOVERY =>
 				onCS <= '1';
 				sEN <= '0';
@@ -420,8 +394,8 @@ begin
 				
 			when WREN_CMD =>
 				sT <= (0 => '0', others => '1');
-				onCS <= '1';
-				sEN <= '0';
+				onCS <= '0';
+				sEN <= '1';
 				sCONTROL <= '1';
 				sMOSI_REG_IN <= x"06000000"; -- 0x06 CMD
 				
@@ -437,8 +411,8 @@ begin
 			
 			when RDSR_CMD =>
 				sT <= (0 => '0', others => '1');
-				onCS <= '1';
-				sEN <= '0';
+				onCS <= '0';
+				sEN <= '1';
 				sCONTROL <= '1';
 				sMOSI_REG_IN <= x"05000000"; -- 0x05 CMD
 			
@@ -454,17 +428,17 @@ begin
 			
 			when WRSR_CMD =>
 				sT <= (0 => '0', others => '1');
-				onCS <= '1';
-				sEN <= '0';
+				onCS <= '0';
+				sEN <= '1';
 				sCONTROL <= '1';
 				sMOSI_REG_IN <= x"01400000"; -- 0x01 CMD 0x40 DATA
 				
 			when QREAD_CMD =>
 				sT <= (0 => '0', others => '1');
-				onCS <= '1';
-				sEN <= '0';
+				onCS <= '0';
+				sEN <= '1';
 				sCONTROL <= '1';
-				sMOSI_REG_IN <= x"6B" & iRD_ADDR; -- 0x6B CMD Input DATA
+				sMOSI_SEL <= '1';
 			
 			when DUMMY =>
 				onCS <= '0';

@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <report-views version="2.0" >
  <header>
-  <DateModified>2018-07-06T18:56:30</DateModified>
+  <DateModified>2018-07-17T15:55:25</DateModified>
   <ModuleName>top</ModuleName>
-  <SummaryTimeStamp>2018-07-06T18:50:21</SummaryTimeStamp>
+  <SummaryTimeStamp>2018-07-16T13:22:42</SummaryTimeStamp>
   <SavedFilePath>D:/Diplomski/Top/iseconfig/top.xreport</SavedFilePath>
   <ImplementationReportsDirectory>D:/Diplomski/Top\</ImplementationReportsDirectory>
   <DateInitialized>2018-06-11T17:13:04</DateInitialized>
@@ -11,7 +11,7 @@
  </header>
  <body>
   <viewgroup label="Design Overview" >
-   <view inputState="Unknown" program="implementation" ShowPartitionData="false" type="FPGASummary" file="top_summary.html" label="Summary" >
+   <view inputState="Unknown" program="implementation" ShowPartitionData="false" ExpandConstraints="false" type="FPGASummary" file="top_summary.html" label="Summary" ExpandClockNets="false" ExpandWarnings="false" >
     <toc-item title="Design Overview" target="Design Overview" />
     <toc-item title="Design Utilization Summary" target="Design Utilization Summary" />
     <toc-item title="Performance Summary" target="Performance Summary" />

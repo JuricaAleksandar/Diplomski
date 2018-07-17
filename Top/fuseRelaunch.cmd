@@ -1,1 +1,1 @@
--intstyle "ise" -incremental -lib "secureip" -o "D:/Diplomski/Top/lcd_controller_tb_isim_beh.exe" -prj "D:/Diplomski/Top/lcd_controller_tb_beh.prj" "work.lcd_controller_tb" 
+-intstyle "ise" -incremental -lib "unisims_ver" -lib "unimacro_ver" -lib "xilinxcorelib_ver" -lib "secureip" -o "D:/Diplomski/Top/top_tb_isim_beh.exe" -prj "D:/Diplomski/Top/top_tb_beh.prj" "work.top_tb" "work.glbl" 

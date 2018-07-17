@@ -42,41 +42,31 @@ ARCHITECTURE behavior OF flash_to_ram_tb IS
     COMPONENT flash_to_ram
     PORT(
          iCLK : IN  std_logic;
-         iRST : IN  std_logic;
+         inRST : IN  std_logic;
          iREADY : IN  std_logic;
+			iIMAGE_SELECT : IN std_logic_vector(2 downto 0);
+			iCALIB_DONE : IN std_logic;
          iDATA_VALID : IN  std_logic;
          iDATA : IN  std_logic_vector(7 downto 0);
-         oRD_EN : OUT  std_logic;
          oRD_START : OUT  std_logic;
          oRD_ADDR : OUT  std_logic_vector(23 downto 0);
-         oRD_COUNT : OUT  std_logic_vector(7 downto 0);
          oDONE : OUT  std_logic;
          oCMD_EN : OUT  std_logic;
          oCMD_INSTR : OUT  std_logic_vector(2 downto 0);
          oCMD_BL : OUT  std_logic_vector(5 downto 0);
          oCMD_BYTE_ADDR : OUT  std_logic_vector(29 downto 0);
-         iCMD_EMPTY : IN  std_logic;
-         iCMD_FULL : IN  std_logic;
          oWR_EN : OUT  std_logic;
          oWR_MASK : OUT  std_logic_vector(3 downto 0);
-         oWR_DATA : OUT  std_logic_vector(31 downto 0);
-         iWR_FULL : IN  std_logic;
-         iWR_EMPTY : IN  std_logic;
-         iWR_COUNT : IN  std_logic_vector(6 downto 0);
-         iWR_UNDERRUN : IN  std_logic;
-         iWR_ERROR : IN  std_logic
+         oWR_DATA : OUT  std_logic_vector(31 downto 0)
         );
     END COMPONENT;
     
 	 COMPONENT spi_flash_controller
     PORT(
          iCLK : IN  std_logic;
-         iRST : IN  std_logic;
-			iCALIB_DONE : IN std_logic;
-			iRD_EN : in STD_LOGIC;
+         inRST : IN  std_logic;
 			iRD_START : in STD_LOGIC;
 			iRD_ADDR : in STD_LOGIC_VECTOR (23 downto 0);
-			iRD_COUNT : in STD_LOGIC_VECTOR (7 downto 0);
 			oDATA_VALID : out STD_LOGIC;
 			oDATA : out STD_LOGIC_VECTOR (7 downto 0);
 			oREADY : out STD_LOGIC;
@@ -108,7 +98,7 @@ ARCHITECTURE behavior OF flash_to_ram_tb IS
 
    --Inputs
    signal iCLK : std_logic := '0';
-   signal iRST : std_logic := '0';
+   signal inRST : std_logic := '0';
 	signal iCALIB_DONE : std_logic := '0';
    signal iREADY : std_logic := '0';
    signal iDATA_VALID : std_logic := '0';
@@ -120,9 +110,9 @@ ARCHITECTURE behavior OF flash_to_ram_tb IS
    signal iWR_COUNT : std_logic_vector(6 downto 0) := (others => '0');
    signal iWR_UNDERRUN : std_logic := '0';
    signal iWR_ERROR : std_logic := '0';
-
+	signal iIMAGE_SELECT : std_logic_vector(2 downto 0);
+	
  	--Outputs
-   signal oRD_EN : std_logic;
    signal oRD_START : std_logic;
    signal oRD_ADDR : std_logic_vector(23 downto 0);
    signal oRD_COUNT : std_logic_vector(7 downto 0);
@@ -136,46 +126,36 @@ ARCHITECTURE behavior OF flash_to_ram_tb IS
    signal oWR_DATA : std_logic_vector(31 downto 0);
 
    -- Clock period definitions
-   constant iCLK_period : time := 10 ns;
+   constant iCLK_period : time := 20 ns;
  
 BEGIN
  
 	-- Instantiate the Unit Under Test (UUT)
    uut: flash_to_ram PORT MAP (
           iCLK => iCLK,
-          iRST => iRST,
+          inRST => inRST,
           iREADY => iREADY,
+			 iIMAGE_SELECT => iIMAGE_SELECT,
+			 iCALIB_DONE => iCALIB_DONE,
           iDATA_VALID => iDATA_VALID,
           iDATA => iDATA,
-          oRD_EN => oRD_EN,
           oRD_START => oRD_START,
           oRD_ADDR => oRD_ADDR,
-          oRD_COUNT => oRD_COUNT,
           oDONE => oDONE,
           oCMD_EN => oCMD_EN,
           oCMD_INSTR => oCMD_INSTR,
           oCMD_BL => oCMD_BL,
           oCMD_BYTE_ADDR => oCMD_BYTE_ADDR,
-          iCMD_EMPTY => iCMD_EMPTY,
-          iCMD_FULL => iCMD_FULL,
           oWR_EN => oWR_EN,
           oWR_MASK => oWR_MASK,
-          oWR_DATA => oWR_DATA,
-          iWR_FULL => iWR_FULL,
-          iWR_EMPTY => iWR_EMPTY,
-          iWR_COUNT => iWR_COUNT,
-          iWR_UNDERRUN => iWR_UNDERRUN,
-          iWR_ERROR => iWR_ERROR
+          oWR_DATA => oWR_DATA
         );
 	
 	spi: spi_flash_controller PORT MAP (
           iCLK => iCLK,
-          iRST => iRST,
-			 iCALIB_DONE => iCALIB_DONE,
-			 iRD_EN => oRD_EN,
+          inRST => inRST,
 			 iRD_START => oRD_START,
 			 iRD_ADDR => oRD_ADDR,
-			 iRD_COUNT => oRD_COUNT,
 			 oREADY => iREADY,
 			 oDATA_VALID => iDATA_VALID,
 			 oDATA => iDATA,
@@ -209,15 +189,16 @@ BEGIN
    -- Stimulus process
    stim_proc: process
    begin		
-      iRST <= '1';
+		iIMAGE_SELECT <= "000";
+      inRST <= '0';
 		iCALIB_DONE <= '1';
       wait for 300 us;	
-		iRST <= '0';
+		inRST <= '1';
 		wait until oDONE = '1';
 		wait for 2*iCLK_period;
-		iRST <= '1';
+		inRST <= '0';
 		wait for 2*iCLK_period;
-		iRST <= '0';
+		inRST <= '1';
 		wait;
    end process;
 

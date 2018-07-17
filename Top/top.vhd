@@ -65,7 +65,9 @@ entity top is
            ioSIO : inout  STD_LOGIC_VECTOR (3 downto 0);
            onRESET : out  STD_LOGIC;
 			  iFILTER_MODE : in STD_LOGIC_VECTOR (1 downto 0);
+			  iIMAGE_SELECT : in STD_LOGIC_VECTOR (2 downto 0);
 			  iSPLIT_SCREEN : in STD_LOGIC;
+			  iDELAY_ON : in STD_LOGIC;
 			  oLCD_L : out STD_LOGIC;
 			  oLCD_RS : out STD_LOGIC;
 			  oLCD_RW : out STD_LOGIC;
@@ -136,23 +138,16 @@ architecture Behavioral of top is
 	signal sP3_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
 
 	signal sLOCKED : STD_LOGIC;
-	signal sGEN_CLK : STD_LOGIC;
-	signal snGEN_CLK : STD_LOGIC;
+	signal sVGA_CLK : STD_LOGIC;
+	signal snVGA_CLK : STD_LOGIC;
 	
 	signal sPIXEL_Y, sPIXEL_X : STD_LOGIC_VECTOR(10 downto 0);
 	signal sVIDEO_ON, sVIDEO_ON_DELAY, sH_SYNC, sV_SYNC : STD_LOGIC;
 	
+	signal sFLASH_CLK : STD_LOGIC;
 	signal sFLASH_DONE : STD_LOGIC;
 	signal sFILTER_DONE : STD_LOGIC;
 	signal sSTART : STD_LOGIC;
-	
-	signal sFLASH_RD_EN : STD_LOGIC;
-	signal sFLASH_RD_START : STD_LOGIC;
-	signal sFLASH_RD_ADDR : STD_LOGIC_VECTOR (23 downto 0);
-	signal sFLASH_RD_COUNT : STD_LOGIC_VECTOR (7 downto 0);
-	signal sFLASH_READY : STD_LOGIC;
-	signal sFLASH_DATA_VALID : STD_LOGIC;
-	signal sFLASH_DATA : STD_LOGIC_VECTOR (7 downto 0);
 	
 	signal sFILTER_DONE_REG : STD_LOGIC;
 	signal sBLANK : STD_LOGIC;
@@ -161,10 +156,12 @@ architecture Behavioral of top is
 	signal sFILTER_READ_DONE : STD_LOGIC;
 	signal sFILTER_MODE : STD_LOGIC_VECTOR (1 downto 0);
 	signal sSPLIT_SCREEN : STD_LOGIC;
+	signal sDELAY_ON : STD_LOGIC;
+	signal sIMAGE_SELECT : STD_LOGIC_VECTOR (2 downto 0);
 	
 begin
 	
-	oLED <= sFILTER_DONE_REG & sFILTER_DONE & sFILTER_READ_DONE & sFLASH_DONE & sFLASH_READY & sCALIB_DONE;
+	oLED <= '0' & sFILTER_DONE_REG & sFILTER_DONE & sFILTER_READ_DONE & sFLASH_DONE & sCALIB_DONE;
 	
 	sw_db : entity work.switch_debouncer
 	port map
@@ -172,9 +169,13 @@ begin
 		iCLK => sCLK,
 		iRST => sRST,
 		iMODE => iFILTER_MODE,
+		iIMAGE_SELECT => iIMAGE_SELECT,
 		iSPLIT_SCREEN => iSPLIT_SCREEN,
+		iDELAY_ON => iDELAY_ON,
 		oMODE => sFILTER_MODE,
-		oSPLIT_SCREEN => sSPLIT_SCREEN
+		oIMAGE_SELECT => sIMAGE_SELECT,
+		oSPLIT_SCREEN => sSPLIT_SCREEN,
+		oDELAY_ON => sDELAY_ON
 	);
 	
 	lcd : entity work.lcd_controller
@@ -192,9 +193,9 @@ begin
 	);
 	
 	imcb : entity work.memControllerBlock
---	generic map(
---			C3_SIMULATION => "TRUE"
---	)
+	generic map(
+			C3_SIMULATION => "TRUE"
+	)
 	port map(
 		c3_sys_clk_p  					=>  iCLK_DIFF_P,
 		c3_sys_clk_n    				=>  iCLK_DIFF_N,
@@ -284,36 +285,18 @@ begin
 		c3_p3_rd_overflow          =>  open,
 		c3_p3_rd_error             =>  open
 	);
-
-	sfc : entity work.spi_flash_controller
+	
+	flash : entity work.spi_module
 	port map(
 		iCLK => sCLK,
 		iRST => sRST,
-		iRD_EN => sFLASH_RD_EN,
-		iRD_START => sFLASH_RD_START,
-		iRD_ADDR => sFLASH_RD_ADDR,
-		iRD_COUNT => sFLASH_RD_COUNT,
-		oREADY => sFLASH_READY,
-		oDATA_VALID => sFLASH_DATA_VALID,
-		oDATA => sFLASH_DATA,
+		iIMAGE_SELECT => sIMAGE_SELECT,
+		oCLK => sFLASH_CLK,
 		oSCLK => oSCLK,
 		onCS => onCS,
 		ioSIO => ioSIO,
-		onRESET => onRESET
-	);
-
-	f2r : entity work.flash_to_ram
-	port map(
-		iCLK => sCLK,
-		iRST => sRST,
+		onRESET => onRESET,
 		iCALIB_DONE => sCALIB_DONE,
-		iREADY => sFLASH_READY,
-		iDATA_VALID => sFLASH_DATA_VALID,
-		iDATA => sFLASH_DATA,
-		oRD_EN => sFLASH_RD_EN,
-		oRD_START => sFLASH_RD_START,
-		oRD_ADDR => sFLASH_RD_ADDR,
-		oRD_COUNT => sFLASH_RD_COUNT,
 		oDONE => sFLASH_DONE,
 		oCMD_EN => sP2_CMD_EN,
 		oCMD_INSTR => sP2_CMD_INSTR,
@@ -330,6 +313,7 @@ begin
 		iRST => sRST,
 		iSTART => sFLASH_DONE,
 		iMODE => sFILTER_MODE,
+		iDELAY_ON => sDELAY_ON,
 		oCMD_EN => sP1_CMD_EN,
 		oCMD_INSTR => sP1_CMD_INSTR,
 		oCMD_BL => sP1_CMD_BL,
@@ -354,7 +338,7 @@ begin
 	pbuffer : entity work.pixel_buffer
 	port map(
 		iWR_CLK => sCLK,
-		iRD_CLK => sGEN_CLK,
+		iRD_CLK => sVGA_CLK,
 		iRST => sRST,
 		iSPLIT_SCREEN => sSPLIT_SCREEN,
 		iDONE => sFILTER_DONE_REG,
@@ -375,7 +359,7 @@ begin
 	
 	ivgasync : entity work.vga_sync
 	port map(
-		iCLK => sGEN_CLK,
+		iCLK => sVGA_CLK,
 		inRST => sLOCKED,
 		iSPLIT_SCREEN => sSPLIT_SCREEN,
 		oPIXEL_X => sPIXEL_X,
@@ -389,7 +373,7 @@ begin
 	dcm65MHz : entity work.dcm65MHz
 	port map(
 		CLK_IN => iCLK,
-		CLK_OUT => sGEN_CLK,
+		CLK_OUT => sVGA_CLK,
 		RESET  => sINV_RST,
 		LOCKED => sLOCKED
 	);
@@ -403,8 +387,8 @@ begin
 	port map                       
 	(
 		Q              =>  oVGA_CLK,
-		C0             =>  sGEN_CLK,
-		C1             =>  snGEN_CLK,
+		C0             =>  sVGA_CLK,
+		C1             =>  snVGA_CLK,
 		CE             =>  '1',
 		D0             =>  '1',
 		D1             =>  '0',
@@ -416,9 +400,11 @@ begin
 		if(sRST = '1') then
 			sFILTER_DONE_REG <= '0';
 		elsif(sCLK'event and sCLK = '1') then
-			if(sSPLIT_SCREEN_REG /= sSPLIT_SCREEN) then
+			if(sSPLIT_SCREEN_REG /= sSPLIT_SCREEN or sFLASH_DONE = '0') then
 				sFILTER_DONE_REG <= '0';
-			elsif(sBLANK = '1') then
+			elsif(sDELAY_ON = '1') then
+				sFILTER_DONE_REG <= '1';
+			else
 				sFILTER_DONE_REG <= sFILTER_DONE;
 			end if;
 		end if;
@@ -430,18 +416,16 @@ begin
 		end if;
 	end process;
 	
-	onSYNC <= sH_SYNC and sV_SYNC;
-	
+	--- VGA signals ---
+	onSYNC <= sH_SYNC and sV_SYNC;	
 	onBLANK <= sVIDEO_ON_DELAY when sBLANK = '0'
-		else '0';
-		
+		else '0';	
 	onPSAVE <= '1';
 	oH_SYNC <= sH_SYNC;
 	oV_SYNC <= sV_SYNC;
+	snVGA_CLK <= not sVGA_CLK;
 	
 	onRAM_CS <= '0';
-
-	snGEN_CLK <= not sGEN_CLK;
 
 	sINV_RST <= not inRST;
 	
@@ -449,12 +433,12 @@ begin
 	sP1_CMD_CLK <= sCLK;
 	sP1_WR_CLK <= sCLK;
 	sP1_RD_CLK <= sCLK;
-	sP2_CMD_CLK <= sCLK;
-	sP2_WR_CLK <= sCLK;
+	sP2_CMD_CLK <= sFLASH_CLK;
+	sP2_WR_CLK <= sFLASH_CLK;
 	sP3_CMD_CLK <= sCLK;
 	sP3_RD_CLK <= sCLK;
 	
-	sSTART <= '1' when (sPIXEL_X = 1342 and sPIXEL_Y = 805)
+	sSTART <= '1' when (sPIXEL_X = 1343 and sPIXEL_Y = 805)
 				else '0';
 	
 end Behavioral;

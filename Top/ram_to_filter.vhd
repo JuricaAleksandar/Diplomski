@@ -37,6 +37,7 @@ entity ram_to_filter is
 			  iRESTART : in STD_LOGIC;
 			  oRESTARTED : out STD_LOGIC;
 			  iCMD_PORT_STATE : in STD_LOGIC;
+			  iDELAY_ON : in STD_LOGIC;
 			  iMODE : in STD_LOGIC_VECTOR (1 downto 0);
 			  iREADY_WR : in STD_LOGIC;
 			  oDONE : out STD_LOGIC;
@@ -281,7 +282,7 @@ begin
 	end process;
 	
 	--- FSM next state generator
-	process(sSTATE, iRESTART, sDELAY_COUNTER, iMODE, iCMD_PORT_STATE, sCMD_BL_REG, iSTART, sCMD_CNT, iRD_COUNT, sCMD_COUNT, sBASE_POS_Y, sBASE_POS_X, sPOS_Y, sPOS_X, sPOS_Y_OFFSET, sPOS_X_OFFSET, sREAD_PIX_CNT, iREADY_WR, sBUFFER_ADDR, iCMD_FULL) begin
+	process(sSTATE, iDELAY_ON, iRESTART, sDELAY_COUNTER, iMODE, iCMD_PORT_STATE, sCMD_BL_REG, iSTART, sCMD_CNT, iRD_COUNT, sCMD_COUNT, sBASE_POS_Y, sBASE_POS_X, sPOS_Y, sPOS_X, sPOS_Y_OFFSET, sPOS_X_OFFSET, sREAD_PIX_CNT, iREADY_WR, sBUFFER_ADDR, iCMD_FULL) begin
 		case sSTATE is
 			when IDLE =>
 				if(iSTART = '1') then
@@ -392,22 +393,24 @@ begin
 			when INC_BASE_ADDR =>
 				if(sBASE_POS_Y = cV_SIZE and sBASE_POS_X = cH_SIZE) then
 					sNEXT_STATE <= DONE;
-				else
+				elsif(iDELAY_ON = '1') then
 					sNEXT_STATE <= DELAY;
+				else
+					sNEXT_STATE <= SET_BL;
 				end if;
 			
 			when DELAY =>
-				if(sDELAY_COUNTER = x"00FF") then
+				if(sDELAY_COUNTER = x"1FF") then
 					sNEXT_STATE <= SET_BL;
 				else
 					sNEXT_STATE <= DELAY;
 				end if;
 			
 			when others =>
-				if(iRESTART = '0') then
-					sNEXT_STATE <= DONE;
-				else
+				if(iRESTART = '1') then
 					sNEXT_STATE <= IDLE;
+				else
+					sNEXT_STATE <= DONE;
 				end if;
 			
 		end case;

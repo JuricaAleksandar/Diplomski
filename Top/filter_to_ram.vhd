@@ -33,6 +33,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity filter_to_ram is
     Port ( iCLK : in  STD_LOGIC;
            iRST : in  STD_LOGIC;
+			  iSTART : in STD_LOGIC;
 			  iRESTART : in STD_LOGIC;
 			  oRESTARTED : out STD_LOGIC;
 			  oWR_CMD : out STD_LOGIC;
@@ -108,8 +109,15 @@ begin
 	end process;
 
 	--- Next state logic ---
-	process(sSTATE, iRESTART, iDATA_VALID, iWR_COUNT, sPOS_X, sPOS_Y, iCMD_FULL) begin
+	process(sSTATE, iSTART, iRESTART, iDATA_VALID, iWR_COUNT, sPOS_X, sPOS_Y, iCMD_FULL) begin
 		case sSTATE is
+			when RESTARTED =>
+				if(iSTART = '1') then
+					sNEXT_STATE <= IDLE;
+				else
+					sNEXT_STATE <= RESTARTED;
+				end if;
+			
 			when IDLE =>
 				if(iDATA_VALID = '1') then
 					sNEXT_STATE <= ADD_TO_FIFO;
@@ -131,15 +139,12 @@ begin
 					sNEXT_STATE <= IDLE;
 				end if;
 			
-			when DONE =>
+			when others =>
 				if(iRESTART = '1') then
 					sNEXT_STATE <= RESTARTED;
 				else
 					sNEXT_STATE <= DONE;
 				end if;
-				
-			when others =>
-				sNEXT_STATE <= IDLE;
 			
 		end case;
 	end process;

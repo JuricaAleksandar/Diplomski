@@ -3,6 +3,7 @@ _xmsgs\pn_parser.xmsgs
 pixel_fifo.asy
 pixel_fifo.gise
 pixel_fifo.ngc
+pixel_fifo.sym
 pixel_fifo.vhd
 pixel_fifo.vho
 pixel_fifo.xco

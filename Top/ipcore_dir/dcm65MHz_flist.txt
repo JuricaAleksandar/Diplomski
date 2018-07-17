@@ -2,6 +2,7 @@
 _xmsgs\pn_parser.xmsgs
 dcm65MHz.asy
 dcm65MHz.gise
+dcm65MHz.sym
 dcm65MHz.ucf
 dcm65MHz.vhd
 dcm65MHz.vho

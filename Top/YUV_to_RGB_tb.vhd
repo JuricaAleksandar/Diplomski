@@ -90,13 +90,14 @@ BEGIN
    stim_proc: process
    begin		
       iRST <= '1';
-		iYUV <= x"123456";
-		iDATA_VALID <= '1';
+		iYUV <= x"a2ee37";
+		iDATA_VALID <= '0';
       wait for 100 ns;	
 		iRST <= '0';
       wait for iCLK_period*10;
-
-      -- insert stimulus here 
+		iDATA_VALID <= '1';
+		wait for iCLK_period;
+      iDATA_VALID <= '0';
 
       wait;
    end process;

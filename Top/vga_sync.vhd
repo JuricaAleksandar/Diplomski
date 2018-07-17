@@ -80,10 +80,10 @@ begin
 		end if;
 	end process;
 
-	sH_SYNC <= '0' when (sH_COUNT_NEXT >= cH_DISPLAY + cH_FP and sH_COUNT_NEXT < cH_DISPLAY + cH_FP + cH_RETR)
+	sH_SYNC <= '0' when (sH_COUNT_NEXT > cH_DISPLAY + cH_FP and sH_COUNT_NEXT <= cH_DISPLAY + cH_FP + cH_RETR)
 					else '1';
 					
-	sV_SYNC <= '0' when (sV_COUNT_NEXT >= cV_DISPLAY + cV_FP and sV_COUNT_NEXT < cV_DISPLAY + cV_FP + cV_RETR)
+	sV_SYNC <= '0' when (sV_COUNT_NEXT > cV_DISPLAY + cV_FP and sV_COUNT_NEXT <= cV_DISPLAY + cV_FP + cV_RETR)
 					else '1';			
 
 	sSINGLE_IMAGE_VIDEO_ON <= '1' when (sH_COUNT_NEXT < cH_DISPLAY/2 + 256 and sH_COUNT_NEXT >= cH_DISPLAY/2 - 256 and sV_COUNT_NEXT < cV_DISPLAY/2 + 256 and sV_COUNT_NEXT >= cV_DISPLAY/2 - 256)

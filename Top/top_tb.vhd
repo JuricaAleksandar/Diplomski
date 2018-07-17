@@ -80,7 +80,9 @@ ARCHITECTURE behavior OF top_tb IS
 		   ioSIO : INOUT  std_logic_vector(3 downto 0);
 		   onRESET : OUT  std_logic;
 			iSPLIT_SCREEN : IN std_logic;
+			iIMAGE_SELECT : IN std_logic_vector (2 downto 0);
 			iFILTER_MODE : IN std_logic_vector(1 downto 0);
+			iDELAY_ON : IN STD_LOGIC;
 			oLED : out STD_LOGIC_VECTOR (5 downto 0)
         );
     END COMPONENT;
@@ -119,7 +121,7 @@ ARCHITECTURE behavior OF top_tb IS
 	 
 	signal oSCLK : std_logic;
 	signal onCS : std_logic;
-	signal ioSIO : std_logic_vector(3 downto 0);
+	signal ioSIO : std_logic_vector (3 downto 0);
 	signal onRESET : std_logic;
 	 
 	signal mcb3_enable1 : std_logic;
@@ -131,14 +133,16 @@ ARCHITECTURE behavior OF top_tb IS
 	signal iCLK : std_logic;
    signal inRST : std_logic;
 	signal iSPLIT_SCREEN : std_logic;
-	signal iFILTER_MODE : std_logic_vector(1 downto 0);
+	signal iFILTER_MODE : std_logic_vector (1 downto 0);
+	signal iDELAY_ON : std_logic;
+	signal iIMAGE_SELECT : std_logic_vector (2 downto 0);
 	
 	--BiDirs
    signal ioRAM_UDQS : std_logic;
    signal ionRAM_UDQS : std_logic;
    signal ioRAM_LDQS : std_logic;
    signal ionRAM_LDQS : std_logic;
-   signal ioRAM_DQ : std_logic_vector(15 downto 0);
+   signal ioRAM_DQ : std_logic_vector (15 downto 0);
    signal ioRZQ : std_logic;
    signal ioZIO : std_logic;
 
@@ -257,8 +261,10 @@ BEGIN
 			 onCS => onCS,
 			 onRESET => onRESET,
 			 ioSIO => ioSIO,
+			 iIMAGE_SELECT => iIMAGE_SELECT,
 			 iSPLIT_SCREEN => iSPLIT_SCREEN,
 			 iFILTER_MODE => iFILTER_MODE,
+			 iDELAY_ON => iDELAY_ON,
 			 oLED => oLED
         );
 
@@ -323,6 +329,8 @@ BEGIN
    -- Stimulus process
    stim_proc: process
    begin		
+		iIMAGE_SELECT <= "100";
+		iDELAY_ON <= '0';
       inRST <= '0';
 		iSPLIT_SCREEN <= '0';
 		iFILTER_MODE <= "11";

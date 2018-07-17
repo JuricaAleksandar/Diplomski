@@ -199,11 +199,7 @@ begin
 				end if;
 				
 			when SET_CMD =>
-				if(iDONE = '0') then
-					sNEXT_STATE <= WAIT_EMPTY;
-				else
-					sNEXT_STATE <= WAIT_UPDATE;
-				end if;
+				sNEXT_STATE <= WAIT_UPDATE;
 			
 			when WAIT_EMPTY =>
 				if(iRD_EMPTY = '1' and sCROSS_REG2 = '1') then
@@ -237,6 +233,9 @@ begin
 				end if;
 				
 		end case;
+		if(iDONE = '0') then
+			sNEXT_STATE <= WAIT_EMPTY;
+		end if;
 	end process;
 	
 	process(sSTATE) begin
@@ -257,7 +256,13 @@ begin
 				oCMD_EN <= '0';
 				sPOS_WE <= '0';
 				sPOS_CLR <= '1';
-				oBLANK <= '0';
+				oBLANK <= '1';
+				
+			when WAIT_EMPTY =>
+				oCMD_EN <= '0';
+				sPOS_WE <= '0';
+				sPOS_CLR <= '0';
+				oBLANK <= '1';
 				
 			when others =>
 				oCMD_EN <= '0';

@@ -67,7 +67,7 @@ ARCHITECTURE behavior OF RGB_to_YUV_tb IS
    signal oWR_DONE : std_logic;
    signal oWR_EN : std_logic;
    signal oWR_ADDR : std_logic_vector(3 downto 0);
-   signal oYUV : std_logic_vector(23 downto 0);
+   signal oY : std_logic_vector(7 downto 0);
 
    -- Clock period definitions
    constant iCLK_period : time := 10 ns;
@@ -85,7 +85,7 @@ BEGIN
           oWR_DONE => oWR_DONE,
           oWR_EN => oWR_EN,
           oWR_ADDR => oWR_ADDR,
-          oYUV => oYUV
+          oY => oY
         );
 
    -- Clock process definitions
@@ -106,7 +106,7 @@ BEGIN
 		iRST <= '0';
 		wait for 100 ns;
 		iWR_EN <= '1';
-		iRGB <= x"A0A0A0";
+		iRGB <= x"";
 		iWR_ADDR <= x"0";
       wait for iCLK_period;
 		iRGB <= x"A3A3A3";
