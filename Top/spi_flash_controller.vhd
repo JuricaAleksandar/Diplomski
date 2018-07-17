@@ -256,7 +256,7 @@ begin
 				end if;
 			
 			when RESET_RECOVERY =>
-				if(sCOUNTER = 5100552) then
+				if(sCOUNTER = 5100552) then 
 					sNEXT_STATE <= IDLE; 
 				else
 					sNEXT_STATE <= RESET_RECOVERY;

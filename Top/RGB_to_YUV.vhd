@@ -34,8 +34,6 @@ entity RGB_to_YUV is
 		(
 			iCLK : in STD_LOGIC;
 			iRST : in STD_LOGIC;
-			iUV_START : in STD_LOGIC;
-			iUV_RESTART : in STD_LOGIC;
 			iWR_DONE : in STD_LOGIC;
 			iWR_EN : in STD_LOGIC;
 			iWR_ADDR : in  STD_LOGIC_VECTOR (3 downto 0);
@@ -43,38 +41,56 @@ entity RGB_to_YUV is
 			oWR_DONE : out STD_LOGIC;
 			oWR_EN : out STD_LOGIC;
 			oWR_ADDR : out  STD_LOGIC_VECTOR (3 downto 0);
-			oY : out  STD_LOGIC_VECTOR (7 downto 0);
-			oUV : out STD_LOGIC_VECTOR (15 downto 0)
+			oYUV : out  STD_LOGIC_VECTOR (23 downto 0)
 		);
 		
 end RGB_to_YUV;
 
 architecture Behavioral of RGB_to_YUV is
 	
-	signal sWR_DONE_DELAY : STD_LOGIC_VECTOR (3 downto 0);
-	signal sWR_EN_DELAY : STD_LOGIC_VECTOR (3 downto 0);
-	signal sWR_ADDR_DELAY : STD_LOGIC_VECTOR (15 downto 0);
+	signal sWR_DONE_DELAY : STD_LOGIC_VECTOR (4 downto 0);
+	signal sWR_EN_DELAY : STD_LOGIC_VECTOR (4 downto 0);
+	signal sWR_ADDR_DELAY : STD_LOGIC_VECTOR (19 downto 0);
 	
 begin
 	
-	calc_luma : entity work.calculate_luma
+	calc_luma_y : entity work.calculate_yuv_components
+	generic map
+	(
+		OUTPUT_COMPONENT => "Y"
+	)
 	port map
 	(
 		iCLK => iCLK,
 		iRST => iCLK,
 		iRGB => iRGB,
-		oY => oY
+		oCOMP => oYUV(23 downto 16)
 	);
 	
-	calc_chroma : entity work.calculate_chroma
+	calc_chroma_u : entity work.calculate_yuv_components
+	generic map
+	(
+		OUTPUT_COMPONENT => "U"
+	)
 	port map
-	( 
+	(
 		iCLK => iCLK,
-		iRST => iRST,
-		iSTART => iUV_START,
-		iRESTART => iUV_RESTART,
+		iRST => iCLK,
 		iRGB => iRGB,
-		oUV => oUV
+		oCOMP => oYUV(15 downto 8)
+	);
+	
+	calc_chroma_v : entity work.calculate_yuv_components
+	generic map
+	(
+		OUTPUT_COMPONENT => "V"
+	)
+	port map
+	(
+		iCLK => iCLK,
+		iRST => iCLK,
+		iRGB => iRGB,
+		oCOMP => oYUV(7 downto 0)
 	);
 	
 	process(iCLK, iRST) begin
@@ -83,15 +99,15 @@ begin
 			sWR_EN_DELAY <= (others => '0');
 			sWR_ADDR_DELAY <= (others => '0');
 		elsif(iCLK'event and iCLK = '1') then
-			sWR_DONE_DELAY <= sWR_DONE_DELAY(2 downto 0) & iWR_DONE;
-			sWR_EN_DELAY <= sWR_EN_DELAY(2 downto 0) & iWR_EN;
-			sWR_ADDR_DELAY <= sWR_ADDR_DELAY(11 downto 0) & iWR_ADDR;
+			sWR_DONE_DELAY <= sWR_DONE_DELAY(3 downto 0) & iWR_DONE;
+			sWR_EN_DELAY <= sWR_EN_DELAY(3 downto 0) & iWR_EN;
+			sWR_ADDR_DELAY <= sWR_ADDR_DELAY(15 downto 0) & iWR_ADDR;
 		end if;
 	end process;
 	
-	oWR_DONE <= sWR_DONE_DELAY(3);
-	oWR_EN <= sWR_EN_DELAY(3);
-	oWR_ADDR <= sWR_ADDR_DELAY(15 downto 12);
+	oWR_DONE <= sWR_DONE_DELAY(4);
+	oWR_EN <= sWR_EN_DELAY(4);
+	oWR_ADDR <= sWR_ADDR_DELAY(19 downto 16);
 	
 end Behavioral;
 

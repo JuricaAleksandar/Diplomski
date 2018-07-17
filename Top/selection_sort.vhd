@@ -30,12 +30,14 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --use UNISIM.VComponents.all;
 
 entity selection_sort is
+	 Generic (SORT_TYPE : STRING := "UNSIGNED");
     Port ( iCLK : in  STD_LOGIC;
            iRST : in  STD_LOGIC;
            iWR_EN : in  STD_LOGIC;
            iWR_ADDR : in  STD_LOGIC_VECTOR (3 downto 0);
            iWR_DATA : in  STD_LOGIC_VECTOR (7 downto 0);
 			  iSTART : in STD_LOGIC;
+			  iRESTART : in STD_LOGIC;
            oDATA : out  STD_LOGIC_VECTOR (7 downto 0);
            oDATA_VALID : out  STD_LOGIC;
 			  oREADY : out STD_LOGIC);
@@ -56,6 +58,7 @@ architecture Behavioral of selection_sort is
 		INC_OUT_CNT,
 		DONE
 	);
+	
 	type tPIXEL_ARRAY is array (0 to 8) of STD_LOGIC_VECTOR (7 downto 0);
 
 	signal sPIXEL_BUFFER : tPIXEL_ARRAY;
@@ -66,13 +69,21 @@ architecture Behavioral of selection_sort is
 	signal sMIN_IND, sNEW_MIN_IND : STD_LOGIC_VECTOR (3 downto 0);
 	signal sMIN_WR_EN : STD_LOGIC;
 	signal sIN_CNT_CONTROL : STD_LOGIC;
-	signal sSWAP_REG, sSWAP_REG_INPUT : STD_LOGIC_VECTOR (7 downto 0);
+	signal sSWAP_REG, sSWAP_REG_INPUT, sINPUT : STD_LOGIC_VECTOR (7 downto 0);
 	signal sSWAP_REG_EN : STD_LOGIC;
 	signal sPBUFF_IN_CONTROL : STD_LOGIC_VECTOR (1 downto 0);
 	
 begin
-
-	oDATA <= sPIXEL_BUFFER(4);
+	
+	U_SORT : if (SORT_TYPE = "UNSIGNED") generate begin
+		sINPUT <= iWR_DATA;
+		oDATA <= sPIXEL_BUFFER(4);
+	end generate U_SORT;
+	
+	S_SORT : if (SORT_TYPE = "SIGNED") generate begin
+		sINPUT <= iWR_DATA + 128;
+		oDATA <= sPIXEL_BUFFER(4) - 128;
+	end generate S_SORT;
 	
 	--- Pixel buffer
 	process(iCLK, iRST) begin
@@ -85,7 +96,7 @@ begin
 				sPIXEL_BUFFER(CONV_INTEGER(sMIN_IND)) <= sSWAP_REG;
 			elsif(sPBUFF_IN_CONTROL = "11") then
 				if(iWR_EN = '1') then
-					sPIXEL_BUFFER(CONV_INTEGER(iWR_ADDR)) <= iWR_DATA;
+					sPIXEL_BUFFER(CONV_INTEGER(iWR_ADDR)) <= sINPUT;
 				end if;
 			end if;
 		end if;
@@ -142,7 +153,7 @@ begin
 		end if;
 	end process;
 
-	process(sSTATE, iSTART, sIN_LOOP_CNT, sOUT_LOOP_CNT, sPIXEL_BUFFER, sMIN_IND) begin
+	process(sSTATE, iSTART, iRESTART, sIN_LOOP_CNT, sOUT_LOOP_CNT, sPIXEL_BUFFER, sMIN_IND) begin
 		case sSTATE is
 			when IDLE =>
 				if(iSTART = '1') then
@@ -192,7 +203,11 @@ begin
 				end if;
 			
 			when others =>
-				sNEXT_STATE <= IDLE;
+				if(iRESTART = '1') then
+					sNEXT_STATE <= IDLE;
+				else
+					sNEXT_STATE <= DONE;
+				end if;
 				
 		end case;
 	end process;

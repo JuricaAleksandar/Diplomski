@@ -36,6 +36,7 @@ entity YUV_to_RGB is
 			iRST : in STD_LOGIC;
 			iDATA_VALID : in STD_LOGIC;
 			iYUV : in  STD_LOGIC_VECTOR (23 downto 0);
+			oRD_DONE : out STD_LOGIC;
 			oDATA_VALID : out STD_LOGIC;
 			oRGB : out  STD_LOGIC_VECTOR (23 downto 0)
 		);
@@ -307,6 +308,7 @@ begin
 		sG_OPMODE <= (others => '0');
 		sINPUT_EN <= '0';
 		oDATA_VALID <= '0';
+		oRD_DONE <= '1';
 		
 		case sSTATE is
 			when IDLE =>
@@ -315,6 +317,7 @@ begin
 				sRB_RSTP <= '1';
 				sG_RSTM <= '1';
 				sG_RSTP <= '1';
+				oRD_DONE <= '0';
 				
 			when STAGE1 =>
 				if(sYUV(7) = '0') then

@@ -63,11 +63,9 @@ architecture Behavioral of median_filter is
 	signal sWR_DONE, sWR_DONE_DELAY : STD_LOGIC;
 	signal sWR_EN, sWR_EN_DELAY : STD_LOGIC;
 	signal sWR_ADDR, sWR_ADDR_DELAY : STD_LOGIC_VECTOR (3 downto 0);
-	signal sRGB_DATA_IN : STD_LOGIC_VECTOR (23 downto 0);
-	signal sY_DATA_IN, sY_DATA_OUT : STD_LOGIC_VECTOR (7 downto 0);
-	signal sUV_DATA : STD_LOGIC_VECTOR (15 downto 0);
+	signal sRGB_DATA_IN, sRGB_DATA_OUT : STD_LOGIC_VECTOR (23 downto 0);
+	signal sYUV_DATA_IN, sYUV_DATA_OUT : STD_LOGIC_VECTOR (23 downto 0);
 	signal sREADY : STD_LOGIC;
-	signal sRGB_DATA_OUT : STD_LOGIC_VECTOR (23 downto 0);
 	signal sSORT_DATA_VALID, sCONV_DATA_VALID : STD_LOGIC;
 	
 	signal sRD_CMD_EN : STD_LOGIC;
@@ -92,7 +90,15 @@ architecture Behavioral of median_filter is
 	signal sMODE_IN_EN : STD_LOGIC_VECTOR(1 downto 0);
 	signal sMODE : STD_LOGIC_VECTOR (1 downto 0);
 	
+	signal sSORT_DATA_VALID_VECTOR : STD_LOGIC_VECTOR (2 downto 0);
+	signal sREADY_VECTOR : STD_LOGIC_VECTOR (2 downto 0);
+	signal sSORT_RESTART : STD_LOGIC;
+	
 begin
+
+	sSORT_DATA_VALID <= sSORT_DATA_VALID_VECTOR(0) and sSORT_DATA_VALID_VECTOR(1) and sSORT_DATA_VALID_VECTOR(2);
+	
+	sREADY <= sREADY_VECTOR(0) and sREADY_VECTOR(1) and sREADY_VECTOR(2);
 
 	oCMD_EN <= sWR_CMD_EN when sCMD_PORT_STATE = '1'
 		else sRD_CMD_EN;
@@ -170,7 +176,6 @@ begin
 		iRD_FULL => iRD_FULL,
 		iRD_EMPTY => iRD_EMPTY,
 		iRD_COUNT => iRD_COUNT,
-		oUV_CONV_START => sUV_CONV_START,
 		oWR_EN => sWR_EN,
       oWR_ADDR => sWR_ADDR,
 	   oWR_DATA => sRGB_DATA_IN,
@@ -185,8 +190,6 @@ begin
 	(
 		iCLK => iCLK,
 		iRST => iRST,
-		iUV_START => sUV_CONV_START,
-		iUV_RESTART => sSORT_DATA_VALID,
 		iWR_DONE => sWR_DONE,
 		iWR_EN => sWR_EN,
 		iWR_ADDR => sWR_ADDR,
@@ -194,31 +197,74 @@ begin
 		oWR_EN => sWR_EN_DELAY,
       oWR_ADDR => sWR_ADDR_DELAY,
 		oWR_DONE => sWR_DONE_DELAY,
-		oY => sY_DATA_IN,
-		oUV => sUV_DATA
+		oYUV => sYUV_DATA_IN
 	);
 	
 	sort_y : entity work.selection_sort
+	generic map
+	(
+		SORT_TYPE => "UNSIGNED"
+	)
 	port map
 	(
 		iCLK => iCLK,
 		iRST => iRST,
+		iRESTART => sSORT_RESTART,
 		iWR_EN => sWR_EN_DELAY,
 		iWR_ADDR => sWR_ADDR_DELAY,
-		iWR_DATA => sY_DATA_IN,
+		iWR_DATA => sYUV_DATA_IN(23 downto 16),
 		iSTART => sWR_DONE_DELAY,
-		oDATA => sY_DATA_OUT,
-		oDATA_VALID => sSORT_DATA_VALID,
-		oREADY => sREADY
+		oDATA => sYUV_DATA_OUT(23 downto 16),
+		oDATA_VALID => sSORT_DATA_VALID_VECTOR(2),
+		oREADY => sREADY_VECTOR(2)
 	);
-
+	
+	sort_u : entity work.selection_sort
+	generic map
+	(
+		SORT_TYPE => "SIGNED"
+	)
+	port map
+	(
+		iCLK => iCLK,
+		iRST => iRST,
+		iRESTART => sSORT_RESTART,
+		iWR_EN => sWR_EN_DELAY,
+		iWR_ADDR => sWR_ADDR_DELAY,
+		iWR_DATA => sYUV_DATA_IN(15 downto 8),
+		iSTART => sWR_DONE_DELAY,
+		oDATA => sYUV_DATA_OUT(15 downto 8),
+		oDATA_VALID => sSORT_DATA_VALID_VECTOR(1),
+		oREADY => sREADY_VECTOR(1)
+	);
+	
+	sort_v : entity work.selection_sort
+	generic map
+	(
+		SORT_TYPE => "SIGNED"
+	)
+	port map
+	(
+		iCLK => iCLK,
+		iRST => iRST,
+		iRESTART => sSORT_RESTART,
+		iWR_EN => sWR_EN_DELAY,
+		iWR_ADDR => sWR_ADDR_DELAY,
+		iWR_DATA => sYUV_DATA_IN(7 downto 0),
+		iSTART => sWR_DONE_DELAY,
+		oDATA => sYUV_DATA_OUT(7 downto 0),
+		oDATA_VALID => sSORT_DATA_VALID_VECTOR(0),
+		oREADY => sREADY_VECTOR(0)
+	);
+	
 	conv2 : entity work.YUV_to_RGB
 	port map
 	(
 		iCLK => iCLK,
 		iRST => iRST,
 		iDATA_VALID => sSORT_DATA_VALID,
-		iYUV => sY_DATA_OUT & sUV_DATA,
+		iYUV => sYUV_DATA_OUT,
+		oRD_DONE => sSORT_RESTART,
 		oDATA_VALID => sCONV_DATA_VALID,
 		oRGB => sRGB_DATA_OUT
 	);
