@@ -32,7 +32,6 @@ use UNISIM.VComponents.all;
 entity calculate_yuv_components is
 	 Generic ( OUTPUT_COMPONENT : STRING := "Y");
     Port ( iCLK : in  STD_LOGIC;
-           iRST : in  STD_LOGIC;
            iRGB : in  STD_LOGIC_VECTOR (23 downto 0);
            oCOMP : out  STD_LOGIC_VECTOR (7 downto 0));
 end calculate_yuv_components;

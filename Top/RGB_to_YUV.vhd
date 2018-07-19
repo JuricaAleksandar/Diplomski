@@ -62,7 +62,6 @@ begin
 	port map
 	(
 		iCLK => iCLK,
-		iRST => iCLK,
 		iRGB => iRGB,
 		oCOMP => oYUV(23 downto 16)
 	);
@@ -75,7 +74,6 @@ begin
 	port map
 	(
 		iCLK => iCLK,
-		iRST => iCLK,
 		iRGB => iRGB,
 		oCOMP => oYUV(15 downto 8)
 	);
@@ -88,7 +86,6 @@ begin
 	port map
 	(
 		iCLK => iCLK,
-		iRST => iCLK,
 		iRGB => iRGB,
 		oCOMP => oYUV(7 downto 0)
 	);

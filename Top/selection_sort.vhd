@@ -30,7 +30,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --use UNISIM.VComponents.all;
 
 entity selection_sort is
-	 Generic (SORT_TYPE : STRING := "UNSIGNED");
+	 Generic (SORT_TYPE : CHARACTER := 'U');
     Port ( iCLK : in  STD_LOGIC;
            iRST : in  STD_LOGIC;
            iWR_EN : in  STD_LOGIC;
@@ -75,12 +75,12 @@ architecture Behavioral of selection_sort is
 	
 begin
 	
-	U_SORT : if (SORT_TYPE = "UNSIGNED") generate begin
+	U_SORT : if (SORT_TYPE = 'U') generate begin
 		sINPUT <= iWR_DATA;
 		oDATA <= sPIXEL_BUFFER(4);
 	end generate U_SORT;
 	
-	S_SORT : if (SORT_TYPE = "SIGNED") generate begin
+	S_SORT : if (SORT_TYPE = 'S') generate begin
 		sINPUT <= iWR_DATA + 128;
 		oDATA <= sPIXEL_BUFFER(4) - 128;
 	end generate S_SORT;

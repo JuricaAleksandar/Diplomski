@@ -45,14 +45,10 @@ entity ram_to_filter is
            oCMD_INSTR : out  STD_LOGIC_VECTOR (2 downto 0);
            oCMD_BL : out  STD_LOGIC_VECTOR (5 downto 0);
            oCMD_BYTE_ADDR : out  STD_LOGIC_VECTOR (29 downto 0);
-           iCMD_EMPTY : in  STD_LOGIC;
            iCMD_FULL : in  STD_LOGIC;
            oRD_EN : out  STD_LOGIC;
            iRD_DATA : in  STD_LOGIC_VECTOR (31 downto 0);
-           iRD_FULL : in  STD_LOGIC;
-           iRD_EMPTY : in  STD_LOGIC;
            iRD_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
-			  oUV_CONV_START : out STD_LOGIC;
 			  oWR_EN : out  STD_LOGIC;
            oWR_ADDR : out  STD_LOGIC_VECTOR (3 downto 0);
            oWR_DATA : out  STD_LOGIC_VECTOR (23 downto 0);
@@ -115,9 +111,8 @@ architecture Behavioral of ram_to_filter is
 	signal sREAD_PIX_CNT : STD_LOGIC_VECTOR (3 downto 0);
 	signal sREAD_PIX_EN : STD_LOGIC;
 	signal sREAD_PIX_RST : STD_LOGIC;
-	signal sBUFFER_ADDR, sINDEX : STD_LOGIC_VECTOR (3 downto 0);
+	signal sBUFFER_ADDR: STD_LOGIC_VECTOR (3 downto 0);
 	signal sBUF_ADDR_RST : STD_LOGIC;
-	signal sINDEX_DEC_BL, sINDEX_DEC_ONE,sINDEX_RST : STD_LOGIC;
 	signal sDELAY_COUNTER : STD_LOGIC_VECTOR (11 downto 0);
 	signal sDELAY_CNT_EN : STD_LOGIC;
 	
@@ -154,23 +149,6 @@ begin
 				sDELAY_COUNTER <= sDELAY_COUNTER + 1;
 			else
 				sDELAY_COUNTER <= (others => '0');
-			end if;
-		end if;
-	end process;
-	
-	--- Filtered pixel index
-	process(iCLK) begin
-		if(iCLK'event and iCLK = '1') then
-			if(sINDEX_RST = '1') then
-				sINDEX <= "0100";
-			elsif(sINDEX_DEC_BL = '1') then
-				sINDEX <= sINDEX - sCMD_BL_REG(3 downto 0) - 1;
-			elsif(sINDEX_DEC_ONE = '1') then
-				if((iMODE = "11" and sBASE_POS_Y = 0) or iMODE = "01") then
-					sINDEX <= sINDEX - 1;
-				else
-					sINDEX <= sINDEX - 2;
-				end if;
 			end if;
 		end if;
 	end process;
@@ -416,7 +394,7 @@ begin
 		end case;
 	end process;
 	
-	process(sSTATE, iRD_DATA, sINDEX, sBUFFER_ADDR) begin
+	process(sSTATE, iRD_DATA, sBUFFER_ADDR) begin
 		oCMD_EN <= '0';
 		sCMD_CNT_CONTROL <= '0';
 		sBASE_POS_EN <= '0';
@@ -436,10 +414,6 @@ begin
 		oWR_DONE <= '0';
 		oDONE <= '0';
 		oRESTARTED <= '0';
-		sINDEX_DEC_BL <= '0';
-		sINDEX_DEC_ONE <= '0';
-		sINDEX_RST <= '0';
-		oUV_CONV_START <= '0';
 		oDIRECT_WRITE_EN <= '0';
 		oMODE_IN_EN <= '0';
 		sDELAY_CNT_EN <= '0';
@@ -454,7 +428,6 @@ begin
 			when SET_BL =>
 				sCMD_BL_CONTROL <= '1';
 				sCMD_BL_EN <= '1';
-				sINDEX_RST <= '1';
 				
 			when GEN_ADDR =>
 				sPOS_X_EN <= '1';
@@ -465,7 +438,6 @@ begin
 				sPOS_Y_CONTROL <= '1';
 				sCMD_CNT_CONTROL <= '1';
 				sCMD_CNT_EN <= '1';
-				sINDEX_DEC_BL <= '1';
 				
 			when Y_HIGH =>
 				sCMD_CNT_CONTROL <= '1';
@@ -475,7 +447,6 @@ begin
 				sPOS_X_EN <= '1';
 				sPOS_X_CONTROL <= '1';
 				sCMD_BL_EN <= '1';
-				sINDEX_DEC_ONE <= '1';
 				
 			when X_HIGH =>
 				sCMD_BL_EN <= '1';
@@ -504,17 +475,11 @@ begin
 				oRD_EN <= '1';
 				oWR_DATA <= iRD_DATA(23 downto 0);
 				sBUF_ADDR_RST <= '0';
-				if(sINDEX = sBUFFER_ADDR) then
-					oUV_CONV_START <= '1';
-				end if;
 				
 			when WRITE_PADDING =>
 				oWR_EN <= '1';
 				oWR_DATA <= (others => '0');
 				sBUF_ADDR_RST <= '0';
-				if(sINDEX = sBUFFER_ADDR) then
-					oUV_CONV_START <= '1';
-				end if;
 				
 			when INC_BASE_ADDR =>
 				oWR_DONE <= '1';

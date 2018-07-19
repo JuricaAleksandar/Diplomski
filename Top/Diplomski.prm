@@ -3,7 +3,7 @@ Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
 
 promgen -w -p mcs -c FF -o D:\Diplomski\Top\//Diplomski -x xcf16p -ver 0 D:/Diplomski/Top/top.bit 
 
-PROM D:\Diplomski\Top\Diplomski.prm map: Mon Jul 16 15:53:01 2018
+PROM D:\Diplomski\Top\Diplomski.prm map: Wed Jul 18 14:34:20 2018
 
 Calculating PROM checksum with fill value ff
 
@@ -11,7 +11,7 @@ Format        Mcs86 (32-bit)
 Size          2048K
 PROM start    0000:0000
 PROM end      001f:ffff
-PROM checksum 0990ee32
+PROM checksum 099858ab
 
         Addr1        Addr2                     Date File(s)
-    0000:0000    0016:a673     Jul 16 15:46:55 2018 D:/Diplomski/Top/top.bit
+    0000:0000    0016:a673     Jul 18 14:29:15 2018 D:/Diplomski/Top/top.bit

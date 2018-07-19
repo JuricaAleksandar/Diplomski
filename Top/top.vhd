@@ -89,7 +89,6 @@ architecture Behavioral of top is
 	signal sP1_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
 	signal sP1_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
 	signal sP1_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
-	signal sP1_CMD_EMPTY : STD_LOGIC;
 	signal sP1_CMD_FULL : STD_LOGIC;
 	
 	--- Port 1 write signals ---
@@ -97,16 +96,12 @@ architecture Behavioral of top is
 	signal sP1_WR_EN : STD_LOGIC;
 	signal sP1_WR_MASK : STD_LOGIC_VECTOR (3 downto 0);
 	signal sP1_WR_DATA : STD_LOGIC_VECTOR (31 downto 0);
-	signal sP1_WR_FULL : STD_LOGIC;
-	signal sP1_WR_EMPTY  : STD_LOGIC;
 	signal sP1_WR_COUNT : STD_LOGIC_VECTOR (6 downto 0);
 	
 	--- Port 1 read signals ---
 	signal sP1_RD_CLK : STD_LOGIC;
 	signal sP1_RD_EN : STD_LOGIC;
 	signal sP1_RD_DATA : STD_LOGIC_VECTOR (31 downto 0);
-	signal sP1_RD_FULL : STD_LOGIC;
-	signal sP1_RD_EMPTY : STD_LOGIC;
 	signal sP1_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
 	
 	--- Port 2 command signals ---
@@ -228,15 +223,15 @@ begin
 		c3_p1_cmd_instr            =>  sP1_CMD_INSTR,
 		c3_p1_cmd_bl               =>  sP1_CMD_BL,
 		c3_p1_cmd_byte_addr        =>  sP1_CMD_BYTE_ADDR,
-		c3_p1_cmd_empty            =>  sP1_CMD_EMPTY,
+		c3_p1_cmd_empty            =>  open,
 		c3_p1_cmd_full             =>  sP1_CMD_FULL,
 		
 		c3_p1_wr_clk               =>  sP1_WR_CLK,
 		c3_p1_wr_en                =>  sP1_WR_EN,
 		c3_p1_wr_mask              =>  sP1_WR_MASK,
 		c3_p1_wr_data              =>  sP1_WR_DATA,
-		c3_p1_wr_full              =>  sP1_WR_FULL,
-		c3_p1_wr_empty             =>  sP1_WR_EMPTY,
+		c3_p1_wr_full              =>  open,
+		c3_p1_wr_empty             =>  open,
 		c3_p1_wr_count             =>  sP1_WR_COUNT,
 		c3_p1_wr_underrun          =>  open,
 		c3_p1_wr_error             =>  open,
@@ -244,8 +239,8 @@ begin
 		c3_p1_rd_clk               =>  sP1_RD_CLK,
 		c3_p1_rd_en                =>  sP1_RD_EN,
 		c3_p1_rd_data              =>  sP1_RD_DATA,
-		c3_p1_rd_full              =>  sP1_RD_FULL,
-		c3_p1_rd_empty             =>  sP1_RD_EMPTY,
+		c3_p1_rd_full              =>  open,
+		c3_p1_rd_empty             =>  open,
 		c3_p1_rd_count             =>  sP1_RD_COUNT,
 		c3_p1_rd_overflow          =>  open,
 		c3_p1_rd_error             =>  open,
@@ -318,18 +313,13 @@ begin
 		oCMD_INSTR => sP1_CMD_INSTR,
 		oCMD_BL => sP1_CMD_BL,
 		oCMD_BYTE_ADDR => sP1_CMD_BYTE_ADDR,
-		iCMD_EMPTY => sP1_CMD_EMPTY,
 		iCMD_FULL => sP1_CMD_FULL,
 		oRD_EN => sP1_RD_EN,
 		iRD_DATA => sP1_RD_DATA,
-		iRD_FULL => sP1_RD_FULL,
-		iRD_EMPTY => sP1_RD_EMPTY,
 		iRD_COUNT => sP1_RD_COUNT,
 		oWR_EN => sP1_WR_EN,
 	   oWR_MASK => sP1_WR_MASK,
 		oWR_DATA => sP1_WR_DATA,
-		iWR_FULL => sP1_WR_FULL,
-		iWR_EMPTY => sP1_WR_EMPTY,
 		iWR_COUNT => sP1_WR_COUNT,
 		oDONE => sFILTER_DONE,
 		oLOAD_IMAGE_DONE => sFILTER_READ_DONE

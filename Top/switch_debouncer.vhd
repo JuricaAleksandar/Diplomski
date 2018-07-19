@@ -45,32 +45,35 @@ end switch_debouncer;
 
 architecture Behavioral of switch_debouncer is
 	
-	type t2BIT_FF is array (0 to 2) of STD_LOGIC_VECTOR(1 downto 0);
-	type t3BIT_FF is array (0 to 2) of STD_LOGIC_VECTOR(2 downto 0);
+	type t2BIT_FF is array (0 to 1) of STD_LOGIC_VECTOR(1 downto 0);
+	type t3BIT_FF is array (0 to 1) of STD_LOGIC_VECTOR(2 downto 0);
 	
+	signal sMODE_INPUT_FF : STD_LOGIC_VECTOR (1 downto 0);
 	signal sMODE_FF : t2BIT_FF;
 	signal sMODE_COUNTER : STD_LOGIC_VECTOR (19 downto 0);
 	signal sMODE_SET : STD_LOGIC;
 	
+	signal sIM_SEL_INPUT_FF : STD_LOGIC_VECTOR (2 downto 0);
 	signal sIM_SEL_FF : t3BIT_FF;
 	signal sIM_SEL_COUNTER : STD_LOGIC_VECTOR (19 downto 0);
 	signal sIM_SEL_SET : STD_LOGIC;
 	
-	signal sSS_FF : STD_LOGIC_VECTOR (2 downto 0);
+	signal sSS_INPUT_FF : STD_LOGIC;
+	signal sSS_FF : STD_LOGIC_VECTOR (1 downto 0);
 	signal sSS_COUNTER : STD_LOGIC_VECTOR (19 downto 0);
 	signal sSS_SET : STD_LOGIC;
 	
-	signal sDELAY_FF : STD_LOGIC_VECTOR (2 downto 0);
+	signal sDELAY_INPUT_FF : STD_LOGIC;
+	signal sDELAY_FF : STD_LOGIC_VECTOR (1 downto 0);
 	signal sDELAY_COUNTER : STD_LOGIC_VECTOR (19 downto 0);
 	signal sDELAY_SET : STD_LOGIC;
 	
 	attribute ASYNC_REG : string;
 	
-	attribute ASYNC_REG of sMODE_FF : signal is "TRUE";
-	attribute ASYNC_REG of sIM_SEL_FF : signal is "TRUE";
-	attribute ASYNC_REG of sSS_FF : signal is "TRUE";
-	attribute ASYNC_REG of sDELAY_FF : signal is "TRUE";
-	
+	attribute ASYNC_REG of sMODE_INPUT_FF : signal is "TRUE";
+	attribute ASYNC_REG of sIM_SEL_INPUT_FF : signal is "TRUE";
+	attribute ASYNC_REG of sSS_INPUT_FF : signal is "TRUE";
+	attribute ASYNC_REG of sDELAY_INPUT_FF : signal is "TRUE";
 	
 begin
 	
@@ -81,13 +84,13 @@ begin
 			sMODE_SET <= '1';
 		elsif(iCLK'event and iCLK = '1') then
 			if(sMODE_SET = '0') then
-				if((sMODE_FF(0) /= sMODE_FF(1))) then
+				if((sMODE_INPUT_FF /= sMODE_FF(0))) then
 					sMODE_COUNTER <= (others => '0');
 				elsif(sMODE_COUNTER = (19 downto 0 => '1')) then
 					sMODE_SET <= '1';
 				end if;
 				sMODE_COUNTER <= sMODE_COUNTER + 1;
-			elsif ((sMODE_FF(0) /= sMODE_FF(1))) then
+			elsif ((sMODE_INPUT_FF /= sMODE_FF(0))) then
 				sMODE_SET <= '0';
 			end if;
 		end if;
@@ -95,10 +98,10 @@ begin
 	
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
-			sMODE_FF(0) <= iMODE;
-			sMODE_FF(1) <= sMODE_FF(0);
+			sMODE_INPUT_FF <= iMODE;
+			sMODE_FF(0) <= sMODE_INPUT_FF;
 			if(sMODE_SET = '1') then
-				sMODE_FF(2) <= sMODE_FF(1);
+				sMODE_FF(1) <= sMODE_FF(0);
 			end if;
 		end if;
 	end process;
@@ -110,13 +113,13 @@ begin
 			sIM_SEL_SET <= '1';
 		elsif(iCLK'event and iCLK = '1') then
 			if(sIM_SEL_SET = '0') then
-				if((sIM_SEL_FF(0) /= sIM_SEL_FF(1))) then
+				if((sIM_SEL_INPUT_FF /= sIM_SEL_FF(0))) then
 					sIM_SEL_COUNTER <= (others => '0');
 				elsif(sIM_SEL_COUNTER = (19 downto 0 => '1')) then
 					sIM_SEL_SET <= '1';
 				end if;
 				sIM_SEL_COUNTER <= sIM_SEL_COUNTER + 1;
-			elsif ((sIM_SEL_FF(0) /= sIM_SEL_FF(1))) then
+			elsif ((sIM_SEL_INPUT_FF /= sIM_SEL_FF(0))) then
 				sIM_SEL_SET <= '0';
 			end if;
 		end if;
@@ -124,10 +127,10 @@ begin
 	
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
-			sIM_SEL_FF(0) <= iIMAGE_SELECT;
-			sIM_SEL_FF(1) <= sIM_SEL_FF(0);
+			sIM_SEL_INPUT_FF <= iIMAGE_SELECT;
+			sIM_SEL_FF(0) <= sIM_SEL_INPUT_FF;
 			if(sIM_SEL_SET = '1') then
-				sIM_SEL_FF(2) <= sIM_SEL_FF(1);
+				sIM_SEL_FF(1) <= sIM_SEL_FF(0);
 			end if;
 		end if;
 	end process;
@@ -139,13 +142,13 @@ begin
 			sSS_SET <= '1';
 		elsif(iCLK'event and iCLK = '1') then
 			if(sSS_SET = '0') then
-				if((sSS_FF(0) /= sSS_FF(1))) then
+				if(sSS_INPUT_FF /= sSS_FF(0)) then
 					sSS_COUNTER <= (others => '0');
 				elsif(sSS_COUNTER = (19 downto 0 => '1')) then
 					sSS_SET <= '1';
 				end if;
 				sSS_COUNTER <= sSS_COUNTER + 1;
-			elsif((sSS_FF(0) /= sSS_FF(1))) then
+			elsif((sSS_INPUT_FF /= sSS_FF(0))) then
 				sSS_SET <= '0';
 			end if;
 		end if;
@@ -153,10 +156,10 @@ begin
 	
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
-			sSS_FF(0) <= iSPLIT_SCREEN;
-			sSS_FF(1) <= sSS_FF(0);
+			sSS_INPUT_FF <= iSPLIT_SCREEN;
+			sSS_FF(0) <= sSS_INPUT_FF;
 			if(sSS_SET = '1') then
-				sSS_FF(2) <= sSS_FF(1);
+				sSS_FF(1) <= sSS_FF(0);
 			end if;
 		end if;
 	end process;
@@ -168,13 +171,13 @@ begin
 			sDELAY_SET <= '1';
 		elsif(iCLK'event and iCLK = '1') then
 			if(sDELAY_SET = '0') then
-				if((sDELAY_FF(0) /= sDELAY_FF(1))) then
+				if(sDELAY_INPUT_FF /= sDELAY_FF(0)) then
 					sDELAY_COUNTER <= (others => '0');
 				elsif(sDELAY_COUNTER = (19 downto 0 => '1')) then
 					sDELAY_SET <= '1';
 				end if;
 				sDELAY_COUNTER <= sDELAY_COUNTER + 1;
-			elsif((sDELAY_FF(0) /= sDELAY_FF(1))) then
+			elsif((sDELAY_INPUT_FF /= sDELAY_FF(0))) then
 				sDELAY_SET <= '0';
 			end if;
 		end if;
@@ -182,18 +185,18 @@ begin
 	
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
-			sDELAY_FF(0) <= iDELAY_ON;
-			sDELAY_FF(1) <= sDELAY_FF(0);
+			sDELAY_INPUT_FF <= iDELAY_ON;
+			sDELAY_FF(0) <= sDELAY_INPUT_FF;
 			if(sDELAY_SET = '1') then
-				sDELAY_FF(2) <= sDELAY_FF(1);
+				sDELAY_FF(1) <= sDELAY_FF(0);
 			end if;
 		end if;
 	end process;
 	
-	oMODE <= sMODE_FF(2);
-	oIMAGE_SELECT <= sIM_SEL_FF(2);
-	oSPLIT_SCREEN <= sSS_FF(2);
-	oDELAY_ON <= sDELAY_FF(2);
+	oMODE <= sMODE_FF(1);
+	oIMAGE_SELECT <= sIM_SEL_FF(1);
+	oSPLIT_SCREEN <= sSS_FF(1);
+	oDELAY_ON <= sDELAY_FF(1);
 	
 end Behavioral;
 

@@ -39,18 +39,13 @@ entity median_filter is
            oCMD_INSTR : out  STD_LOGIC_VECTOR (2 downto 0);
            oCMD_BL : out  STD_LOGIC_VECTOR (5 downto 0);
            oCMD_BYTE_ADDR : out  STD_LOGIC_VECTOR (29 downto 0);
-           iCMD_EMPTY : in  STD_LOGIC;
            iCMD_FULL : in  STD_LOGIC;
            oRD_EN : out  STD_LOGIC;
            iRD_DATA : in  STD_LOGIC_VECTOR (31 downto 0);
-           iRD_FULL : in  STD_LOGIC;
-           iRD_EMPTY : in  STD_LOGIC;
            iRD_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
 			  oWR_EN : out  STD_LOGIC;
 			  oWR_MASK : out  STD_LOGIC_VECTOR (3 downto 0);
 			  oWR_DATA : out  STD_LOGIC_VECTOR (31 downto 0);
-			  iWR_FULL : in  STD_LOGIC;
-			  iWR_EMPTY : in  STD_LOGIC;
 			  iWR_COUNT : in  STD_LOGIC_VECTOR (6 downto 0);
 			  oLOAD_IMAGE_DONE : out STD_LOGIC;
 			  oDONE : out STD_LOGIC);
@@ -83,7 +78,6 @@ architecture Behavioral of median_filter is
 	signal sFTOR_RESTART : STD_LOGIC;
 	signal sFTOR_RESTARTED : STD_LOGIC;
 	
-	signal sUV_CONV_START : STD_LOGIC;
 	signal sFILTER_DATA, sFILTER_DATA_REG : STD_LOGIC_VECTOR (23 downto 0);
 	signal sFILTER_DATA_VALID, sFILTER_DATA_VALID_REG : STD_LOGIC;
 	signal sDIRECT_WRITE : STD_LOGIC;
@@ -158,6 +152,7 @@ begin
 	port map(
 		iCLK => iCLK,
 		iRST => iRST,
+		iCMD_FULL => iCMD_FULL,
 		iCMD_PORT_STATE => sCMD_PORT_STATE,
 		iSTART => iSTART,
 		iMODE => sMODE,
@@ -169,12 +164,8 @@ begin
 		oCMD_INSTR => sRD_CMD_INSTR,
 		oCMD_BL => sRD_CMD_BL,
 		oCMD_BYTE_ADDR => sRD_CMD_BYTE_ADDR,
-		iCMD_EMPTY => iCMD_EMPTY,
-		iCMD_FULL => iCMD_FULL,
 		oRD_EN => oRD_EN,
 		iRD_DATA => iRD_DATA,
-		iRD_FULL => iRD_FULL,
-		iRD_EMPTY => iRD_EMPTY,
 		iRD_COUNT => iRD_COUNT,
 		oWR_EN => sWR_EN,
       oWR_ADDR => sWR_ADDR,
@@ -203,7 +194,7 @@ begin
 	sort_y : entity work.selection_sort
 	generic map
 	(
-		SORT_TYPE => "UNSIGNED"
+		SORT_TYPE => 'U'										-- UNSIGNED
 	)
 	port map
 	(
@@ -222,7 +213,7 @@ begin
 	sort_u : entity work.selection_sort
 	generic map
 	(
-		SORT_TYPE => "SIGNED"
+		SORT_TYPE => 'S'										-- SIGNED
 	)
 	port map
 	(
@@ -241,7 +232,7 @@ begin
 	sort_v : entity work.selection_sort
 	generic map
 	(
-		SORT_TYPE => "SIGNED"
+		SORT_TYPE => 'S'										-- SIGNED
 	)
 	port map
 	(
@@ -284,13 +275,9 @@ begin
 		oCMD_INSTR => sWR_CMD_INSTR,
 		oCMD_BL => sWR_CMD_BL,
 		oCMD_BYTE_ADDR => sWR_CMD_BYTE_ADDR,
-		iCMD_EMPTY => iCMD_EMPTY,
-		iCMD_FULL => iCMD_FULL,
 		oWR_EN => oWR_EN,
 		oWR_MASK => oWR_MASK,
 		oWR_DATA => oWR_DATA,
-		iWR_FULL => iWR_FULL,
-		iWR_EMPTY => iWR_EMPTY,
 		iWR_COUNT => iWR_COUNT,
 		oMODE_IN_EN => sMODE_IN_EN(1)
 	);
