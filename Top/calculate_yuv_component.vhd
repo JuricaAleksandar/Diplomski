@@ -31,29 +31,30 @@ use UNISIM.VComponents.all;
 
 entity calculate_yuv_components is
 	 Generic ( OUTPUT_COMPONENT : STRING := "Y");
-    Port ( iCLK : in  STD_LOGIC;
-           iRGB : in  STD_LOGIC_VECTOR (23 downto 0);
-           oCOMP : out  STD_LOGIC_VECTOR (7 downto 0));
+    Port ( iCLK : in  STD_LOGIC;											-- Input clock signal
+           iRGB : in  STD_LOGIC_VECTOR (23 downto 0);				-- Input pixel value in RGB color space
+           oCOMP : out  STD_LOGIC_VECTOR (7 downto 0));			-- Output Y,U or V component
 end calculate_yuv_components;
 
 architecture Behavioral of calculate_yuv_components is
 
-	signal sFS_A, sFS_B : STD_LOGIC_VECTOR (17 downto 0);
-	signal sFS_C, sFS_RES : STD_LOGIC_VECTOR (47 downto 0);
-	signal sFS_OPMODE : STD_LOGIC_VECTOR (7 downto 0);
+	signal sFS_A, sFS_B : STD_LOGIC_VECTOR (17 downto 0);			-- First stage A and B inputs for DSP48A1
+	signal sFS_C, sFS_RES : STD_LOGIC_VECTOR (47 downto 0);		-- First stage C input signal and first stage result signal (FS_A * FS_B + FS_C = FS_RES)
+	signal sFS_OPMODE : STD_LOGIC_VECTOR (7 downto 0);				-- First stage operation mode configuration signal
 	
-	signal sSS_A, sSS_B : STD_LOGIC_VECTOR (17 downto 0);
-	signal sSS_RES : STD_LOGIC_VECTOR (47 downto 0);
-	signal sSS_OPMODE : STD_LOGIC_VECTOR (7 downto 0);
+	signal sSS_A, sSS_B : STD_LOGIC_VECTOR (17 downto 0);			-- Second stage A and B inputs for DSP48A1
+	signal sSS_RES : STD_LOGIC_VECTOR (47 downto 0);				-- Second stage result signal (SS_A * SS_B + FS_RES = SS_RES)
+	signal sSS_OPMODE : STD_LOGIC_VECTOR (7 downto 0);				-- Second stage operation mode configuration signal
 	
-	signal sTS_A, sTS_B : STD_LOGIC_VECTOR (17 downto 0);
-	signal sTS_RES : STD_LOGIC_VECTOR (47 downto 0);
-	signal sTS_OPMODE : STD_LOGIC_VECTOR (7 downto 0);
+	signal sTS_A, sTS_B : STD_LOGIC_VECTOR (17 downto 0);			-- Third stage A and B inputs for DSP48A1
+	signal sTS_RES : STD_LOGIC_VECTOR (47 downto 0);				-- Third stage result signal (TS_A * TS_B + SS_RES = TS_RES)
+	signal sTS_OPMODE : STD_LOGIC_VECTOR (7 downto 0);				-- Third stage operation mode configuration signal
 
-	signal sRGB : STD_LOGIC_VECTOR (23 downto 0);
+	signal sRGB : STD_LOGIC_VECTOR (23 downto 0);					-- Input delay signal
 
 begin
-
+	
+	-- Input signal delay register
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
 			sRGB <= iRGB;
@@ -237,32 +238,32 @@ begin
       RSTP => '0'              -- 1-bit input: reset input for P pipeline registers
    );
 	
-	sFS_A <= '0' & sRGB(23 downto 16) & "000000000";
-	sFS_C <= x"000000020000";
+	sFS_A <= '0' & sRGB(23 downto 16) & "000000000"; -- First stage A input for DSP48A1, R component value
+	sFS_C <= x"000000020000"; -- First stage C input for DSP48A1, 0.5 in decimal
 	sFS_OPMODE <= "00001101";
 	
-	sSS_A <= '0' & sRGB(15 downto 8) & "000000000";
+	sSS_A <= '0' & sRGB(15 downto 8) & "000000000"; -- Second stage A input for DSP48A1, G component value
 	sSS_OPMODE <= "00000101";
 	
-	sTS_A <= '0' & sRGB(7 downto 0) & "000000000";
+	sTS_A <= '0' & sRGB(7 downto 0) & "000000000"; -- Third stage A input for DSP48A1, B component value
 	sTS_OPMODE <= "00000101";
 	
 	Y_COMP : if (OUTPUT_COMPONENT = "Y") generate begin
-		sFS_B <= "000000000010011001";
-		sSS_B <= "000000000100101100";
-		sTS_B <= "000000000000111010";
+		sFS_B <= "000000000010011001"; -- First stage B input for DSP48A1, 0.299 decimal
+		sSS_B <= "000000000100101100"; -- Second stage B input for DSP48A1, 0.587 decimal
+		sTS_B <= "000000000000111010"; -- Third stage B input for DSP48A1, 0.114 decimal
 	end generate Y_COMP;
 	
 	U_COMP : if (OUTPUT_COMPONENT = "U") generate begin
-		sFS_B <= "111111111110110101";
-		sSS_B <= "111111111101101101";
-		sTS_B <= "000000000011011111";
+		sFS_B <= "111111111110110101"; -- First stage B input for DSP48A1, -0.14713 decimal
+		sSS_B <= "111111111101101101"; -- Second stage B input for DSP48A1, -0.28886 decimal
+		sTS_B <= "000000000011011111"; -- Third stage B input for DSP48A1, 0.436 decimal
 	end generate U_COMP;
 	
 	V_COMP : if (OUTPUT_COMPONENT = "V") generate begin
-		sFS_B <= "000000000100111010";
-		sSS_B <= "111111111011111001";
-		sTS_B <= "111111111111001101";
+		sFS_B <= "000000000100111010"; -- First stage B input for DSP48A1, 0.615 decimal
+		sSS_B <= "111111111011111001"; -- Second stage B input for DSP48A1, -0.51499 decimal
+		sTS_B <= "111111111111001101"; -- Third stage B input for DSP48A1, -0.10001 decimal
 	end generate V_COMP;
 
 	oCOMP <= sTS_RES(25 downto 18);

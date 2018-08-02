@@ -20,70 +20,78 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
 library UNISIM;
 use UNISIM.VComponents.all;
 
 entity top is
-    Port ( iCLK_DIFF_P : in  STD_LOGIC;
-           iCLK_DIFF_N : in  STD_LOGIC;
-			  iCLK : in STD_LOGIC;
-           inRST : in  STD_LOGIC;
-			  onRAM_CS : out STD_LOGIC;
-			  onRAM_WE : out STD_LOGIC;
-			  onRAM_CAS : out STD_LOGIC;
-			  onRAM_RAS : out STD_LOGIC;
-			  onRAM_CLK : out STD_LOGIC;
-			  oRAM_CLK : out STD_LOGIC;
-			  oRAM_CKE : out STD_LOGIC;
-			  oRAM_ODT : out STD_LOGIC;
-			  oRAM_UDM : out STD_LOGIC;
-			  oRAM_LDM : out STD_LOGIC;
-			  oRAM_BADDR : out STD_LOGIC_VECTOR (2 downto 0);
-			  oRAM_ADDR : out STD_LOGIC_VECTOR (13 downto 0);
-			  ioRAM_UDQS : inout STD_LOGIC;
-			  ionRAM_UDQS : inout STD_LOGIC;
-			  ioRAM_LDQS : inout STD_LOGIC;
-			  ionRAM_LDQS : inout STD_LOGIC;
-			  ioRAM_DQ : inout STD_LOGIC_VECTOR (15 downto 0);
-			  ioRZQ : inout STD_LOGIC;
-			  ioZIO : inout STD_LOGIC;
-		     onBLANK : out STD_LOGIC;
-			  onSYNC : out STD_LOGIC;
-			  onPSAVE : out STD_LOGIC;
-		     oH_SYNC : out STD_LOGIC;
-			  oV_SYNC : out STD_LOGIC;
-			  oRGB : out STD_LOGIC_VECTOR (23 downto 0);
-			  oVGA_CLK : out STD_LOGIC;
-			  oSCLK : out  STD_LOGIC;
-			  onCS : out  STD_LOGIC;
-           ioSIO : inout  STD_LOGIC_VECTOR (3 downto 0);
-           onRESET : out  STD_LOGIC;
-			  iFILTER_MODE : in STD_LOGIC_VECTOR (1 downto 0);
-			  iIMAGE_SELECT : in STD_LOGIC_VECTOR (2 downto 0);
-			  iSPLIT_SCREEN : in STD_LOGIC;
-			  iDELAY_ON : in STD_LOGIC;
-			  oLCD_L : out STD_LOGIC;
-			  oLCD_RS : out STD_LOGIC;
-			  oLCD_RW : out STD_LOGIC;
-			  oLCD_EN : out STD_LOGIC;
-			  oLCD_DATA : out STD_LOGIC_VECTOR (3 downto 0);
-			  oLED : out STD_LOGIC_VECTOR (5 downto 0));
+    Port
+	 (
+			  -- Clocks and reset
+			  iCLK_DIFF_P : in  STD_LOGIC;										-- Positive side of differential clock(50MHz)
+           iCLK_DIFF_N : in  STD_LOGIC;										-- Negative side of differential clock(50MHz)
+			  iCLK : in STD_LOGIC;													-- Input clock for VGA(24MHz)
+           inRST : in  STD_LOGIC;												-- Input reset(inverse logic)
+			  
+			  -- RAM
+			  onRAM_CS : out STD_LOGIC;											-- Chip select signal
+			  onRAM_WE : out STD_LOGIC;											-- Write enable signal
+			  onRAM_CAS : out STD_LOGIC;											-- Column address strobe signal
+			  onRAM_RAS : out STD_LOGIC;											-- Row address strobe signal
+			  onRAM_CLK : out STD_LOGIC;											-- Differential clock signal(negative)
+			  oRAM_CLK : out STD_LOGIC;											-- Differential clock signal(positive)
+			  oRAM_CKE : out STD_LOGIC;											-- Clock enable signal
+			  oRAM_ODT : out STD_LOGIC;											-- On-die termination signal
+			  oRAM_UDM : out STD_LOGIC;											-- Upper bits data mask
+			  oRAM_LDM : out STD_LOGIC;											-- Lower bits data mask
+			  oRAM_BADDR : out STD_LOGIC_VECTOR (2 downto 0);				-- Bank address
+			  oRAM_ADDR : out STD_LOGIC_VECTOR (13 downto 0);				-- Address
+			  ioRAM_UDQS : inout STD_LOGIC;										-- Differential upper bits data strobe(positive)
+			  ionRAM_UDQS : inout STD_LOGIC;										-- Differential upper bits data strobe(negative)
+			  ioRAM_LDQS : inout STD_LOGIC;										-- Differential lower bits data strobe(positive)
+			  ionRAM_LDQS : inout STD_LOGIC;										-- Differential lower bits data strobe(negative)
+			  ioRAM_DQ : inout STD_LOGIC_VECTOR (15 downto 0);				-- Data bus
+			  ioRZQ : inout STD_LOGIC;												-- Memory controller calibration 
+			  ioZIO : inout STD_LOGIC;												-- Memory controller calibration
+			  
+			  -- VGA DAC
+		     onBLANK : out STD_LOGIC;												-- Blanking signal(inverse logic)
+			  onSYNC : out STD_LOGIC;												-- Synchronization signal(inverse logic)
+			  onPSAVE : out STD_LOGIC;												-- Power saving signal(inverse logic)
+		     oH_SYNC : out STD_LOGIC;												-- Horizontal synchronization signal
+			  oV_SYNC : out STD_LOGIC;												-- Vertical synchronization signal
+			  oRGB : out STD_LOGIC_VECTOR (23 downto 0);						-- Pixel value bus(RGB format)
+			  oVGA_CLK : out STD_LOGIC;											-- Clock signal
+			  
+			  -- SPI flash
+			  oSCLK : out  STD_LOGIC;												-- Clock signal
+			  onCS : out  STD_LOGIC;												-- Chip select signal(inverse logic)
+           ioSIO : inout  STD_LOGIC_VECTOR (3 downto 0);					-- Communication bus
+           onRESET : out  STD_LOGIC;											-- Reset signal(inverse logic)
+			  
+			  -- Switches
+			  iFILTER_MODE : in STD_LOGIC_VECTOR (1 downto 0);				-- Input filter mode 
+			  iIMAGE_SELECT : in STD_LOGIC_VECTOR (2 downto 0);			-- Input image selection
+			  iSPLIT_SCREEN : in STD_LOGIC;										-- Input split screen
+			  iDELAY_ON : in STD_LOGIC;											-- Input filtering delay
+			  
+			  -- LCD
+			  oLCD_L : out STD_LOGIC;												
+			  oLCD_RS : out STD_LOGIC;												-- Register select signal(0 - command, 1 - data)
+			  oLCD_RW : out STD_LOGIC;												-- Read/write signal(1/0)
+			  oLCD_EN : out STD_LOGIC;												-- Enable signal
+			  oLCD_DATA : out STD_LOGIC_VECTOR (3 downto 0)					-- Data bus
+	);
 end top;
 
 architecture Behavioral of top is
 	
-	signal sINV_RST : STD_LOGIC;
-	signal sCLK : STD_LOGIC;
-	signal sRST : STD_LOGIC;
-	signal sCALIB_DONE : STD_LOGIC;
+	signal sINV_RST : STD_LOGIC;													-- Inverted input reset signal
+	signal sCLK : STD_LOGIC;														-- Clock signal generated by memory controller module, used by other modules
+	signal sRST : STD_LOGIC;														-- Asynchronous reset signal generated by memory controller module, used by other modules
+	signal sCALIB_DONE : STD_LOGIC;												-- Calibration done signal, set when memory controller finishes calibration process and it is safe to send commands
 	
-	--- Port 1 command signals ---
+	-- Port 1 command signals
 	signal sP1_CMD_CLK : STD_LOGIC;
 	signal sP1_CMD_EN : STD_LOGIC;
 	signal sP1_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
@@ -91,33 +99,33 @@ architecture Behavioral of top is
 	signal sP1_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
 	signal sP1_CMD_FULL : STD_LOGIC;
 	
-	--- Port 1 write signals ---
+	-- Port 1 write signals
 	signal sP1_WR_CLK : STD_LOGIC;
 	signal sP1_WR_EN : STD_LOGIC;
 	signal sP1_WR_MASK : STD_LOGIC_VECTOR (3 downto 0);
 	signal sP1_WR_DATA : STD_LOGIC_VECTOR (31 downto 0);
 	signal sP1_WR_COUNT : STD_LOGIC_VECTOR (6 downto 0);
 	
-	--- Port 1 read signals ---
+	-- Port 1 read signals
 	signal sP1_RD_CLK : STD_LOGIC;
 	signal sP1_RD_EN : STD_LOGIC;
 	signal sP1_RD_DATA : STD_LOGIC_VECTOR (31 downto 0);
 	signal sP1_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
 	
-	--- Port 2 command signals ---
+	-- Port 2 command signals
 	signal sP2_CMD_CLK : STD_LOGIC;
 	signal sP2_CMD_EN : STD_LOGIC;
 	signal sP2_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
 	signal sP2_CMD_BL : STD_LOGIC_VECTOR (5 downto 0);
 	signal sP2_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
 	
-	--- Port 2 write signals ---
+	-- Port 2 write signals 
 	signal sP2_WR_CLK : STD_LOGIC;
 	signal sP2_WR_EN : STD_LOGIC;
 	signal sP2_WR_MASK : STD_LOGIC_VECTOR (3 downto 0);
 	signal sP2_WR_DATA : STD_LOGIC_VECTOR (31 downto 0);
 	
-	--- Port 3 command signals ---
+	-- Port 3 command signals
 	signal sP3_CMD_CLK : STD_LOGIC;
 	signal sP3_CMD_EN : STD_LOGIC;
 	signal sP3_CMD_INSTR : STD_LOGIC_VECTOR (2 downto 0);
@@ -125,30 +133,31 @@ architecture Behavioral of top is
 	signal sP3_CMD_BYTE_ADDR : STD_LOGIC_VECTOR (29 downto 0);
 	signal sP3_CMD_FULL : STD_LOGIC;
 	
-	--- Port 3 read signals ---
+	-- Port 3 read signals
 	signal sP3_RD_CLK : STD_LOGIC;
 	signal sP3_RD_EN : STD_LOGIC;
 	signal sP3_RD_DATA : STD_LOGIC_VECTOR (31 downto 0);
 	signal sP3_RD_EMPTY : STD_LOGIC;
 	signal sP3_RD_COUNT : STD_LOGIC_VECTOR (6 downto 0);
-
-	signal sLOCKED : STD_LOGIC;
-	signal sVGA_CLK : STD_LOGIC;
-	signal snVGA_CLK : STD_LOGIC;
 	
+	-- VGA signals
+	signal sVGA_CLK : STD_LOGIC;
+	signal snVGA_CLK : STD_LOGIC;	
+	signal sVGA_CLK_LOCKED : STD_LOGIC;
 	signal sPIXEL_Y, sPIXEL_X : STD_LOGIC_VECTOR(10 downto 0);
 	signal sVIDEO_ON, sVIDEO_ON_DELAY, sH_SYNC, sV_SYNC : STD_LOGIC;
+	signal sBLANK : STD_LOGIC;
+	signal sSTART : STD_LOGIC;
 	
+	-- Flash signals
 	signal sFLASH_CLK : STD_LOGIC;
 	signal sFLASH_DONE : STD_LOGIC;
 	signal sFILTER_DONE : STD_LOGIC;
-	signal sSTART : STD_LOGIC;
 	
 	signal sFILTER_DONE_REG : STD_LOGIC;
-	signal sBLANK : STD_LOGIC;
 	signal sSPLIT_SCREEN_REG : STD_LOGIC;
-	
 	signal sFILTER_READ_DONE : STD_LOGIC;
+	
 	signal sFILTER_MODE : STD_LOGIC_VECTOR (1 downto 0);
 	signal sSPLIT_SCREEN : STD_LOGIC;
 	signal sDELAY_ON : STD_LOGIC;
@@ -156,9 +165,7 @@ architecture Behavioral of top is
 	
 begin
 	
-	oLED <= '0' & sFILTER_DONE_REG & sFILTER_DONE & sFILTER_READ_DONE & sFLASH_DONE & sCALIB_DONE;
-	
-	sw_db : entity work.switch_debouncer
+	switch_debouncer : entity work.switch_debouncer
 	port map
 	(
 		iCLK => sCLK,
@@ -173,7 +180,7 @@ begin
 		oDELAY_ON => sDELAY_ON
 	);
 	
-	lcd : entity work.lcd_controller
+	lcd_controller : entity work.lcd_controller
    port map
 	(
 		iCLK => sCLK,
@@ -187,7 +194,7 @@ begin
 		oDATA => oLCD_DATA
 	);
 	
-	imcb : entity work.memControllerBlock
+	memory_controller : entity work.memControllerBlock
 	generic map(
 			C3_SIMULATION => "TRUE"
 	)
@@ -281,7 +288,7 @@ begin
 		c3_p3_rd_error             =>  open
 	);
 	
-	flash : entity work.spi_module
+	spi_controller_module : entity work.spi_module
 	port map(
 		iCLK => sCLK,
 		iRST => sRST,
@@ -302,7 +309,7 @@ begin
 		oWR_DATA => sP2_WR_DATA
 	);
 	
-	mf : entity work.median_filter
+	median_filter : entity work.median_filter
 	port map(
 		iCLK => sCLK,
 		iRST => sRST,
@@ -325,7 +332,7 @@ begin
 		oLOAD_IMAGE_DONE => sFILTER_READ_DONE
 	);
 	
-	pbuffer : entity work.pixel_buffer
+	pixel_buffer : entity work.pixel_buffer
 	port map(
 		iWR_CLK => sCLK,
 		iRD_CLK => sVGA_CLK,
@@ -347,10 +354,10 @@ begin
 		oBLANK => sBLANK
 	);
 	
-	ivgasync : entity work.vga_sync
+	vga_synchronization : entity work.vga_sync
 	port map(
 		iCLK => sVGA_CLK,
-		inRST => sLOCKED,
+		inRST => sVGA_CLK_LOCKED,
 		iSPLIT_SCREEN => sSPLIT_SCREEN,
 		oPIXEL_X => sPIXEL_X,
 		oPIXEL_Y => sPIXEL_Y,
@@ -360,15 +367,15 @@ begin
 		oV_SYNC => sV_SYNC
 	);
 	
-	dcm65MHz : entity work.dcm65MHz
+	clock_generator_65MHz : entity work.dcm65MHz
 	port map(
 		CLK_IN => iCLK,
 		CLK_OUT => sVGA_CLK,
 		RESET  => sINV_RST,
-		LOCKED => sLOCKED
+		LOCKED => sVGA_CLK_LOCKED
 	);
 	
-	CLK_ODDR2 : ODDR2            
+	VGA_clock_output_register : ODDR2            
 	generic map(
 		DDR_ALIGNMENT  =>  "NONE",
 		INIT           =>  '0',
@@ -406,7 +413,7 @@ begin
 		end if;
 	end process;
 	
-	--- VGA signals ---
+	-- VGA signals
 	onSYNC <= sH_SYNC and sV_SYNC;	
 	onBLANK <= sVIDEO_ON_DELAY when sBLANK = '0'
 		else '0';	
@@ -419,7 +426,7 @@ begin
 
 	sINV_RST <= not inRST;
 	
-	--- SDRAM controller port clocks ---
+	-- SDRAM controller port clocks
 	sP1_CMD_CLK <= sCLK;
 	sP1_WR_CLK <= sCLK;
 	sP1_RD_CLK <= sCLK;

@@ -90,7 +90,7 @@ architecture Behavioral of ram_to_filter is
 		DONE
 	);
 
-	signal sSTATE, sNEXT_STATE : tSTATE;
+	signal sR2F_CURRENT_STATE, sR2F_NEXT_STATE : tSTATE;
 
 	signal sCMD_CNT : STD_LOGIC_VECTOR (3 downto 0);
 	signal sCMD_CNT_EN : STD_LOGIC;
@@ -253,148 +253,148 @@ begin
 	--- FSM register 
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
-			sSTATE <= IDLE;
+			sR2F_CURRENT_STATE <= IDLE;
 		elsif(iCLK'event and iCLK = '1') then
-			sSTATE <= sNEXT_STATE;
+			sR2F_CURRENT_STATE <= sR2F_NEXT_STATE;
 		end if;
 	end process;
 	
 	--- FSM next state generator
-	process(sSTATE, iDELAY_ON, iRESTART, sDELAY_COUNTER, iMODE, iCMD_PORT_STATE, sCMD_BL_REG, iSTART, sCMD_CNT, iRD_COUNT, sCMD_COUNT, sBASE_POS_Y, sBASE_POS_X, sPOS_Y, sPOS_X, sPOS_Y_OFFSET, sPOS_X_OFFSET, sREAD_PIX_CNT, iREADY_WR, sBUFFER_ADDR, iCMD_FULL) begin
-		case sSTATE is
+	process(sR2F_CURRENT_STATE, iDELAY_ON, iRESTART, sDELAY_COUNTER, iMODE, iCMD_PORT_STATE, sCMD_BL_REG, iSTART, sCMD_CNT, iRD_COUNT, sCMD_COUNT, sBASE_POS_Y, sBASE_POS_X, sPOS_Y, sPOS_X, sPOS_Y_OFFSET, sPOS_X_OFFSET, sREAD_PIX_CNT, iREADY_WR, sBUFFER_ADDR, iCMD_FULL) begin
+		case sR2F_CURRENT_STATE is
 			when IDLE =>
 				if(iSTART = '1') then
-					sNEXT_STATE <= SET_BL;
+					sR2F_NEXT_STATE <= SET_BL;
 				else
-					sNEXT_STATE <= IDLE;
+					sR2F_NEXT_STATE <= IDLE;
 				end if;
 				
 			when SET_BL =>
-				sNEXT_STATE <= GEN_ADDR;
+				sR2F_NEXT_STATE <= GEN_ADDR;
 				
 			when GEN_ADDR =>
-				sNEXT_STATE <= CHECK_ADDR;
+				sR2F_NEXT_STATE <= CHECK_ADDR;
 				
 			when CHECK_ADDR =>
 				if((sPOS_Y - sBASE_POS_Y) > sPOS_Y_OFFSET and sBASE_POS_Y < sPOS_Y_OFFSET) then
-					sNEXT_STATE <= Y_LOW;
+					sR2F_NEXT_STATE <= Y_LOW;
 				elsif(sPOS_Y < sPOS_Y_OFFSET and sBASE_POS_Y > cV_SIZE - sPOS_Y_OFFSET) then
-					sNEXT_STATE <= Y_HIGH;
+					sR2F_NEXT_STATE <= Y_HIGH;
 				elsif(sPOS_X > sBASE_POS_X and sBASE_POS_X < sPOS_X_OFFSET) then
-					sNEXT_STATE <= X_LOW;
+					sR2F_NEXT_STATE <= X_LOW;
 				elsif(('0' & sPOS_X) + ('0' & sCMD_BL_REG) > cH_SIZE) then
-					sNEXT_STATE <= X_HIGH;
+					sR2F_NEXT_STATE <= X_HIGH;
 				else
-					sNEXT_STATE <= SET_CMD;
+					sR2F_NEXT_STATE <= SET_CMD;
 				end if;
 				
 			when Y_LOW|X_LOW|X_HIGH =>
-				sNEXT_STATE <= CHECK_ADDR;
+				sR2F_NEXT_STATE <= CHECK_ADDR;
 				
 			when Y_HIGH =>
-				sNEXT_STATE <= CHECK_COUNT;
+				sR2F_NEXT_STATE <= CHECK_COUNT;
 			
 			when SET_CMD =>
 				if(iCMD_PORT_STATE = '1') then
-					sNEXT_STATE <= WAIT_CMD_PORT;
+					sR2F_NEXT_STATE <= WAIT_CMD_PORT;
 				else
-					sNEXT_STATE <= CHECK_COUNT;
+					sR2F_NEXT_STATE <= CHECK_COUNT;
 				end if;
 			
 			when WAIT_CMD_PORT =>
 				if(iCMD_PORT_STATE = '1') then
-					sNEXT_STATE <= WAIT_CMD_PORT;
+					sR2F_NEXT_STATE <= WAIT_CMD_PORT;
 				else
-					sNEXT_STATE <= CHECK_COUNT;
+					sR2F_NEXT_STATE <= CHECK_COUNT;
 				end if;
 			
 			when CHECK_COUNT =>
 				if(sCMD_CNT < sCMD_COUNT) then
 					if(iCMD_FULL = '0') then
-						sNEXT_STATE <= CHECK_ADDR;
+						sR2F_NEXT_STATE <= CHECK_ADDR;
 					else
-						sNEXT_STATE <= WAIT_FIFO;
+						sR2F_NEXT_STATE <= WAIT_FIFO;
 					end if;
 				else
-					sNEXT_STATE <= WAIT_DATA;
+					sR2F_NEXT_STATE <= WAIT_DATA;
 				end if;
 				
 			when WAIT_FIFO =>
 				if(iCMD_FULL = '1') then
-					sNEXT_STATE <= WAIT_FIFO;
+					sR2F_NEXT_STATE <= WAIT_FIFO;
 				else
-					sNEXT_STATE <= CHECK_ADDR;
+					sR2F_NEXT_STATE <= CHECK_ADDR;
 				end if;
 				
 			when WAIT_DATA =>
 				if(iRD_COUNT < sREAD_PIX_CNT) then
-					sNEXT_STATE <= WAIT_DATA;
+					sR2F_NEXT_STATE <= WAIT_DATA;
 				else
 					if(iMODE = "00") then
-						sNEXT_STATE <= DIRECT_WRITE_PREPARE;
+						sR2F_NEXT_STATE <= DIRECT_WRITE_PREPARE;
 					else
-						sNEXT_STATE <= CHECK_READY;
+						sR2F_NEXT_STATE <= CHECK_READY;
 					end if;
 				end if;
 				
 			when DIRECT_WRITE_PREPARE =>
-				sNEXT_STATE <= DIRECT_WRITE;
+				sR2F_NEXT_STATE <= DIRECT_WRITE;
 				
 			when DIRECT_WRITE =>
-				sNEXT_STATE <= INC_BASE_ADDR;
+				sR2F_NEXT_STATE <= INC_BASE_ADDR;
 				
 			when CHECK_READY =>
 				if(iREADY_WR = '1') then
-					sNEXT_STATE <= WRITE_PIXEL;
+					sR2F_NEXT_STATE <= WRITE_PIXEL;
 				else
-					sNEXT_STATE <= CHECK_READY;
+					sR2F_NEXT_STATE <= CHECK_READY;
 				end if;
 			
 			when WRITE_PIXEL =>
 				if(sBUFFER_ADDR < 8) then
 					if(sBUFFER_ADDR < sREAD_PIX_CNT - 1) then
-						sNEXT_STATE <= WRITE_PIXEL;
+						sR2F_NEXT_STATE <= WRITE_PIXEL;
 					else
-						sNEXT_STATE <= WRITE_PADDING;
+						sR2F_NEXT_STATE <= WRITE_PADDING;
 					end if;
 				else
-					sNEXT_STATE <= INC_BASE_ADDR;
+					sR2F_NEXT_STATE <= INC_BASE_ADDR;
 				end if;
 			
 			when WRITE_PADDING =>
 				if(sBUFFER_ADDR < 8) then
-					sNEXT_STATE <= WRITE_PADDING;
+					sR2F_NEXT_STATE <= WRITE_PADDING;
 				else
-					sNEXT_STATE <= INC_BASE_ADDR;
+					sR2F_NEXT_STATE <= INC_BASE_ADDR;
 				end if;
 			
 			when INC_BASE_ADDR =>
 				if(sBASE_POS_Y = cV_SIZE and sBASE_POS_X = cH_SIZE) then
-					sNEXT_STATE <= DONE;
+					sR2F_NEXT_STATE <= DONE;
 				elsif(iDELAY_ON = '1') then
-					sNEXT_STATE <= DELAY;
+					sR2F_NEXT_STATE <= DELAY;
 				else
-					sNEXT_STATE <= SET_BL;
+					sR2F_NEXT_STATE <= SET_BL;
 				end if;
 			
 			when DELAY =>
 				if(sDELAY_COUNTER = x"1FF") then
-					sNEXT_STATE <= SET_BL;
+					sR2F_NEXT_STATE <= SET_BL;
 				else
-					sNEXT_STATE <= DELAY;
+					sR2F_NEXT_STATE <= DELAY;
 				end if;
 			
 			when others =>
 				if(iRESTART = '1') then
-					sNEXT_STATE <= IDLE;
+					sR2F_NEXT_STATE <= IDLE;
 				else
-					sNEXT_STATE <= DONE;
+					sR2F_NEXT_STATE <= DONE;
 				end if;
 			
 		end case;
 	end process;
 	
-	process(sSTATE, iRD_DATA, sBUFFER_ADDR) begin
+	process(sR2F_CURRENT_STATE, iRD_DATA, sBUFFER_ADDR) begin
 		oCMD_EN <= '0';
 		sCMD_CNT_CONTROL <= '0';
 		sBASE_POS_EN <= '0';
@@ -418,7 +418,7 @@ begin
 		oMODE_IN_EN <= '0';
 		sDELAY_CNT_EN <= '0';
 		
-		case sSTATE is
+		case sR2F_CURRENT_STATE is
 			when IDLE =>
 				oRESTARTED <= '1';
 				oMODE_IN_EN <= '1';

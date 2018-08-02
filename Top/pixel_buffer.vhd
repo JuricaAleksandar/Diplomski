@@ -20,14 +20,6 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
 
 entity pixel_buffer is
     Port ( iWR_CLK : in  STD_LOGIC;
@@ -66,7 +58,7 @@ architecture Behavioral of pixel_buffer is
 		RST_POS
 	);
 	
-	signal sSTATE, sNEXT_STATE : tREAD_STATE;
+	signal sPB_CURRENT_STATE, sPB_NEXT_STATE : tREAD_STATE;
 
 	signal sFIFO_FULL : STD_LOGIC;
 	signal sFIFO_EMPTY : STD_LOGIC;
@@ -81,6 +73,11 @@ architecture Behavioral of pixel_buffer is
 	signal sBURST_READ : STD_LOGIC;
 	signal sPOS_CLR : STD_LOGIC;
 	signal sCROSS_REG1, sCROSS_REG2 : STD_LOGIC;
+	
+	attribute ASYNC_REG : string;
+	
+	attribute ASYNC_REG of sCROSS_REG1 : signal is "TRUE";
+	attribute ASYNC_REG of sCROSS_REG2 : signal is "TRUE";
 	
 begin
 		
@@ -106,6 +103,7 @@ begin
 		end if;
 	end process;
 		
+	-- Read enable signal register
 	process(iRD_CLK, iRST) begin
 		if(iRST = '1') then
 			sFIFO_RD_EN <= '0';
@@ -118,7 +116,7 @@ begin
 		end if;
 	end process;
 		
-	-- Read pixel counter --
+	-- Read pixel counter
 	process(iWR_CLK, iRST) begin
 		if(iRST = '1') then
 			sREAD_COUNT <= (others => '0');
@@ -141,7 +139,7 @@ begin
 		end if;
 	end process;
 	
-	-- Read fifo stored burst counter --
+	-- Read fifo stored burst counter
 	process(iWR_CLK, iRST) begin
 		if(iRST = '1') then
 			sFIFO_BURST_COUNT <= (others => '0');
@@ -156,7 +154,7 @@ begin
 		end if;
 	end process;
 	
-	-- Read address generator --
+	-- Read address generator
 	process(iWR_CLK, iRST) begin
 		if(iRST = '1') then
 			sPOS_X <= (others => '0');
@@ -180,66 +178,68 @@ begin
 		end if;
 	end process;
 		
-	-- Memory reader automate --
+	-- Memory reader FSM register
 	process(iWR_CLK, iRST) begin
 		if(iRST = '1') then
-			sSTATE <= IDLE;
+			sPB_CURRENT_STATE <= IDLE;
 		elsif(iWR_CLK'event and iWR_CLK = '1') then
-			sSTATE <= sNEXT_STATE;
+			sPB_CURRENT_STATE <= sPB_NEXT_STATE;
 		end if;
 	end process;
 	
-	process(sSTATE, sFIFO_BURST_COUNT, iCMD_FULL, sFIFO_FULL, sCROSS_REG2, iDONE, iRD_EMPTY) begin
-		case sSTATE is
+	-- Memory reader FSM transition logic
+	process(sPB_CURRENT_STATE, sFIFO_BURST_COUNT, iCMD_FULL, sFIFO_FULL, sCROSS_REG2, iDONE, iRD_EMPTY) begin
+		case sPB_CURRENT_STATE is
 			when IDLE =>
 				if(sFIFO_FULL = '0' and iDONE = '1') then
-					sNEXT_STATE <= SET_CMD;
+					sPB_NEXT_STATE <= SET_CMD;
 				else
-					sNEXT_STATE <= IDLE;
+					sPB_NEXT_STATE <= IDLE;
 				end if;
 				
 			when SET_CMD =>
-				sNEXT_STATE <= WAIT_UPDATE;
+				sPB_NEXT_STATE <= WAIT_UPDATE;
 			
 			when WAIT_EMPTY =>
 				if(iRD_EMPTY = '1' and sCROSS_REG2 = '1') then
-					sNEXT_STATE <= RST_POS;
+					sPB_NEXT_STATE <= RST_POS;
 				else
-					sNEXT_STATE <= WAIT_EMPTY;
+					sPB_NEXT_STATE <= WAIT_EMPTY;
 				end if;
 				
 			when RST_POS =>
-				sNEXT_STATE <= IDLE;
+				sPB_NEXT_STATE <= IDLE;
 				
 			when WAIT_UPDATE =>
-				sNEXT_STATE <= WAIT_DATA;
+				sPB_NEXT_STATE <= WAIT_DATA;
 				
 			when WAIT_DATA =>
 				if(sFIFO_FULL = '1') then
-					sNEXT_STATE <= WAIT_FIFO;
+					sPB_NEXT_STATE <= WAIT_FIFO;
 				else
 					if(sFIFO_BURST_COUNT < 8 and iCMD_FULL ='0') then
-						sNEXT_STATE <= SET_CMD;
+						sPB_NEXT_STATE <= SET_CMD;
 					else
-						sNEXT_STATE <= WAIT_DATA;
+						sPB_NEXT_STATE <= WAIT_DATA;
 					end if;
 				end if;
 				
 			when others =>
 				if(sFIFO_FULL = '0') then
-					sNEXT_STATE <= WAIT_DATA;
+					sPB_NEXT_STATE <= WAIT_DATA;
 				else
-					sNEXT_STATE <= WAIT_FIFO;
+					sPB_NEXT_STATE <= WAIT_FIFO;
 				end if;
 				
 		end case;
 		if(iDONE = '0') then
-			sNEXT_STATE <= WAIT_EMPTY;
+			sPB_NEXT_STATE <= WAIT_EMPTY;
 		end if;
 	end process;
 	
-	process(sSTATE) begin
-		case sSTATE is	
+	-- Memory reader FSM output logic
+	process(sPB_CURRENT_STATE) begin
+		case sPB_CURRENT_STATE is	
 			when IDLE =>
 				oCMD_EN <= '0';
 				sPOS_WE <= '0';

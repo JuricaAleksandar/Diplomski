@@ -21,33 +21,24 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
-
 entity lcd_controller is
 	 Generic
 	 (
-		CLK_PERIOD : integer := 10; 				-- ns 
-		COUNTER_WIDTH : integer := 21; 			-- 15.500.000 / CLK_PERIOD <= 2^COUNTER_WIDTH
-		ENABLE_COUNTER_WIDTH : integer := 19 	-- 4301150 / CLK_PERIOD <= 2^ENABLE_COUNTER_WIDTH
+		CLK_PERIOD : integer := 10; 						-- ns 
+		COUNTER_WIDTH : integer := 21; 					-- 15.500.000 / CLK_PERIOD <= 2^COUNTER_WIDTH
+		ENABLE_COUNTER_WIDTH : integer := 19 			-- 4301150 / CLK_PERIOD <= 2^ENABLE_COUNTER_WIDTH
 	 ); 
     Port
 	 (
-		iCLK : in  STD_LOGIC;
-		iRST : in  STD_LOGIC;
-		iMODE : in  STD_LOGIC_VECTOR (1 downto 0);
-		iSPLIT_SCREEN : in STD_LOGIC;
-		oRS : out  STD_LOGIC;
-		oRW : out  STD_LOGIC;
-		oEN : out  STD_LOGIC;
-		oL : out STD_LOGIC;
-		oDATA : out  STD_LOGIC_VECTOR (3 downto 0)
+		iCLK : in  STD_LOGIC;								-- Input clock signal
+		iRST : in  STD_LOGIC;								-- Input reset signal
+		iMODE : in  STD_LOGIC_VECTOR (1 downto 0);	-- Input mode signal
+		iSPLIT_SCREEN : in STD_LOGIC;						-- Input split screen signal 
+		oRS : out  STD_LOGIC;								-- Output LCD register select
+		oRW : out  STD_LOGIC;								-- Output LCD Read/Write(1/0)
+		oEN : out  STD_LOGIC;								-- Output LCD enable
+		oL : out STD_LOGIC;									-- Output LCD L
+		oDATA : out  STD_LOGIC_VECTOR (3 downto 0)	-- Output LCD data
 	 );
 	 
 end lcd_controller;
@@ -70,16 +61,18 @@ architecture Behavioral of lcd_controller is
 		SET_DDRAM_ADDR4
 	);
 	
-	constant cRS_SETUP_TIME : integer := 150/CLK_PERIOD;
-	constant cENABLE_PULSE_WIDTH : integer := 400/CLK_PERIOD;
-	constant cENABLE_PULSE_CYCLE_PERIOD : integer := 600/CLK_PERIOD;
+	constant cRS_SETUP_TIME : integer := 150/CLK_PERIOD;					-- LCD register select setup time(150ns)
+	constant cENABLE_PULSE_WIDTH : integer := 400/CLK_PERIOD;			-- LCD enable pulse width(400ns)	
+	constant cENABLE_PULSE_CYCLE_PERIOD : integer := 600/CLK_PERIOD;	-- LCD enable pulse cycle time(600ns)
 	
+	-- LCD commands wait periods
 	constant c15ms_WAIT_PERIOD : integer := 15500000/CLK_PERIOD;
 	constant c4ms_WAIT_PERIOD : integer := 4300000/CLK_PERIOD;	
 	constant c120us_WAIT_PERIOD : integer := 120000/CLK_PERIOD;
 	constant c2ms_WAIT_PERIOD : integer := 1800000/CLK_PERIOD;
 	constant c45us_WAIT_PERIOD : integer := 45000/CLK_PERIOD;
 	
+	-- Initialisation sequence rom
 	constant cINIT_SEQ_ROM : tINIT_SEQ_ROM :=
 	(
 		"0011" & (ENABLE_COUNTER_WIDTH - 1 downto 0 => '0') + c4ms_WAIT_PERIOD,
@@ -98,7 +91,7 @@ architecture Behavioral of lcd_controller is
 		"1100" & (ENABLE_COUNTER_WIDTH - 1 downto 0 => '0') + c45us_WAIT_PERIOD
 	);
 	
-	signal sLCD_STATE, sLCD_NEXT_STATE : tLCD_STATE;
+	signal sLCD_CURRENT_STATE, sLCD_NEXT_STATE : tLCD_STATE;
 	signal sTEXT_ROM : tDISPLAY_MEMORY;
 	
 	signal sCNT_EN, sSEQ_EN : STD_LOGIC;
@@ -118,6 +111,7 @@ begin
 	oRW <= '0';
 	oL <= '1';
 	
+	-- LCD text rom
 	process(iMODE,iSPLIT_SCREEN) begin
 		sTEXT_ROM <=
 	(
@@ -291,7 +285,7 @@ begin
 		end case;
 	end process;
 	
-	--- Input change detection ---
+	-- Input change detection
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
 			sMODE <= iMODE;
@@ -309,7 +303,7 @@ begin
 		end if;
 	end process;
 	
-	--- ROM address generator ---
+	-- ROM address generator
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
 			if(sROM_ADDR_RST = '1') then
@@ -320,7 +314,7 @@ begin
 		end if;
 	end process;
 	
-	--- Instruction sending sequence ---
+	-- Instruction sending sequence
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
 			if(sSEQ_EN = '1') then
@@ -347,7 +341,7 @@ begin
 		end if;
 	end process;
 	
-	--- Power on timer ---
+	-- Power on timer
 	process(iCLK) begin
 		if(iCLK'event and iCLK = '1') then
 			if(sCNT_EN = '1') then
@@ -356,18 +350,18 @@ begin
 		end if;
 	end process;
 	
-	--- FSM register --- 
+	-- LCD controller FSM register
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
-			sLCD_STATE <= POWER_ON;
+			sLCD_CURRENT_STATE <= POWER_ON;
 		elsif(iCLK'event and iCLK = '1') then
-			sLCD_STATE <= sLCD_NEXT_STATE;
+			sLCD_CURRENT_STATE <= sLCD_NEXT_STATE;
 		end if;
 	end process;
 
-	--- FSM transition logic ---
-	process(sLCD_STATE, sPWR_ON_COUNTER, sENABLE_SEQUENCE, sROM_ADDR, sREWRITE) begin
-		case sLCD_STATE is
+	-- LCD controller FSM transition logic
+	process(sLCD_CURRENT_STATE, sPWR_ON_COUNTER, sENABLE_SEQUENCE, sROM_ADDR, sREWRITE) begin
+		case sLCD_CURRENT_STATE is
 			when POWER_ON =>
 				if(sPWR_ON_COUNTER < c15ms_WAIT_PERIOD) then
 					sLCD_NEXT_STATE <= POWER_ON;
@@ -437,8 +431,8 @@ begin
 		end case;
 	end process;
 
-	--- FSM output logic ---
-	process(sLCD_STATE, sENABLE, sROM_ADDR, sTEXT_ROM) begin
+	-- LCD controller FSM output logic
+	process(sLCD_CURRENT_STATE, sENABLE, sROM_ADDR, sTEXT_ROM) begin
 		sCNT_EN <= '0';
 		oRS <= '0';
 		oEN <= '0';
@@ -448,7 +442,7 @@ begin
 		sROM_ADDR_EN <= '0';
 		sDONE <= '0';
 		
-		case sLCD_STATE is
+		case sLCD_CURRENT_STATE is
 			when POWER_ON =>
 				sCNT_EN <= '1';
 				oDATA <= "0000";

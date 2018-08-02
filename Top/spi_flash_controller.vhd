@@ -20,31 +20,27 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
 
--- Uncomment the following library declaration if instantiating
--- any Xilinx primitives in this code.
 library UNISIM;
 use UNISIM.VComponents.all;
 
 entity spi_flash_controller is
-    Port ( iCLK : in  STD_LOGIC;
-           inRST : in  STD_LOGIC;
-			  iRD_START : in STD_LOGIC;
-			  iRD_ADDR : in STD_LOGIC_VECTOR (23 downto 0);
-			  oREADY : out STD_LOGIC;
-			  oDATA_VALID : out STD_LOGIC;
-			  oDATA : out STD_LOGIC_VECTOR (7 downto 0);
-           oSCLK : out  STD_LOGIC;
-           onCS : out  STD_LOGIC;
-           ioSIO : inout  STD_LOGIC_VECTOR (3 downto 0);
-           onRESET : out  STD_LOGIC);
+    Port ( iCLK : in  STD_LOGIC;											-- Input clock signal
+           inRST : in  STD_LOGIC;										-- Input reset signal(inverse logic)
+			  iRD_START : in STD_LOGIC;									-- Input read start signal
+			  iRD_ADDR : in STD_LOGIC_VECTOR (23 downto 0);			-- Input read address
+			  oREADY : out STD_LOGIC;										-- Output ready flag
+			  oDATA_VALID : out STD_LOGIC;								-- Output data valid flag
+			  oDATA : out STD_LOGIC_VECTOR (7 downto 0);				-- Output data bus
+           oSCLK : out  STD_LOGIC;										-- SPI flash clock
+           onCS : out  STD_LOGIC;										-- SPI flash chip select(inverse logic)
+           ioSIO : inout  STD_LOGIC_VECTOR (3 downto 0);			-- Input/output bidirectional 4-bit data bus
+           onRESET : out  STD_LOGIC);									-- SPI flash reset(inverse logic)
 end spi_flash_controller;
 
 architecture Behavioral of spi_flash_controller is
 
+	-- SPI flash controller FSM states
 	type tREADER_STATE is 
 	(
 		RESET_COUNTER,
@@ -71,29 +67,25 @@ architecture Behavioral of spi_flash_controller is
 		END_CMD2
 	);
 	
-	signal sSTATE, sNEXT_STATE : tREADER_STATE;
+	signal sSPI_CURRENT_STATE, sSPI_NEXT_STATE : tREADER_STATE;
 	
-	signal snCLK : STD_LOGIC;
-	
-	signal sT : STD_LOGIC_VECTOR (3 downto 0);
-	signal sIN : STD_LOGIC_VECTOR (3 downto 0);
-	signal sOUT : STD_LOGIC_VECTOR (3 downto 0);
-	signal sMOSI_SHREG : STD_LOGIC_VECTOR (31 downto 0);
-	signal sMOSI_REG_IN : STD_LOGIC_VECTOR (31 downto 0);
-	signal sCONTROL : STD_LOGIC;
-	signal sEN, snEN : STD_LOGIC;
-	signal sBIT_COUNTER : STD_LOGIC_VECTOR (8 downto 0) := (others => '0');
-	signal sMISO_SHREG : STD_LOGIC_VECTOR (7 downto 0);
-	signal sREC_STATUS : STD_LOGIC;
-	signal sREC_DATA : STD_LOGIC;
-	signal sCOUNTER : STD_LOGIC_VECTOR (22 downto 0) := (others => '0');
-	signal sCNT_EN : STD_LOGIC;
-	signal sDATA : STD_LOGIC_VECTOR (7 downto 0);
-	signal sDATA_VALID : STD_LOGIC;
-	signal sRD_COUNT : STD_LOGIC_VECTOR (7 downto 0);
-	
-	signal sCONTROL_VECTOR : STD_LOGIC_VECTOR (35 downto 0);
-	signal sMOSI_SEL : STD_LOGIC;
+	signal snCLK : STD_LOGIC;																	-- Inverted clock signal(used as one of the inputs of ODDR register)	
+	signal sT : STD_LOGIC_VECTOR (3 downto 0);											-- Tri-state buffer control signal
+	signal sIN : STD_LOGIC_VECTOR (3 downto 0);											-- Inputs from tri-state buffers
+	signal sOUT : STD_LOGIC_VECTOR (3 downto 0);											-- Outputs to tri-state buffer
+	signal sMOSI_SHREG : STD_LOGIC_VECTOR (31 downto 0);								-- MOSI shift register signal 
+	signal sMOSI_REG_IN : STD_LOGIC_VECTOR (31 downto 0);								-- MOSI shift register input signal
+	signal sCONTROL : STD_LOGIC;																-- Control signal for MOSI shift register(0 - shift, 1 - write to register)
+	signal sEN, snEN : STD_LOGIC;																-- Output SPI clock enable signals
+	signal sBIT_COUNTER : STD_LOGIC_VECTOR (8 downto 0) := (others => '0');		-- Data transfer bit counter signal
+	signal sMISO_SHREG : STD_LOGIC_VECTOR (7 downto 0);								-- MISO shift register signal
+	signal sREC_STATUS : STD_LOGIC;															-- Receiving status signal
+	signal sREC_DATA : STD_LOGIC;																-- Receiving data signal
+	signal sCOUNTER : STD_LOGIC_VECTOR (22 downto 0) := (others => '0');			-- Clock cycle counter
+	signal sCNT_EN : STD_LOGIC;																-- Transaction bit counter clock enable signal
+	signal sDATA : STD_LOGIC_VECTOR (7 downto 0);										-- Output data register signal
+	signal sDATA_VALID : STD_LOGIC;															-- Output data valid signal
+	signal sMOSI_SEL : STD_LOGIC;																-- MOSI selection signal, 0 - MOSI register loaded with FSM output, 1 - MOSI register loaded with input read address
 	
 begin
 	
@@ -103,7 +95,7 @@ begin
 	oDATA <= sDATA;
 	snEN <= not sEN;
 	
-	-- SPI clock output register
+	-- SPI clock output DDR register
 	CLK_ODDR2 : ODDR2            
 	generic map(
 		DDR_ALIGNMENT  =>  "NONE",
@@ -227,145 +219,147 @@ begin
 		end if;
 	end process;
 
-	-- Flash reader automate
+	-- Flash controller FSM register
 	process(iCLK, inRST) begin
 		if(inRST = '0') then
-			sSTATE <= RESET_COUNTER;
+			sSPI_CURRENT_STATE <= RESET_COUNTER;
 		elsif(iCLK'event and iCLK = '1') then
-			sSTATE <= sNEXT_STATE;
+			sSPI_CURRENT_STATE <= sSPI_NEXT_STATE;
 		end if;
 	end process;
 
-	process(sSTATE, sBIT_COUNTER, sMISO_SHREG,  sCOUNTER, iRD_START) begin
-		case sSTATE is		
+	-- Flash controller FSM transition logic
+	process(sSPI_CURRENT_STATE, sBIT_COUNTER, sMISO_SHREG,  sCOUNTER, iRD_START) begin
+		case sSPI_CURRENT_STATE is		
 			when RESET_COUNTER =>
-				sNEXT_STATE <= RESET_SETUP;
+				sSPI_NEXT_STATE <= RESET_SETUP;
 				
 			when RESET_SETUP =>
 				if(sCOUNTER = 2) then
-					sNEXT_STATE <= RESETTING;
+					sSPI_NEXT_STATE <= RESETTING;
 				else
-					sNEXT_STATE <= RESET_SETUP;
+					sSPI_NEXT_STATE <= RESET_SETUP;
 				end if;
 			
 			when RESETTING =>
 				if(sCOUNTER = 552) then
-					sNEXT_STATE <= RESET_RECOVERY;
+					sSPI_NEXT_STATE <= RESET_RECOVERY;
 				else
-					sNEXT_STATE <= RESETTING;
+					sSPI_NEXT_STATE <= RESETTING;
 				end if;
 			
 			when RESET_RECOVERY =>
 				if(sCOUNTER = 5100552) then 
-					sNEXT_STATE <= IDLE; 
+					sSPI_NEXT_STATE <= IDLE; 
 				else
-					sNEXT_STATE <= RESET_RECOVERY;
+					sSPI_NEXT_STATE <= RESET_RECOVERY;
 				end if;
 					
 			when IDLE =>
-				sNEXT_STATE <= WREN_CMD;
+				sSPI_NEXT_STATE <= WREN_CMD;
 					
 			when WREN_CMD =>
-				sNEXT_STATE <= SEND;
+				sSPI_NEXT_STATE <= SEND;
 				
 			when SEND =>
 				if(sBIT_COUNTER = 7) then
-					sNEXT_STATE <= END_CMD;
+					sSPI_NEXT_STATE <= END_CMD;
 				else
-					sNEXT_STATE <= SEND;
+					sSPI_NEXT_STATE <= SEND;
 				end if;
 				
 			when END_CMD =>
-				sNEXT_STATE <= IDLE1;
+				sSPI_NEXT_STATE <= IDLE1;
 				
 			when IDLE1 =>
 				if(sCOUNTER < 6) then
-					sNEXT_STATE <= IDLE1;
+					sSPI_NEXT_STATE <= IDLE1;
 				else
-					sNEXT_STATE <= RDSR_CMD;
+					sSPI_NEXT_STATE <= RDSR_CMD;
 				end if;
 				
 			when RDSR_CMD =>
-				sNEXT_STATE <= SEND1;
+				sSPI_NEXT_STATE <= SEND1;
 				
 			when SEND1 =>
 				if(sBIT_COUNTER = 8) then
-					sNEXT_STATE <= RECEIVE1;
+					sSPI_NEXT_STATE <= RECEIVE1;
 				else
-					sNEXT_STATE <= SEND1;
+					sSPI_NEXT_STATE <= SEND1;
 				end if;
 				
 			when RECEIVE1 =>
 				if(sBIT_COUNTER = 16) then
-					sNEXT_STATE <= END_CMD1;
+					sSPI_NEXT_STATE <= END_CMD1;
 				else
-					sNEXT_STATE <= RECEIVE1;
+					sSPI_NEXT_STATE <= RECEIVE1;
 				end if;
 				
 			when END_CMD1 =>
 				if(sMISO_SHREG(0) = '0') then
 					if(sMISO_SHREG(1) = '1' and sMISO_SHREG(6) = '0') then
-						sNEXT_STATE <= IDLE2;
+						sSPI_NEXT_STATE <= IDLE2;
 					elsif(sMISO_SHREG(6) = '1') then
-						sNEXT_STATE <= READY;
+						sSPI_NEXT_STATE <= READY;
 					else
-						sNEXT_STATE <= IDLE;
+						sSPI_NEXT_STATE <= IDLE;
 					end if;
 				else
-					sNEXT_STATE <= IDLE1;
+					sSPI_NEXT_STATE <= IDLE1;
 				end if;
 				
 			when IDLE2 =>
-				sNEXT_STATE <= WRSR_CMD;
+				sSPI_NEXT_STATE <= WRSR_CMD;
 				
 			when WRSR_CMD =>
-				sNEXT_STATE <= SEND2;
+				sSPI_NEXT_STATE <= SEND2;
 				
 			when SEND2 =>
 				if(sBIT_COUNTER = 15) then
-					sNEXT_STATE <= END_CMD;
+					sSPI_NEXT_STATE <= END_CMD;
 				else
-					sNEXT_STATE <= SEND2;
+					sSPI_NEXT_STATE <= SEND2;
 				end if;
 				
 			when READY =>
 				if(iRD_START = '1') then
-					sNEXT_STATE <= QREAD_CMD;
+					sSPI_NEXT_STATE <= QREAD_CMD;
 				else
-					sNEXT_STATE <= READY;
+					sSPI_NEXT_STATE <= READY;
 				end if;
 				
 			when QREAD_CMD =>
-				sNEXT_STATE <= SEND3;
+				sSPI_NEXT_STATE <= SEND3;
 				
 			when SEND3 =>
 				if(sBIT_COUNTER = 32) then
-					sNEXT_STATE <= DUMMY;
+					sSPI_NEXT_STATE <= DUMMY;
 				else
-					sNEXT_STATE <= SEND3;
+					sSPI_NEXT_STATE <= SEND3;
 				end if;
 			
 			when DUMMY =>
 				if(sBIT_COUNTER = 40) then
-					sNEXT_STATE <= RECEIVE2;
+					sSPI_NEXT_STATE <= RECEIVE2;
 				else
-					sNEXT_STATE <= DUMMY;
+					sSPI_NEXT_STATE <= DUMMY;
 				end if;
 				
 			when RECEIVE2 =>
 				if(sBIT_COUNTER = 234) then
-					sNEXT_STATE <= END_CMD2;
+					sSPI_NEXT_STATE <= END_CMD2;
 				else
-					sNEXT_STATE <= RECEIVE2;
+					sSPI_NEXT_STATE <= RECEIVE2;
 				end if;
 				
 			when others =>
-				sNEXT_STATE <= READY;
+				sSPI_NEXT_STATE <= READY;
 				
 		end case;
 	end process;
 	
-	process(sSTATE) begin
+	-- Flash controller FSM output logic
+	process(sSPI_CURRENT_STATE) begin
 		sT <= (others => '1');
 		oREADY <= '0';
 		sREC_STATUS <= '0';
@@ -376,7 +370,7 @@ begin
 		onRESET <= '1';
 		sMOSI_SEL <= '0';
 		
-		case sSTATE is		
+		case sSPI_CURRENT_STATE is		
 			when RESET_COUNTER =>
 				onCS <= '1';
 				sEN <= '0';

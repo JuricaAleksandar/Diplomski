@@ -32,19 +32,19 @@ use UNISIM.VComponents.all;
 entity YUV_to_RGB is
 		Port
 		(
-			iCLK : in STD_LOGIC;
-			iRST : in STD_LOGIC;
-			iDATA_VALID : in STD_LOGIC;
-			iYUV : in  STD_LOGIC_VECTOR (23 downto 0);
-			oRD_DONE : out STD_LOGIC;
-			oDATA_VALID : out STD_LOGIC;
-			oRGB : out  STD_LOGIC_VECTOR (23 downto 0)
+			iCLK : in STD_LOGIC;									-- Input clock signal
+			iRST : in STD_LOGIC;									-- Input reset
+			iDATA_VALID : in STD_LOGIC;						-- Data valid input signal, when set YUV pixel is loaded to input register
+			iYUV : in  STD_LOGIC_VECTOR (23 downto 0);	-- Input pixel value in YUV color space
+			oRD_DONE : out STD_LOGIC;							-- Output read done signal, set when input pixel is loaded to input register
+			oDATA_VALID : out STD_LOGIC;						-- Data valid output signal, set when pixel conversion is done
+			oRGB : out  STD_LOGIC_VECTOR (23 downto 0)	-- Output pixel value in RGB color space
 		);
 end YUV_to_RGB;
 
 architecture Behavioral of YUV_to_RGB is
 
-	type tSTATE is
+	type tSTATE is	-- Converter states
 	(
 		IDLE,
 		STAGE1,
@@ -53,25 +53,25 @@ architecture Behavioral of YUV_to_RGB is
 		DONE
 	);
 
-	signal sSTATE, sNEXT_STATE : tSTATE;
+	signal sYUV2RGB_CURRENT_STATE, sYUV2RGB_NEXT_STATE : tSTATE; -- Converter state signals
 
-	signal sRGB_C : STD_LOGIC_VECTOR (47 downto 0);
+	signal sRGB_C : STD_LOGIC_VECTOR (47 downto 0); -- C input for all three DSP48A1 instances
 
-	signal sR_P : STD_LOGIC_VECTOR (47 downto 0);
-	signal sR_A, sR_B : STD_LOGIC_VECTOR (17 downto 0);
+	signal sR_P : STD_LOGIC_VECTOR (47 downto 0); -- P output of DSP48A1 for red component
+	signal sR_A, sR_B : STD_LOGIC_VECTOR (17 downto 0); -- A and B inputs of DSP48A1 instance for red component 
 	
-	signal sG_P : STD_LOGIC_VECTOR (47 downto 0);
-	signal sG_A, sG_B : STD_LOGIC_VECTOR (17 downto 0);
+	signal sG_P : STD_LOGIC_VECTOR (47 downto 0); -- P output of DSP48A1 for green component
+	signal sG_A, sG_B : STD_LOGIC_VECTOR (17 downto 0); --  A and B inputs of DSP48A1 for green component
 	
-	signal sB_P : STD_LOGIC_VECTOR (47 downto 0);
-	signal sB_A, sB_B : STD_LOGIC_VECTOR (17 downto 0);
+	signal sB_P : STD_LOGIC_VECTOR (47 downto 0); -- P output of DSP48A1 for blue component
+	signal sB_A, sB_B : STD_LOGIC_VECTOR (17 downto 0); --  A and B inputs of DSP48A1 for blue component
 	
-	signal sRB_OPMODE, sG_OPMODE : STD_LOGIC_VECTOR (7 downto 0);
-	signal sRB_CEM, sRB_CEP, sG_CEM, sG_CEP : STD_LOGIC;
-	signal sRB_RSTM, sRB_RSTP, sG_RSTM, sG_RSTP : STD_LOGIC;
+	signal sRB_OPMODE, sG_OPMODE : STD_LOGIC_VECTOR (7 downto 0); -- DSP48A1 operation mode configuration signals
+	signal sRB_CEM, sRB_CEP, sG_CEM, sG_CEP : STD_LOGIC; -- DSP48A1 registers clock enable signals
+	signal sRB_RSTM, sRB_RSTP, sG_RSTM, sG_RSTP : STD_LOGIC; -- DSP48A1 registers reset signals
 	
-	signal sYUV : STD_LOGIC_VECTOR (23 downto 0);
-	signal sINPUT_EN : STD_LOGIC;
+	signal sYUV : STD_LOGIC_VECTOR (23 downto 0); -- Input pixel value delayed signal
+	signal sINPUT_EN : STD_LOGIC; -- Input pixel register enable signal
 	
 begin
 
@@ -252,6 +252,7 @@ begin
       RSTP => sRB_RSTP              -- 1-bit input: reset input for P pipeline registers
    );
 	
+	-- Input pixel value register
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
 			sYUV <= (others => '0');
@@ -262,55 +263,58 @@ begin
 		end if;
 	end process;
 	
+	-- FSM register
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
-			sSTATE <= IDLE;
+			sYUV2RGB_CURRENT_STATE <= IDLE;
 		elsif(iCLK'event and iCLK = '1') then
-			sSTATE <= sNEXT_STATE;
+			sYUV2RGB_CURRENT_STATE <= sYUV2RGB_NEXT_STATE;
 		end if;
 	end process;
 	
-	process(sSTATE, iDATA_VALID) begin
-		case sSTATE is
+	-- FSM next state logic
+	process(sYUV2RGB_CURRENT_STATE, iDATA_VALID) begin
+		case sYUV2RGB_CURRENT_STATE is
 			when IDLE =>
 				if(iDATA_VALID = '1') then
-					sNEXT_STATE <= STAGE1;
+					sYUV2RGB_NEXT_STATE <= STAGE1;
 				else
-					sNEXT_STATE <= IDLE;
+					sYUV2RGB_NEXT_STATE <= IDLE;
 				end if;
 				
 			when STAGE1 =>
-				sNEXT_STATE <= STAGE2;
+				sYUV2RGB_NEXT_STATE <= STAGE2;
 				
 			when STAGE2 =>
-				sNEXT_STATE <= STAGE3;
+				sYUV2RGB_NEXT_STATE <= STAGE3;
 				
 			when STAGE3 =>
-				sNEXT_STATE <= DONE;
+				sYUV2RGB_NEXT_STATE <= DONE;
 				
 			when others =>
-				sNEXT_STATE <= IDLE;
+				sYUV2RGB_NEXT_STATE <= IDLE;
 				
 		end case;
 	end process;
 	
-	process(sSTATE, sYUV) begin
-		sRB_CEM <= '1';
-		sRB_CEP <= '1';
-		sRB_RSTM <= '0';
-		sRB_RSTP <= '0';
-		sG_CEM <= '1';
-		sG_CEP <= '1';
-		sG_RSTM <= '0';
-		sG_RSTP <= '0';
-		sG_A <= (others => '0');
-		sG_B <= (others => '0');
-		sG_OPMODE <= (others => '0');
-		sINPUT_EN <= '0';
-		oDATA_VALID <= '0';
-		oRD_DONE <= '1';
+	-- FSM state output logic
+	process(sYUV2RGB_CURRENT_STATE, sYUV) begin
+		sRB_CEM <= '1';					-- Red and blue component DSP48A1 instances M register clock enable
+		sRB_CEP <= '1';					-- Red and blue component DSP48A1 instances P register clock enable
+		sRB_RSTM <= '0';					-- Red and blue component DSP48A1 instances M register reset
+		sRB_RSTP <= '0';					-- Red and blue component DSP48A1 instances P register reset
+		sG_CEM <= '1';						-- Green component DSP48A1 instance M register clock enable
+		sG_CEP <= '1';						-- Green component DSP48A1 instance P register clock enable
+		sG_RSTM <= '0';					-- Green component DSP48A1 instance M register reset
+		sG_RSTP <= '0';					-- Green component DSP48A1 instance P register reset
+		sG_A <= (others => '0');		-- Green component DSP48A1 instance A input
+		sG_B <= (others => '0');		-- Green component DSP48A1 instance B input
+		sG_OPMODE <= (others => '0'); -- Green component DSP48A1 instance operation mode configuration signal
+		sINPUT_EN <= '0';					-- Input pixel register clock enable
+		oDATA_VALID <= '0';				-- Output data valid signal
+		oRD_DONE <= '1';					-- Data valid output signal
 		
-		case sSTATE is
+		case sYUV2RGB_CURRENT_STATE is
 			when IDLE =>
 				sINPUT_EN <= '1';
 				sRB_RSTM <= '1';
@@ -352,15 +356,15 @@ begin
 		end case;
 	end process;
 	
-	sR_A <= '0' & sYUV(7 downto 0) & "000000000" when sYUV(7) = '0'
+	sR_A <= '0' & sYUV(7 downto 0) & "000000000" when sYUV(7) = '0' -- if V component has positive value set value of all other bits to 0 else set value of all other bits to 1
 		else '1' & sYUV(7 downto 0) & "111111111";
 		
-	sR_B <= "000000001001000111";
+	sR_B <= "000000001001000111"; -- 1.13983 decimal, to be multiplied by V component value
 	
-	sB_A <= '0' & sYUV(15 downto 8) & "000000000" when sYUV(15) = '0'
+	sB_A <= '0' & sYUV(15 downto 8) & "000000000" when sYUV(15) = '0' -- if U component has positive value set value of all other bits to 0 else set value of all other bits to 1
 		else '1' & sYUV(15 downto 8) & "111111111";
 	
-	sB_B <= "000000010000010000";
+	sB_B <= "000000010000010000"; -- 2.03211 decimal, to be multiplied by U component value
 	sRGB_C <= "0000000000000000000000" & sYUV(23 downto 16) & "000000000000000000";
 	sRB_OPMODE <= "00001101";
 	oRGB <= sR_P(25 downto 18) & sG_P(25 downto 18) & sB_P(25 downto 18);

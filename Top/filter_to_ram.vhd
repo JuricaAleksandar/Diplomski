@@ -67,7 +67,7 @@ architecture Behavioral of filter_to_ram is
 		DONE
 	);
 
-	signal sSTATE, sNEXT_STATE : tSTATE;
+	signal sF2R_CURRENT_STATE, sF2R_NEXT_STATE : tSTATE;
 	signal sPOS_X : STD_LOGIC_VECTOR (cH_WIDTH downto 0);
 	signal sPOS_Y : STD_LOGIC_VECTOR (cV_WIDTH	downto 0);
 	signal sPOS_EN : STD_LOGIC;
@@ -98,55 +98,55 @@ begin
 	--- FSM register ---
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
-			sSTATE <= RESTARTED;
+			sF2R_CURRENT_STATE <= RESTARTED;
 		elsif(iCLK'event and iCLK = '1') then
-			sSTATE <= sNEXT_STATE;
+			sF2R_CURRENT_STATE <= sF2R_NEXT_STATE;
 		end if;
 	end process;
 
 	--- Next state logic ---
-	process(sSTATE, iSTART, iRESTART, iDATA_VALID, iWR_COUNT, sPOS_X, sPOS_Y) begin
-		case sSTATE is
+	process(sF2R_CURRENT_STATE, iSTART, iRESTART, iDATA_VALID, iWR_COUNT, sPOS_X, sPOS_Y) begin
+		case sF2R_CURRENT_STATE is
 			when RESTARTED =>
 				if(iSTART = '1') then
-					sNEXT_STATE <= IDLE;
+					sF2R_NEXT_STATE <= IDLE;
 				else
-					sNEXT_STATE <= RESTARTED;
+					sF2R_NEXT_STATE <= RESTARTED;
 				end if;
 			
 			when IDLE =>
 				if(iDATA_VALID = '1') then
-					sNEXT_STATE <= ADD_TO_FIFO;
+					sF2R_NEXT_STATE <= ADD_TO_FIFO;
 				else
-					sNEXT_STATE <= IDLE;
+					sF2R_NEXT_STATE <= IDLE;
 				end if;
 				
 			when ADD_TO_FIFO =>
 				if(iWR_COUNT >= 31) then
-					sNEXT_STATE <= SET_CMD;
+					sF2R_NEXT_STATE <= SET_CMD;
 				else
-					sNEXT_STATE <= IDLE;
+					sF2R_NEXT_STATE <= IDLE;
 				end if;			
 			
 			when SET_CMD =>
 				if(sPOS_X = cH_SIZE and sPOS_Y = cV_SIZE) then
-					sNEXT_STATE <= DONE;
+					sF2R_NEXT_STATE <= DONE;
 				else
-					sNEXT_STATE <= IDLE;
+					sF2R_NEXT_STATE <= IDLE;
 				end if;
 			
 			when others =>
 				if(iRESTART = '1') then
-					sNEXT_STATE <= RESTARTED;
+					sF2R_NEXT_STATE <= RESTARTED;
 				else
-					sNEXT_STATE <= DONE;
+					sF2R_NEXT_STATE <= DONE;
 				end if;
 			
 		end case;
 	end process;
 	
 	--- State output logic --- 
-	process(sSTATE) begin
+	process(sF2R_CURRENT_STATE) begin
 		oCMD_EN <= '0';
 		oDONE <= '0';
 		sPOS_EN <= '0';
@@ -155,7 +155,7 @@ begin
 		oRESTARTED <= '0';
 		oMODE_IN_EN <= '0';
 		
-		case sSTATE is
+		case sF2R_CURRENT_STATE is
 			when IDLE =>
 			
 			when ADD_TO_FIFO =>

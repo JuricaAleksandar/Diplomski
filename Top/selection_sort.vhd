@@ -65,7 +65,7 @@ architecture Behavioral of selection_sort is
 	signal sIN_LOOP_CNT : STD_LOGIC_VECTOR (3 downto 0);
 	signal sOUT_LOOP_CNT : STD_LOGIC_VECTOR (2 downto 0);
 	signal sIN_CNT_EN, sOUT_CNT_EN : STD_LOGIC;
-	signal sSTATE, sNEXT_STATE : tFILTER_STATE;
+	signal sSORT_CURRENT_STATE, sSORT_NEXT_STATE : tFILTER_STATE;
 	signal sMIN_IND, sNEW_MIN_IND : STD_LOGIC_VECTOR (3 downto 0);
 	signal sMIN_WR_EN : STD_LOGIC;
 	signal sIN_CNT_CONTROL : STD_LOGIC;
@@ -147,72 +147,72 @@ begin
 	--- Filter automate
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
-			sSTATE <= IDLE;
+			sSORT_CURRENT_STATE <= IDLE;
 		elsif(iCLK'event and iCLK = '1') then
-			sSTATE <= sNEXT_STATE;
+			sSORT_CURRENT_STATE <= sSORT_NEXT_STATE;
 		end if;
 	end process;
 
-	process(sSTATE, iSTART, iRESTART, sIN_LOOP_CNT, sOUT_LOOP_CNT, sPIXEL_BUFFER, sMIN_IND) begin
-		case sSTATE is
+	process(sSORT_CURRENT_STATE, iSTART, iRESTART, sIN_LOOP_CNT, sOUT_LOOP_CNT, sPIXEL_BUFFER, sMIN_IND) begin
+		case sSORT_CURRENT_STATE is
 			when IDLE =>
 				if(iSTART = '1') then
-					sNEXT_STATE <= PREPARE;
+					sSORT_NEXT_STATE <= PREPARE;
 				else
-					sNEXT_STATE <= IDLE;
+					sSORT_NEXT_STATE <= IDLE;
 				end if;
 				
 			when PREPARE =>
-				sNEXT_STATE <= COMPARE;
+				sSORT_NEXT_STATE <= COMPARE;
 				
 			when COMPARE =>
 				if(sIN_LOOP_CNT < 9) then
 					if(sPIXEL_BUFFER(CONV_INTEGER(sIN_LOOP_CNT)) < sPIXEL_BUFFER(CONV_INTEGER(sMIN_IND))) then
-						sNEXT_STATE <= SET_NEW_MIN;
+						sSORT_NEXT_STATE <= SET_NEW_MIN;
 					else
-						sNEXT_STATE <= INC_IN_CNT;
+						sSORT_NEXT_STATE <= INC_IN_CNT;
 					end if;
 				else
 					if(sMIN_IND = ('0' & sOUT_LOOP_CNT)) then 
-						sNEXT_STATE <= INC_OUT_CNT;
+						sSORT_NEXT_STATE <= INC_OUT_CNT;
 					else
-						sNEXT_STATE <= SWAP1;
+						sSORT_NEXT_STATE <= SWAP1;
 					end if;
 				end if;
 				
 			when SET_NEW_MIN =>
-				sNEXT_STATE <= INC_IN_CNT;
+				sSORT_NEXT_STATE <= INC_IN_CNT;
 				
 			when INC_IN_CNT =>
-				sNEXT_STATE <= COMPARE;
+				sSORT_NEXT_STATE <= COMPARE;
 				
 			when SWAP1 =>
-				sNEXT_STATE <= SWAP2;
+				sSORT_NEXT_STATE <= SWAP2;
 				
 			when SWAP2 =>
-				sNEXT_STATE <= SWAP3;
+				sSORT_NEXT_STATE <= SWAP3;
 			
 			when SWAP3 =>
-				sNEXT_STATE <= INC_OUT_CNT;
+				sSORT_NEXT_STATE <= INC_OUT_CNT;
 				
 			when INC_OUT_CNT =>
 				if(sOUT_LOOP_CNT < 7) then
-					sNEXT_STATE <= PREPARE;
+					sSORT_NEXT_STATE <= PREPARE;
 				else
-					sNEXT_STATE <= DONE;
+					sSORT_NEXT_STATE <= DONE;
 				end if;
 			
 			when others =>
 				if(iRESTART = '1') then
-					sNEXT_STATE <= IDLE;
+					sSORT_NEXT_STATE <= IDLE;
 				else
-					sNEXT_STATE <= DONE;
+					sSORT_NEXT_STATE <= DONE;
 				end if;
 				
 		end case;
 	end process;
 
-	process(sSTATE, sOUT_LOOP_CNT, sIN_LOOP_CNT, sPIXEL_BUFFER) begin
+	process(sSORT_CURRENT_STATE, sOUT_LOOP_CNT, sIN_LOOP_CNT, sPIXEL_BUFFER) begin
 		sOUT_CNT_EN <= '0';
 		sIN_CNT_EN <= '0';
 		sIN_CNT_CONTROL <= '1';
@@ -224,7 +224,7 @@ begin
 		oDATA_VALID <= '0';
 		oREADY <= '0';
 		
-		case sSTATE is
+		case sSORT_CURRENT_STATE is
 			when IDLE =>
 				sPBUFF_IN_CONTROL <= "11";
 				oREADY <= '1';

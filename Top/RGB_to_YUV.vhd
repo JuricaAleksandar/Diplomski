@@ -32,25 +32,25 @@ use UNISIM.VComponents.all;
 entity RGB_to_YUV is
 		Port
 		(
-			iCLK : in STD_LOGIC;
-			iRST : in STD_LOGIC;
-			iWR_DONE : in STD_LOGIC;
-			iWR_EN : in STD_LOGIC;
-			iWR_ADDR : in  STD_LOGIC_VECTOR (3 downto 0);
-			iRGB : in  STD_LOGIC_VECTOR (23 downto 0);
-			oWR_DONE : out STD_LOGIC;
-			oWR_EN : out STD_LOGIC;
-			oWR_ADDR : out  STD_LOGIC_VECTOR (3 downto 0);
-			oYUV : out  STD_LOGIC_VECTOR (23 downto 0)
+			iCLK : in STD_LOGIC;										-- Input clock signal
+			iRST : in STD_LOGIC;										-- Input reset signal
+			iWR_DONE : in STD_LOGIC;								-- Input write done signal, to be delayed in this module
+			iWR_EN : in STD_LOGIC;									-- Input write enable signal, to be delayed in this module
+			iWR_ADDR : in  STD_LOGIC_VECTOR (3 downto 0);	-- Input write address, to be delayed in this module
+			iRGB : in  STD_LOGIC_VECTOR (23 downto 0);		-- Input pixel value in RGB color space
+			oWR_DONE : out STD_LOGIC;								-- Output of delayed input write done signal
+			oWR_EN : out STD_LOGIC;									-- Output of delayed input write enable signal
+			oWR_ADDR : out  STD_LOGIC_VECTOR (3 downto 0);	-- Output of delayed input write address signal
+			oYUV : out  STD_LOGIC_VECTOR (23 downto 0)		-- Output pixel value in YUV color space
 		);
 		
 end RGB_to_YUV;
 
 architecture Behavioral of RGB_to_YUV is
 	
-	signal sWR_DONE_DELAY : STD_LOGIC_VECTOR (4 downto 0);
-	signal sWR_EN_DELAY : STD_LOGIC_VECTOR (4 downto 0);
-	signal sWR_ADDR_DELAY : STD_LOGIC_VECTOR (19 downto 0);
+	signal sWR_DONE_DELAY : STD_LOGIC_VECTOR (4 downto 0); -- Delayed signal of input write done signal
+	signal sWR_EN_DELAY : STD_LOGIC_VECTOR (4 downto 0); -- Delayed signal of input write enable signal
+	signal sWR_ADDR_DELAY : STD_LOGIC_VECTOR (19 downto 0); -- Delayed signal of input write address signal
 	
 begin
 	
@@ -61,9 +61,9 @@ begin
 	)
 	port map
 	(
-		iCLK => iCLK,
-		iRGB => iRGB,
-		oCOMP => oYUV(23 downto 16)
+		iCLK => iCLK, -- Clock signal
+		iRGB => iRGB, -- Reset signal
+		oCOMP => oYUV(23 downto 16) -- Y component 
 	);
 	
 	calc_chroma_u : entity work.calculate_yuv_components
@@ -73,9 +73,9 @@ begin
 	)
 	port map
 	(
-		iCLK => iCLK,
-		iRGB => iRGB,
-		oCOMP => oYUV(15 downto 8)
+		iCLK => iCLK, -- Clock signal
+		iRGB => iRGB, -- Reset signal
+		oCOMP => oYUV(15 downto 8) -- U component 
 	);
 	
 	calc_chroma_v : entity work.calculate_yuv_components
@@ -85,11 +85,12 @@ begin
 	)
 	port map
 	(
-		iCLK => iCLK,
-		iRGB => iRGB,
-		oCOMP => oYUV(7 downto 0)
+		iCLK => iCLK, -- Clock signal
+		iRGB => iRGB, -- Reset signal
+		oCOMP => oYUV(7 downto 0) -- V component 
 	);
 	
+	-- 4 clock period delay register (shift register)
 	process(iCLK, iRST) begin
 		if(iRST = '1') then
 			sWR_DONE_DELAY <= (others => '0');
